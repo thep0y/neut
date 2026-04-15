@@ -11,6 +11,7 @@ import { Spinner } from "./components/spinner";
 import { AspectRatio } from "./components/aspect-ratio";
 import { Image } from "./components/image";
 import { Badge } from "./components/badge/Badge";
+import { Separator } from "./components/separator/Separator";
 
 const App: Component = () => {
   const [theme, setTheme] = createSignal<"light" | "dark">("light");
@@ -143,6 +144,31 @@ const App: Component = () => {
         <Badge variant="destructive">Destructive</Badge>
         <Badge variant="outline">Outline</Badge>
         <Badge variant="ghost">Ghost</Badge>
+      </div>
+
+      <div class="flex h-5 items-center gap-4 text-sm">
+        <div>Blog</div>
+        <Separator orientation="vertical" />
+        <div>Docs</div>
+        <Separator orientation="vertical" />
+        <div>Source</div>
+      </div>
+
+      <div class="flex w-full max-w-sm flex-col gap-2 text-sm">
+        <dl class="flex items-center justify-between">
+          <dt>Item 1</dt>
+          <dd class="text-neutral-500 dark:text-neutral-400">Value 1</dd>
+        </dl>
+        <Separator />
+        <dl class="flex items-center justify-between">
+          <dt>Item 2</dt>
+          <dd class="text-neutral-500 dark:text-neutral-400">Value 2</dd>
+        </dl>
+        <Separator />
+        <dl class="flex items-center justify-between">
+          <dt>Item 3</dt>
+          <dd class="text-neutral-500 dark:text-neutral-400">Value 3</dd>
+        </dl>
       </div>
     </div>
   );
