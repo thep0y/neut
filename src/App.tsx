@@ -7,6 +7,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "./components/accordion";
+import { Spinner } from "./components/spinner";
 
 const App: Component = () => {
   const [theme, setTheme] = createSignal<"light" | "dark">("light");
@@ -71,6 +72,20 @@ const App: Component = () => {
         </Button>
         <Button variant="outline" icon={<GitFork />} iconPosition="right">
           Fork
+        </Button>
+      </div>
+
+      <div class="flex items-center justify-center gap-3">
+        <Button variant="outline" disabled icon={<Spinner />}>
+          Generating
+        </Button>
+        <Button
+          variant="secondary"
+          disabled
+          icon={<Spinner />}
+          iconPosition="right"
+        >
+          Downloading
         </Button>
       </div>
 
