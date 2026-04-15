@@ -1,5 +1,5 @@
-import type { JSX, JSXElement } from "solid-js";
-import type { MakeRequired, PolymorphicProps } from "~/types";
+import type { JSXElement } from "solid-js";
+import type { BaseProps, MakeRequired, PolymorphicProps } from "~/types";
 
 export type ButtonVariant =
   | "primary"
@@ -11,18 +11,13 @@ export type ButtonVariant =
 
 export type ButtonSize = "md" | "xs" | "sm" | "lg";
 
-interface BaseButtonProps {
+interface BaseButtonProps extends BaseProps {
   variant?: ButtonVariant;
 
   size?: ButtonSize;
 
-  class?: string;
-
-  /** Additional CSS classes */
-  classList?: Record<string, boolean>;
-
   /** Button content */
-  children?: JSX.Element;
+  children?: JSXElement;
 
   icon?: JSXElement;
 

@@ -49,6 +49,7 @@ export const Button = <T extends ButtonValidElement = "button">(
           size: iconOnly() ? undefined : local.size,
           iconSize: iconOnly() ? local.size : undefined,
         }),
+        local.class,
       )}
       {...others}
     >
