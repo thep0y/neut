@@ -26,3 +26,9 @@ export type PolymorphicProps<
   P = EmptyObject,
   EnableAs extends boolean = true,
 > = P & Omit<ComponentProps<T>, keyof P> & AsProp<T, EnableAs>;
+
+export interface BaseProps {
+  class?: string;
+  classList?: Record<string, string | undefined>;
+  dir?: "ltr" | "rtl";
+}

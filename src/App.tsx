@@ -1,6 +1,12 @@
 import { createEffect, createSignal, type Component } from "solid-js";
 import { Button } from "./components/button/Button";
 import { ArrowUp, GitBranch, GitFork, Sun } from "lucide-solid";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "./components/accordion";
 
 const App: Component = () => {
   const [theme, setTheme] = createSignal<"light" | "dark">("light");
@@ -66,6 +72,39 @@ const App: Component = () => {
         <Button variant="outline" icon={<GitFork />} iconPosition="right">
           Fork
         </Button>
+      </div>
+
+      <div class="flex w-full justify-center p-10">
+        <Accordion
+          defaultValue={["shipping"]}
+          class="max-w-lg"
+          onValueChange={(value) => console.log(value)}
+          multiple
+        >
+          <AccordionItem value="shipping">
+            <AccordionTrigger>What are your shipping options?</AccordionTrigger>
+            <AccordionContent>
+              We offer standard (5-7 days), express (2-3 days), and overnight
+              shipping. Free shipping on international orders.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="returns" disabled>
+            <AccordionTrigger>What is your return policy?</AccordionTrigger>
+            <AccordionContent>
+              Returns accepted within 30 days. Items must be unused and in
+              original packaging. Refunds processed within 5-7 business days.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="support">
+            <AccordionTrigger>
+              How can I contact customer support?
+            </AccordionTrigger>
+            <AccordionContent>
+              Reach us via email, live chat, or phone. We respond within 24
+              hours during business days.
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
     </div>
   );

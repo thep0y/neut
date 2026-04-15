@@ -1,0 +1,1 @@
+export { AccordionTrigger } from "./AccordionTrigger";

@@ -5,6 +5,38 @@
 @theme {
     --radius: 0.625rem;
     --font-ar: "Noto Sans Arabic", "Noto Sans Arabic Fallback";
+
+    --animate-accordion-down: accordion-down
+        var(--tw-animation-duration, var(--tw-duration, 0.2s))
+        var(--tw-ease, ease-out) var(--tw-animation-delay, 0s)
+        var(--tw-animation-iteration-count, 1)
+        var(--tw-animation-direction, normal)
+        var(--tw-animation-fill-mode, none);
+
+    --animate-accordion-up: accordion-up
+        var(--tw-animation-duration, var(--tw-duration, 0.2s))
+        var(--tw-ease, ease-out) var(--tw-animation-delay, 0s)
+        var(--tw-animation-iteration-count, 1)
+        var(--tw-animation-direction, normal)
+        var(--tw-animation-fill-mode, none);
+
+    @keyframes accordion-down {
+        0% {
+            height: 0;
+        }
+        100% {
+            height: var(--accordion-panel-height, auto);
+        }
+    }
+
+    @keyframes accordion-up {
+        0% {
+            height: var(--accordion-panel-height, auto);
+        }
+        to {
+            height: 0;
+        }
+    }
 }
 
 @theme inline {
@@ -28,6 +60,9 @@
         font-synthesis-weight: none;
         text-rendering: optimizeLegibility;
     }
+    * {
+        @apply border-neutral-200 dark:border-white/10;
+    }
     @supports (font: -apple-system-body) and (-webkit-appearance: none) {
         [data-wrapper] {
             @apply min-[1800px]:border-t;
@@ -45,5 +80,11 @@
 
     [data-lang="he"] {
         font-family: var(--font-he);
+    }
+}
+
+@layer utilities {
+    :is(.\*\:data-\[slot\=accordion\]\:max-w-sm > *)[data-slot="accordion"] {
+        max-width: var(--container-sm);
     }
 }
