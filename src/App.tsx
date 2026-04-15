@@ -1,6 +1,6 @@
 import { createEffect, createSignal, type Component } from "solid-js";
 import { Button } from "./components/button/Button";
-import { ArrowUp, GitBranch, GitFork, Sun } from "lucide-solid";
+import { ArrowUp, GitBranch, GitFork, Moon, Sun } from "lucide-solid";
 import {
   Accordion,
   AccordionContent,
@@ -10,6 +10,7 @@ import {
 import { Spinner } from "./components/spinner";
 import { AspectRatio } from "./components/aspect-ratio";
 import { Image } from "./components/image";
+import { Badge } from "./components/badge/Badge";
 
 const App: Component = () => {
   const [theme, setTheme] = createSignal<"light" | "dark">("light");
@@ -21,7 +22,8 @@ const App: Component = () => {
   return (
     <div class="py-4 flex flex-col items-center justify-center gap-3 bg-white dark:bg-neutral-900 text-neutral-950 dark:text-neutral-300 overflow-y-auto">
       <Button
-        icon={<Sun />}
+        class="fixed right-4 top-4"
+        icon={theme() === "light" ? <Moon /> : <Sun />}
         onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
       />
 
@@ -133,6 +135,14 @@ const App: Component = () => {
             class="w-full rounded-lg object-cover grayscale dark:brightness-20"
           />
         </AspectRatio>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <Badge>Default</Badge>
+        <Badge variant="secondary">Secondary</Badge>
+        <Badge variant="destructive">Destructive</Badge>
+        <Badge variant="outline">Outline</Badge>
+        <Badge variant="ghost">Ghost</Badge>
       </div>
     </div>
   );
