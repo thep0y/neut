@@ -8,6 +8,8 @@ import {
   AccordionTrigger,
 } from "./components/accordion";
 import { Spinner } from "./components/spinner";
+import { AspectRatio } from "./components/aspect-ratio";
+import { Image } from "./components/image";
 
 const App: Component = () => {
   const [theme, setTheme] = createSignal<"light" | "dark">("light");
@@ -17,7 +19,7 @@ const App: Component = () => {
   });
 
   return (
-    <div class="w-screen h-screen flex flex-col items-center justify-center gap-3 bg-white dark:bg-neutral-900 text-neutral-950 dark:text-neutral-300">
+    <div class="py-4 flex flex-col items-center justify-center gap-3 bg-white dark:bg-neutral-900 text-neutral-950 dark:text-neutral-300 overflow-y-auto">
       <Button
         icon={<Sun />}
         onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
@@ -120,6 +122,17 @@ const App: Component = () => {
             </AccordionContent>
           </AccordionItem>
         </Accordion>
+      </div>
+
+      <div class="preview relative flex h-72 w-96 justify-center p-10 ">
+        <AspectRatio ratio={1 / 1} class="w-full max-w-48 rounded-lg bg-muted">
+          <Image
+            src="https://avatar.vercel.sh/shadcn1"
+            alt="Photo"
+            fill
+            class="w-full rounded-lg object-cover grayscale dark:brightness-20"
+          />
+        </AspectRatio>
       </div>
     </div>
   );
