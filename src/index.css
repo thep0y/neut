@@ -51,8 +51,9 @@
 
 @layer base {
     ::selection {
-        @apply bg-neutral-950 text-white dark:bg-neutral-200 dark:text-neutral-900;
+        @apply bg-neutral-950 text-white;
     }
+
     html {
         @apply overscroll-y-none;
     }
@@ -61,7 +62,7 @@
         text-rendering: optimizeLegibility;
     }
     * {
-        @apply border-neutral-200 dark:border-white/10;
+        @apply border-neutral-200;
     }
     @supports (font: -apple-system-body) and (-webkit-appearance: none) {
         [data-wrapper] {
@@ -80,6 +81,15 @@
 
     [data-lang="he"] {
         font-family: var(--font-he);
+    }
+
+    @variant dark {
+        ::selection {
+            @apply bg-neutral-200 text-neutral-900;
+        }
+        * {
+            @apply border-white/10;
+        }
     }
 }
 
