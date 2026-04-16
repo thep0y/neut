@@ -29,6 +29,6 @@ export type PolymorphicProps<
 
 export interface BaseProps {
   class?: string;
-  classList?: Record<string, string | undefined>;
+  classList?: Record<string, boolean | undefined>;
   dir?: "ltr" | "rtl";
 }
