@@ -1,7 +1,7 @@
 import { mergeProps, splitProps } from "solid-js";
-import type { SeparatorProps } from "./Separator.types";
 import { clsx } from "~/lib/utils";
 import { classes } from "./Separator.styles";
+import type { SeparatorProps } from "./Separator.types";
 
 export const Separator = (props: SeparatorProps) => {
   const merged = mergeProps({ orientation: "horizontal" } as const, props);

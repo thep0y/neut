@@ -1,13 +1,12 @@
 import { mergeProps, Show, splitProps } from "solid-js";
 import { Dynamic } from "solid-js/web";
-
+import { clsx } from "~/lib/utils";
+import s from "./Button.styles";
 import type {
   ButtonProps,
   ButtonValidElement,
   DefaultStyleProps,
 } from "./Button.types";
-import { clsx } from "~/lib/utils";
-import s from "./Button.styles";
 
 export const Button = <T extends ButtonValidElement = "button">(
   props: ButtonProps<T>,

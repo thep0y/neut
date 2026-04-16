@@ -5,6 +5,8 @@
  */
 
 import { mergeProps, splitProps } from "solid-js";
+import { warnOnce } from "~/lib/utils";
+import { imageConfigDefault } from "./Image.config";
 import type {
   ImageConfig,
   ImageConfigComplete,
@@ -22,8 +24,6 @@ import type {
   StaticImport,
   StaticRequire,
 } from "./Image.types";
-import { imageConfigDefault } from "./Image.config";
-import { warnOnce } from "~/lib/utils";
 
 // ─── 类型补充 ─────────────────────────────────────────────────────────────────
 

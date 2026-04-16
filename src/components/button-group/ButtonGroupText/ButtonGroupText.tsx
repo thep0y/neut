@@ -1,6 +1,6 @@
 import { clsx } from "~/lib/utils";
-import type { ButtonGroupTextProps } from "./ButtonGroupText.types";
 import { classes } from "./ButtonGroupText.styles";
+import type { ButtonGroupTextProps } from "./ButtonGroupText.types";
 
 export const ButtonGroupText = (props: ButtonGroupTextProps) => {
   return (

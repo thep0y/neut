@@ -1,7 +1,7 @@
 import { mergeProps, splitProps } from "solid-js";
-import type { CardProps } from "./Card.types";
-import { clsx } from "~/lib/utils";
 import { classes } from "~/components/card/Card/Card.styles";
+import { clsx } from "~/lib/utils";
+import type { CardProps } from "./Card.types";
 
 export const Card = (props: CardProps) => {
   const merged = mergeProps({ size: "md" } as const, props);

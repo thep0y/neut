@@ -1,7 +1,7 @@
-import { clsx } from "~/lib/utils";
-import type { BadgeProps } from "./Badge.types";
-import { badgeVariants } from "./Badge.styles";
 import { splitProps } from "solid-js";
+import { clsx } from "~/lib/utils";
+import { badgeVariants } from "./Badge.styles";
+import type { BadgeProps } from "./Badge.types";
 
 export const Badge = (props: BadgeProps) => {
   const [local, others] = splitProps(props, ["variant", "class", "classList"]);

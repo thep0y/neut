@@ -1,7 +1,7 @@
 import { mergeProps, splitProps } from "solid-js";
-import type { AccordionProps } from "./Accordion.types";
 import { clsx } from "~/lib/utils";
 import { AccordionProvider } from "./Accordion.context";
+import type { AccordionProps } from "./Accordion.types";
 
 export const Accordion = <T extends string | number>(
   props: AccordionProps<T>,

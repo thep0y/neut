@@ -98,18 +98,19 @@ export interface LocalPattern {
 export type LoadingValue = (typeof VALID_LOADING_VALUES)[number];
 
 /** 公开的 <Image> 组件 Props */
-export interface ImageProps extends Omit<
-  JSX.IntrinsicElements["img"],
-  | "src"
-  | "srcSet"
-  | "ref"
-  | "alt"
-  | "width"
-  | "height"
-  | "loading"
-  | "style"
-  | "onLoad"
-> {
+export interface ImageProps
+  extends Omit<
+    JSX.IntrinsicElements["img"],
+    | "src"
+    | "srcSet"
+    | "ref"
+    | "alt"
+    | "width"
+    | "height"
+    | "loading"
+    | "style"
+    | "onLoad"
+  > {
   style?: JSX.CSSProperties;
   src: string | StaticImport;
   alt: string;

@@ -1,7 +1,7 @@
 import { splitProps } from "solid-js";
-import type { AspectRatioProps } from "./AspectRatio.types";
 import { clsx } from "~/lib/utils";
 import { classes } from "./AspectRatio.styles";
+import type { AspectRatioProps } from "./AspectRatio.types";
 
 export const AspectRatio = (props: AspectRatioProps) => {
   const [local, others] = splitProps(props, ["ratio", "class", "classList"]);

@@ -1,7 +1,7 @@
-import { clsx } from "~/lib/utils";
-import type { ButtonGroupProps } from "./ButtonGroup.types";
-import { buttonGroupVariants } from "./ButtonGroup.styles";
 import { splitProps } from "solid-js";
+import { clsx } from "~/lib/utils";
+import { buttonGroupVariants } from "./ButtonGroup.styles";
+import type { ButtonGroupProps } from "./ButtonGroup.types";
 
 export const ButtonGroup = (props: ButtonGroupProps) => {
   const [local, others] = splitProps(props, [

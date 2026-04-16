@@ -6,8 +6,6 @@
  */
 
 import { type Component, createMemo, createSignal, Show } from "solid-js";
-import ImageElement from "./ImageElement";
-import ImagePreload from "./ImagePreload";
 import { resolveConfig, useImageConfig } from "./Image.config";
 import type {
   ImageProps,
@@ -15,6 +13,8 @@ import type {
   PlaceholderValue,
 } from "./Image.types";
 import { getImgProps } from "./Image.utils";
+import ImageElement from "./ImageElement";
+import ImagePreload from "./ImagePreload";
 
 // ─── 组件 ─────────────────────────────────────────────────────────────────────
 

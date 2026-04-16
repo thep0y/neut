@@ -1,8 +1,8 @@
 import { onCleanup, splitProps } from "solid-js";
-import type { AccordionItemProps } from "./AccordionItem.types";
 import { clsx } from "~/lib/utils";
 import { useAccordionContext } from "../Accordion/Accordion.context";
 import { AccordionItemProvider } from "./AccordionItem.context";
+import type { AccordionItemProps } from "./AccordionItem.types";
 
 export const AccordionItem = <T extends string | number>(
   props: AccordionItemProps<T>,

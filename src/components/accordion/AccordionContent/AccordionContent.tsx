@@ -5,10 +5,10 @@ import {
   Show,
   splitProps,
 } from "solid-js";
-import type { AccordionContentProps } from "./AccordionContent.types";
 import { clsx } from "~/lib/utils";
 import { useAccordionContext } from "../Accordion/Accordion.context";
 import { useAccordionItemContext } from "../AccordionItem/AccordionItem.context";
+import type { AccordionContentProps } from "./AccordionContent.types";
 
 export const AccordionContent = (props: AccordionContentProps) => {
   const { orientation } = useAccordionContext();

@@ -1,9 +1,9 @@
-import { splitProps } from "solid-js";
-import type { AccordionTriggerProps } from "./AccordionTrigger.types";
-import { clsx } from "~/lib/utils";
 import { ChevronDown, ChevronUp } from "lucide-solid";
+import { splitProps } from "solid-js";
+import { clsx } from "~/lib/utils";
 import { useAccordionContext } from "../Accordion/Accordion.context";
 import { useAccordionItemContext } from "../AccordionItem/AccordionItem.context";
+import type { AccordionTriggerProps } from "./AccordionTrigger.types";
 
 export const AccordionTrigger = (props: AccordionTriggerProps) => {
   const { orientation, toggle } = useAccordionContext();

@@ -1,7 +1,7 @@
 import { splitProps } from "solid-js";
-import type { CardContentProps } from "./CardContent.types";
 import { clsx } from "~/lib/utils";
 import { classes } from "./CardContent.styles";
+import type { CardContentProps } from "./CardContent.types";
 
 export const CardContent = (props: CardContentProps) => {
   const [local, rest] = splitProps(props, ["class", "classList"]);
