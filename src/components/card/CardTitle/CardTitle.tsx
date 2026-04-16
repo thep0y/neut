@@ -1,0 +1,12 @@
+import { splitProps } from "solid-js";
+import type { CardTitleProps } from "./CardTitle.types";
+import { clsx } from "~/lib/utils";
+import { classes } from "./CardTitle.styles";
+
+export const CardTitle = (props: CardTitleProps) => {
+  const [local, rest] = splitProps(props, ["class", "classList"]);
+
+  return (
+    <div data-slot="card-title" class={clsx(classes, local.class)} {...rest} />
+  );
+};
