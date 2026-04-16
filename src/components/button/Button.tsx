@@ -42,6 +42,7 @@ export const Button = <T extends ButtonValidElement = "button">(
   return (
     // @ts-expect-error
     <Dynamic
+      data-slot="button"
       component={local.as}
       class={clsx(
         s({
