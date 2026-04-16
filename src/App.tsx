@@ -1,6 +1,14 @@
 import { createEffect, createSignal, type Component } from "solid-js";
 import { Button } from "./components/button/Button";
-import { ArrowUp, GitBranch, GitFork, Moon, Sun } from "lucide-solid";
+import {
+  ArrowUp,
+  GitBranch,
+  GitFork,
+  Minus,
+  Moon,
+  Plus,
+  Sun,
+} from "lucide-solid";
 import {
   Accordion,
   AccordionContent,
@@ -12,6 +20,7 @@ import { AspectRatio } from "./components/aspect-ratio";
 import { Image } from "./components/image";
 import { Badge } from "./components/badge/Badge";
 import { Separator } from "./components/separator/Separator";
+import { ButtonGroup, ButtonGroupSeparator } from "./components/button-group";
 
 const App: Component = () => {
   const [theme, setTheme] = createSignal<"light" | "dark">("light");
@@ -170,6 +179,55 @@ const App: Component = () => {
           <dd class="text-neutral-500 dark:text-neutral-400">Value 3</dd>
         </dl>
       </div>
+
+      <ButtonGroup
+        orientation="vertical"
+        aria-label="Media controls"
+        class="h-fit"
+      >
+        <Button variant="outline" icon={<Plus />} />
+
+        <Button variant="outline" icon={<Minus />} />
+      </ButtonGroup>
+
+      <div class="flex flex-col items-start gap-8">
+        <ButtonGroup>
+          <Button variant="outline" size="sm">
+            Small
+          </Button>
+          <Button variant="outline" size="sm">
+            Button
+          </Button>
+          <Button variant="outline" size="sm">
+            Group
+          </Button>
+          <Button variant="outline" size="sm" icon={<Plus />} />
+        </ButtonGroup>
+        <ButtonGroup>
+          <Button variant="outline">Default</Button>
+          <Button variant="outline">Button</Button>
+          <Button variant="outline">Group</Button>
+          <Button variant="outline" icon={<Plus />} />
+        </ButtonGroup>
+        <ButtonGroup>
+          <Button variant="outline" size="lg">
+            Large
+          </Button>
+          <Button variant="outline" size="lg">
+            Button
+          </Button>
+          <Button variant="outline" size="lg">
+            Group
+          </Button>
+          <Button variant="outline" size="lg" icon={<Plus />} />
+        </ButtonGroup>
+      </div>
+
+      <ButtonGroup>
+        <Button variant="secondary">Button</Button>
+        <ButtonGroupSeparator />
+        <Button icon={<Plus />} variant="secondary" />
+      </ButtonGroup>
     </div>
   );
 };
