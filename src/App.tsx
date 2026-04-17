@@ -46,6 +46,7 @@ import {
   TooltipTrigger,
 } from "./components/tooltip";
 import { Kbd } from "./components/kbd";
+import { Input } from "./components/input";
 
 const App: Component = () => {
   const [theme, setTheme] = createSignal<"light" | "dark">("light");
@@ -452,6 +453,22 @@ const App: Component = () => {
             <p>This feature is currently unavailable</p>
           </TooltipContent>
         </Tooltip>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        <Input
+          type="number"
+          onInput={(v) => console.log(v + 1)}
+          placeholder="Enter a number"
+        />
+
+        <Input onInput={(v) => console.log(v)} placeholder="Enter text" />
+
+        <Input
+          onInput={(v) => console.log(v)}
+          placeholder="Disabled"
+          disabled
+        />
       </div>
     </div>
   );
