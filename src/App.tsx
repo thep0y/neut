@@ -74,6 +74,15 @@ import {
   InputGroupText,
   InputGroupTextarea,
 } from "./components/input-group";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "./components/pagination";
 
 const App: Component = () => {
   const [theme, setTheme] = createSignal<"light" | "dark">("light");
@@ -704,6 +713,49 @@ const App: Component = () => {
           </InputGroupAddon>
         </InputGroup>
       </div>
+
+      <Pagination>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationLink href="#" page={1} />
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationLink href="#" isActive page={2} />
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationLink href="#" page={3} />
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationLink href="#" page={4} />
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationLink href="#" page={5} />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+
+      <Pagination>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious href="#" />
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationLink href="#" page={1} />
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationLink href="#" isActive page={2} />
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationLink href="#" page={3} />
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationEllipsis />
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationNext href="#" />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
     </div>
   );
 };

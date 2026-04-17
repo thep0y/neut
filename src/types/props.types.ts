@@ -30,5 +30,5 @@ export type PolymorphicProps<
 export interface BaseProps {
   class?: string;
   classList?: Record<string, boolean | undefined>;
-  dir?: "ltr" | "rtl";
+  dir?: "ltr" | "rtl" | "auto";
 }
