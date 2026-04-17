@@ -6,6 +6,7 @@ import {
   Minus,
   Moon,
   Plus,
+  Save,
   Sun,
 } from "lucide-solid";
 import { type Component, createEffect, createSignal } from "solid-js";
@@ -38,6 +39,13 @@ import {
 import { Image } from "./components/image";
 import { Separator } from "./components/separator/Separator";
 import { Spinner } from "./components/spinner";
+import {
+  Tooltip,
+  TooltipArrow,
+  TooltipContent,
+  TooltipTrigger,
+} from "./components/tooltip";
+import { Kbd } from "./components/kbd";
 
 const App: Component = () => {
   const [theme, setTheme] = createSignal<"light" | "dark">("light");
@@ -368,6 +376,83 @@ const App: Component = () => {
         <CarouselPrevious />
         <CarouselNext />
       </Carousel>
+
+      <div class="p-24 flex items-center gap-3">
+        <Tooltip>
+          <TooltipTrigger>
+            <Button variant="outline">Left</Button>
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            Tooltip content
+            <TooltipArrow />
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger>
+            <Button variant="outline">Top</Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            Tooltip content
+            <TooltipArrow />
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger>
+            <Button variant="outline">Bottom</Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            Tooltip content
+            <TooltipArrow />
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger>
+            <Button variant="outline">Right</Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            Tooltip content
+            <TooltipArrow />
+          </TooltipContent>
+        </Tooltip>
+      </div>
+
+      <div>
+        <Tooltip>
+          <TooltipTrigger>
+            <Button variant="outline" size="sm" icon={<Save />} />
+          </TooltipTrigger>
+          <TooltipContent>
+            Save Changes <Kbd>S</Kbd>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+      <div>
+        <Tooltip>
+          <TooltipTrigger>
+            <Button variant="outline" size="sm" disabled>
+              Disabled
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <TooltipArrow />
+            <p>This feature is currently unavailable</p>
+          </TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger>
+            <span class="inline-block w-fit">
+              <Button variant="outline" size="sm" disabled>
+                Disabled
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <TooltipArrow />
+            <p>This feature is currently unavailable</p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
     </div>
   );
 };
