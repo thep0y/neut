@@ -83,7 +83,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "./components/pagination";
-import { ScrollArea, ScrollBar } from "./components/scroll-area";
+import { ScrollArea } from "./components/scroll-area";
 
 const App: Component = () => {
   const [theme, setTheme] = createSignal<"light" | "dark">("light");
