@@ -34,7 +34,6 @@ export const useTooltipContent = (
       local().alignOffset,
       local().sideOffset,
     );
-    console.log(side);
     setPosition({ top, left, side, align });
   };
 
