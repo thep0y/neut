@@ -16,11 +16,19 @@ export const InputGroupButton = (props: InputGroupButtonProps) => {
     "classList",
   ]);
 
+  const iconOnly = () => !!others.icon && !others.children;
+
   return (
     <Button
       data-size={local.size}
       variant={local.variant}
-      class={clsx(inputGroupButtonVariants({ size: local.size }), local.class)}
+      class={clsx(
+        inputGroupButtonVariants({
+          size: iconOnly() ? undefined : local.size,
+          iconSize: iconOnly() ? local.size : undefined,
+        }),
+        local.class,
+      )}
       {...others}
     />
   );
