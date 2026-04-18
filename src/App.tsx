@@ -1,5 +1,6 @@
 import {
   ArrowUp,
+  BadgeCheck,
   Check,
   ChevronRight,
   Copy,
@@ -7,6 +8,7 @@ import {
   CreditCard,
   GitBranch,
   GitFork,
+  Inbox,
   Info,
   Loader,
   Mail,
@@ -16,6 +18,7 @@ import {
   RefreshCcw,
   Save,
   Search,
+  ShieldAlert,
   Star,
   Sun,
 } from "lucide-solid";
@@ -89,6 +92,22 @@ import { ScrollArea } from "./components/scroll-area";
 import { Label } from "./components/label";
 import { Switch } from "./components/switch";
 import { toast, Toaster } from "./components/toast";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from "./components/item";
+import {
+  Avatar,
+  AvatarBadge,
+  AvatarFallback,
+  AvatarGroup,
+  AvatarGroupCount,
+  AvatarImage,
+} from "./components/avatar";
 
 const App: Component = () => {
   const [theme, setTheme] = createSignal<"light" | "dark">("light");
@@ -923,6 +942,245 @@ const App: Component = () => {
         >
           Promise
         </Button>
+      </div>
+
+      <div class="flex flex-row flex-wrap items-center gap-6 md:gap-12">
+        <Avatar>
+          <AvatarImage
+            src="https://github.com/shadcn.png"
+            alt="@shadcn"
+            class="grayscale"
+          />
+          <AvatarFallback>CN</AvatarFallback>
+        </Avatar>
+        <Avatar>
+          <AvatarImage
+            src="https://github.com/shadcn.png1"
+            alt="@shadcn"
+            class="grayscale"
+          />
+          <AvatarFallback>CN</AvatarFallback>
+        </Avatar>
+        <Avatar>
+          <AvatarImage
+            src="https://github.com/evilrabbit.png"
+            alt="@evilrabbit"
+          />
+          <AvatarFallback>ER</AvatarFallback>
+          <AvatarBadge class="bg-green-600 dark:bg-green-800" />
+        </Avatar>
+        <AvatarGroup class="grayscale">
+          <Avatar>
+            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
+          <Avatar>
+            <AvatarImage
+              src="https://github.com/maxleiter.png"
+              alt="@maxleiter"
+            />
+            <AvatarFallback>LR</AvatarFallback>
+          </Avatar>
+          <Avatar>
+            <AvatarImage
+              src="https://github.com/evilrabbit.png"
+              alt="@evilrabbit"
+            />
+            <AvatarFallback>ER</AvatarFallback>
+          </Avatar>
+          <AvatarGroupCount>+3</AvatarGroupCount>
+        </AvatarGroup>
+
+        <AvatarGroup class="grayscale">
+          <Avatar>
+            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
+          <Avatar>
+            <AvatarImage
+              src="https://github.com/maxleiter.png"
+              alt="@maxleiter"
+            />
+            <AvatarFallback>LR</AvatarFallback>
+          </Avatar>
+          <Avatar>
+            <AvatarImage
+              src="https://github.com/evilrabbit.png"
+              alt="@evilrabbit"
+            />
+            <AvatarFallback>ER</AvatarFallback>
+          </Avatar>
+          <AvatarGroupCount>
+            <Plus />
+          </AvatarGroupCount>
+        </AvatarGroup>
+
+        <Avatar class="grayscale">
+          <AvatarImage
+            src="https://github.com/pranathip.png"
+            alt="@pranathip"
+          />
+          <AvatarFallback>PP</AvatarFallback>
+          <AvatarBadge>
+            <Plus />
+          </AvatarBadge>
+        </Avatar>
+
+        <Avatar size="sm">
+          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+          <AvatarFallback>CN</AvatarFallback>
+        </Avatar>
+        <Avatar>
+          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+          <AvatarFallback>CN</AvatarFallback>
+        </Avatar>
+        <Avatar size="lg">
+          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+          <AvatarFallback>CN</AvatarFallback>
+        </Avatar>
+      </div>
+
+      <div class="flex w-full max-w-md flex-col gap-6">
+        <Item>
+          <ItemMedia variant="icon">
+            <Inbox />
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>Default Variant</ItemTitle>
+            <ItemDescription>
+              Transparent background with no border.
+            </ItemDescription>
+          </ItemContent>
+        </Item>
+        <Item variant="outline">
+          <ItemMedia variant="icon">
+            <Inbox />
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>Outline Variant</ItemTitle>
+            <ItemDescription>
+              Outlined style with a visible border.
+            </ItemDescription>
+          </ItemContent>
+        </Item>
+        <Item variant="muted">
+          <ItemMedia variant="icon">
+            <Inbox />
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>Muted Variant</ItemTitle>
+            <ItemDescription>
+              Muted background for secondary content.
+            </ItemDescription>
+          </ItemContent>
+        </Item>
+      </div>
+
+      <div class="flex w-full max-w-md flex-col gap-6">
+        <Item variant="outline">
+          <ItemContent>
+            <ItemTitle>Basic Item</ItemTitle>
+            <ItemDescription>
+              A simple item with title and description.
+            </ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <Button variant="outline" size="sm">
+              Action
+            </Button>
+          </ItemActions>
+        </Item>
+
+        <Item as="a" href="#" variant="outline" size="sm">
+          <ItemMedia>
+            <BadgeCheck class="size-5" />
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>Your profile has been verified.</ItemTitle>
+          </ItemContent>
+          <ItemActions>
+            <ChevronRight class="size-4" />
+          </ItemActions>
+        </Item>
+
+        <Item variant="outline">
+          <ItemMedia variant="icon">
+            <ShieldAlert />
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>Security Alert</ItemTitle>
+            <ItemDescription>
+              New login detected from unknown device.
+            </ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <Button size="sm" variant="outline">
+              Review
+            </Button>
+          </ItemActions>
+        </Item>
+      </div>
+
+      <div class="flex w-full max-w-lg flex-col gap-6">
+        <Item variant="outline">
+          <ItemMedia>
+            <Avatar class="size-10">
+              <AvatarImage src="https://github.com/evilrabbit.png" />
+              <AvatarFallback>ER</AvatarFallback>
+            </Avatar>
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>Evil Rabbit</ItemTitle>
+            <ItemDescription>Last seen 5 months ago</ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <Button
+              size="sm"
+              variant="outline"
+              class="rounded-full"
+              aria-label="Invite"
+              icon={<Plus />}
+            />
+          </ItemActions>
+        </Item>
+        <Item variant="outline">
+          <ItemMedia>
+            <div class="flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-white dark:*:data-[slot=avatar]:ring-neutral-950 *:data-[slot=avatar]:grayscale">
+              <Avatar class="hidden sm:flex">
+                <AvatarImage
+                  src="https://github.com/shadcn.png"
+                  alt="@shadcn"
+                />
+                <AvatarFallback>CN</AvatarFallback>
+              </Avatar>
+              <Avatar class="hidden sm:flex">
+                <AvatarImage
+                  src="https://github.com/maxleiter.png"
+                  alt="@maxleiter"
+                />
+                <AvatarFallback>LR</AvatarFallback>
+              </Avatar>
+              <Avatar>
+                <AvatarImage
+                  src="https://github.com/evilrabbit.png"
+                  alt="@evilrabbit"
+                />
+                <AvatarFallback>ER</AvatarFallback>
+              </Avatar>
+            </div>
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>No Team Members</ItemTitle>
+            <ItemDescription>
+              Invite your team to collaborate on this project.
+            </ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <Button size="sm" variant="outline">
+              Invite
+            </Button>
+          </ItemActions>
+        </Item>
       </div>
     </div>
   );
