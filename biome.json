@@ -29,6 +29,7 @@
       "style": {
         "noNonNullAssertion": "off"
       },
+      "suspicious": { "noExplicitAny": "off" },
       "a11y": {
         "useKeyWithClickEvents": "off",
         "useSemanticElements": "off",

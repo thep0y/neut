@@ -88,6 +88,7 @@ import {
 import { ScrollArea } from "./components/scroll-area";
 import { Label } from "./components/label";
 import { Switch } from "./components/switch";
+import { toast, Toaster } from "./components/toast";
 
 const App: Component = () => {
   const [theme, setTheme] = createSignal<"light" | "dark">("light");
@@ -859,6 +860,68 @@ const App: Component = () => {
           <FieldLabel for="switch-size-default">Default</FieldLabel>
         </Field>
       </FieldGroup>
+
+      <Toaster position="top-center" closeButton />
+
+      <div class="flex flex-wrap gap-2">
+        <Button
+          variant="outline"
+          onClick={() =>
+            toast("Event has been created", {
+              duration: 100000000,
+              cancel: "取消",
+            })
+          }
+        >
+          Default
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => toast.success("Event has been created")}
+        >
+          Success
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() =>
+            toast.info("Be at the area 10 minutes before the event time")
+          }
+        >
+          Info
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() =>
+            toast.warning("Event start time cannot be earlier than 8am")
+          }
+        >
+          Warning
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => toast.error("Event has not been created")}
+        >
+          Error
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            toast.promise<{ name: string }>(
+              () =>
+                new Promise((resolve) =>
+                  setTimeout(() => resolve({ name: "Event" }), 2000),
+                ),
+              {
+                loading: "Loading...",
+                success: (data) => `${data.name} has been created`,
+                error: "Error",
+              },
+            );
+          }}
+        >
+          Promise
+        </Button>
+      </div>
     </div>
   );
 };
