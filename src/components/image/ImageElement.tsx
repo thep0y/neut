@@ -77,10 +77,8 @@ const ImageElement: Component<ImageElementProps> = (rawProps) => {
       if (!internal.src) {
         console.error('[Image] 缺少必填属性 "src"', img);
       }
-      if (img.getAttribute("alt") === null) {
-        console.error(
-          '[Image] 缺少必填属性 "alt"，请为屏幕阅读器和搜索引擎提供替代文本。',
-        );
+      if (img.getAttribute("alt") === null && internal.alt === undefined) {
+        console.error('[Image] 缺少必填属性 "alt"...');
       }
     }
 
