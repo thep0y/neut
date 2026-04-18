@@ -1,6 +1,5 @@
 import type { SwipeDirection, ToasterProps } from "./types";
 import { MOBILE_VIEWPORT_OFFSET, VIEWPORT_OFFSET } from "./constants";
-import { JSX } from "solid-js/h/jsx-runtime";
 
 /** Derives default swipe directions from a position string like "bottom-right" */
 export function getDefaultSwipeDirections(position: string): SwipeDirection[] {

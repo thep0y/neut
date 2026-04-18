@@ -4,7 +4,14 @@
  * Single responsibility: layout, positioning, and orchestrating sub-components/hooks.
  * All state logic is delegated to dedicated hooks.
  */
-import { createMemo, createSignal, For, Show, type Component } from "solid-js";
+import {
+  createMemo,
+  createSignal,
+  For,
+  mergeProps,
+  Show,
+  type Component,
+} from "solid-js";
 import { Toast } from "./Toast";
 import { useTheme } from "../hooks/useTheme";
 import { useToasterKeyboard } from "../hooks/useToasterKeyboard";
@@ -15,15 +22,24 @@ import type { HeightT, Position, ToasterProps } from "../types";
 import { Portal } from "solid-js/web";
 
 export const Toaster: Component<ToasterProps> = (props) => {
-  // ─── Defaults ────────────────────────────────────────────────────────────────
-  const position = () => props.position ?? "bottom-right";
-  const hotkey = () => props.hotkey ?? ["altKey", "KeyT"];
-  const gap = () => props.gap ?? GAP;
-  const visibleToasts = () => props.visibleToasts ?? VISIBLE_TOASTS_AMOUNT;
-  const dir = () => props.dir ?? getDocumentDirection();
-  const containerAriaLabel = () => props.containerAriaLabel ?? "Notifications";
+  console.warn(
+    "The current `Toast` component still has many bugs, which originate from the upstream component library at https://github.com/emilkowalski/sonner. If you encounter a bug, you can file an issue in the upstream repository or in this repository. The design concept of the upstream project is very impressive, but due to poor code quality, this component will not stay in sync with the upstream code unless the upstream adds significantly more impressive features. Bugs and some edge cases will be fixed independently.",
+  );
+
+  const merged = mergeProps(
+    {
+      position: "bottom-right",
+      hotkey: ["altKey", "KeyT"] as string[],
+      gap: GAP,
+      visibleToasts: VISIBLE_TOASTS_AMOUNT,
+      dir: getDocumentDirection(),
+      containerAriaLabel: "Notifications",
+    } as const,
+    props,
+  );
+
   const hotkeyLabel = () =>
-    hotkey().join("+").replace(/Key/g, "").replace(/Digit/g, "");
+    merged.hotkey.join("+").replace(/Key/g, "").replace(/Digit/g, "");
 
   // ─── Local state ──────────────────────────────────────────────────────────────
   const [heights, setHeights] = createSignal<HeightT[]>([]);
@@ -39,7 +55,7 @@ export const Toaster: Component<ToasterProps> = (props) => {
   const { toasts, removeToast } = useToastSubscription();
 
   useToasterKeyboard({
-    hotkey: hotkey(),
+    hotkey: merged.hotkey,
     listRef: () => listRef,
     setExpanded,
   });
@@ -57,7 +73,7 @@ export const Toaster: Component<ToasterProps> = (props) => {
   const possiblePositions = createMemo(() =>
     Array.from(
       new Set(
-        [position()].concat(
+        [merged.position].concat(
           filteredToasts()
             .filter((t) => t.position)
             .map((t) => t.position as Position),
@@ -101,7 +117,8 @@ export const Toaster: Component<ToasterProps> = (props) => {
     <Portal>
       <section
         aria-label={
-          props.customAriaLabel ?? `${containerAriaLabel()} ${hotkeyLabel()}`
+          props.customAriaLabel ??
+          `${merged.containerAriaLabel} ${hotkeyLabel()}`
         }
         tabIndex={-1}
         aria-live="polite"
@@ -114,16 +131,17 @@ export const Toaster: Component<ToasterProps> = (props) => {
             const toastsForPos = () =>
               filteredToasts().filter(
                 (t) =>
-                  (!t.position && pos === position()) || t.position === pos,
+                  (!t.position && pos === merged.position) ||
+                  t.position === pos,
               );
-            const heightsForPos = () =>
-              heights().filter((h) => h.position === pos);
 
             return (
               <Show when={toastsForPos().length > 0}>
                 <ol
                   ref={(el) => (listRef = el)}
-                  dir={dir() === "auto" ? getDocumentDirection() : dir()}
+                  dir={
+                    merged.dir === "auto" ? getDocumentDirection() : merged.dir
+                  }
                   tabIndex={-1}
                   class={props.class}
                   data-sonner-toaster
@@ -133,7 +151,7 @@ export const Toaster: Component<ToasterProps> = (props) => {
                   style={{
                     "--front-toast-height": `${heights()[0]?.height ?? 0}px`,
                     "--width": `${TOAST_WIDTH}px`,
-                    "--gap": `${gap()}px`,
+                    "--gap": `${merged.gap}px`,
                     ...(props.style as any),
                     ...offsetVars(),
                   }}
@@ -153,48 +171,56 @@ export const Toaster: Component<ToasterProps> = (props) => {
                   onPointerUp={() => setInteracting(false)}
                 >
                   <For each={toastsForPos()}>
-                    {(toast, index) => (
-                      <Toast
-                        icons={props.icons}
-                        index={index()}
-                        toast={toast}
-                        defaultRichColors={props.richColors}
-                        duration={
-                          props.toastOptions?.duration ?? props.duration
-                        }
-                        class={props.toastOptions?.class}
-                        descriptionClass={props.toastOptions?.descriptionClass}
-                        invert={props.invert ?? false}
-                        visibleToasts={visibleToasts()}
-                        closeButton={
-                          props.toastOptions?.closeButton ??
-                          props.closeButton ??
-                          false
-                        }
-                        interacting={interacting()}
-                        position={pos}
-                        style={props.toastOptions?.style}
-                        unstyled={props.toastOptions?.unstyled}
-                        classes={props.toastOptions?.classes}
-                        cancelButtonStyle={
-                          props.toastOptions?.cancelButtonStyle
-                        }
-                        actionButtonStyle={
-                          props.toastOptions?.actionButtonStyle
-                        }
-                        closeButtonAriaLabel={
-                          props.toastOptions?.closeButtonAriaLabel
-                        }
-                        removeToast={removeToast}
-                        toasts={toastsForPos()}
-                        heights={heightsForPos()}
-                        setHeights={setHeights}
-                        expandByDefault={props.expand ?? false}
-                        gap={gap()}
-                        expanded={expanded()}
-                        swipeDirections={props.swipeDirections}
-                      />
-                    )}
+                    {(toast, index) => {
+                      const heightsForPos = createMemo(() =>
+                        heights().filter((h) => h.position === toast.position),
+                      );
+
+                      return (
+                        <Toast
+                          icons={props.icons}
+                          index={index()}
+                          toast={toast}
+                          defaultRichColors={props.richColors}
+                          duration={
+                            props.toastOptions?.duration ?? props.duration
+                          }
+                          class={props.toastOptions?.class}
+                          descriptionClass={
+                            props.toastOptions?.descriptionClass
+                          }
+                          invert={props.invert ?? false}
+                          visibleToasts={merged.visibleToasts}
+                          closeButton={
+                            props.toastOptions?.closeButton ??
+                            props.closeButton ??
+                            false
+                          }
+                          interacting={interacting()}
+                          position={pos}
+                          style={props.toastOptions?.style}
+                          unstyled={props.toastOptions?.unstyled}
+                          classes={props.toastOptions?.classes}
+                          cancelButtonStyle={
+                            props.toastOptions?.cancelButtonStyle
+                          }
+                          actionButtonStyle={
+                            props.toastOptions?.actionButtonStyle
+                          }
+                          closeButtonAriaLabel={
+                            props.toastOptions?.closeButtonAriaLabel
+                          }
+                          removeToast={removeToast}
+                          toasts={toastsForPos()}
+                          heights={heightsForPos()}
+                          setHeights={setHeights}
+                          expandByDefault={props.expand ?? false}
+                          gap={merged.gap}
+                          expanded={expanded()}
+                          swipeDirections={props.swipeDirections}
+                        />
+                      );
+                    }}
                   </For>
                 </ol>
               </Show>

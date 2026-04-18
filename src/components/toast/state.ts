@@ -3,6 +3,7 @@
  * Pure observable store — no framework dependency.
  * Responsible for: creating, updating, dismissing toasts, and notifying subscribers.
  */
+import { createUniqueId, type JSXElement } from "solid-js";
 import type {
   ExternalToast,
   PromiseData,
@@ -17,15 +18,11 @@ const isValidElement = (src: object): boolean => {
   return !("id" in src && "message" in src);
 };
 
-let toastsCounter = 1;
-
-type TitleT = (() => any) | any;
-
 // ─── Observer (pub/sub) ────────────────────────────────────────────────────────
 class Observer {
   subscribers: Array<(toast: ToastT | ToastToDismiss) => void> = [];
   toasts: Array<ToastT | ToastToDismiss> = [];
-  dismissedToasts: Set<string | number> = new Set();
+  dismissedToasts: Set<string> = new Set();
 
   subscribe = (subscriber: (toast: ToastT | ToastToDismiss) => void) => {
     this.subscribers.push(subscriber);
@@ -48,17 +45,17 @@ class Observer {
 
   create = (
     data: ExternalToast & {
-      message?: TitleT;
+      message?: JSXElement;
       type?: ToastTypes;
       promise?: PromiseT;
-      jsx?: any;
+      jsx?: (() => JSXElement) | JSXElement;
     },
   ) => {
     const { message, ...rest } = data;
     const id =
       typeof data?.id === "number" || (data.id as string)?.length > 0
         ? data.id!
-        : toastsCounter++;
+        : createUniqueId();
 
     const alreadyExists = this.toasts.find((t) => t.id === id);
     const dismissible =
@@ -81,7 +78,7 @@ class Observer {
     return id;
   };
 
-  dismiss = (id?: number | string) => {
+  dismiss = (id?: string) => {
     if (id !== undefined) {
       this.dismissedToasts.add(id);
       requestAnimationFrame(() => {
@@ -90,32 +87,34 @@ class Observer {
         }
       });
     } else {
-      for (const toast of this.toasts) {
-        for (const subscriber of this.subscribers) {
-          subscriber({ id: toast.id, dismiss: true });
+      requestAnimationFrame(() => {
+        for (const toast of this.toasts) {
+          for (const subscriber of this.subscribers) {
+            subscriber({ id: toast.id, dismiss: true });
+          }
         }
-      }
+      });
     }
 
     return id;
   };
 
-  message = (message: TitleT, data?: ExternalToast) =>
+  message = (message: JSXElement, data?: ExternalToast) =>
     this.create({ ...data, message });
 
-  error = (message: TitleT, data?: ExternalToast) =>
+  error = (message: JSXElement, data?: ExternalToast) =>
     this.create({ ...data, message, type: "error" });
 
-  success = (message: TitleT, data?: ExternalToast) =>
+  success = (message: JSXElement, data?: ExternalToast) =>
     this.create({ ...data, type: "success", message });
 
-  info = (message: TitleT, data?: ExternalToast) =>
+  info = (message: JSXElement, data?: ExternalToast) =>
     this.create({ ...data, type: "info", message });
 
-  warning = (message: TitleT, data?: ExternalToast) =>
+  warning = (message: JSXElement, data?: ExternalToast) =>
     this.create({ ...data, type: "warning", message });
 
-  loading = (message: TitleT, data?: ExternalToast) =>
+  loading = (message: JSXElement, data?: ExternalToast) =>
     this.create({ ...data, type: "loading", message });
 
   promise = <ToastData>(
@@ -124,7 +123,7 @@ class Observer {
   ) => {
     if (!data) return;
 
-    let id: string | number | undefined;
+    let id: string | undefined;
     if (data.loading !== undefined) {
       id = this.create({
         ...data,
@@ -249,7 +248,7 @@ class Observer {
   };
 
   custom = (jsx: (id: number | string) => any, data?: ExternalToast) => {
-    const id = data?.id || toastsCounter++;
+    const id = data?.id || createUniqueId();
     this.create({ jsx: jsx(id), ...data, id });
     return id;
   };
@@ -261,8 +260,8 @@ class Observer {
 // ─── Singleton & public API ────────────────────────────────────────────────────
 export const ToastState = new Observer();
 
-const toastFunction = (message: TitleT, data?: ExternalToast) => {
-  const id = data?.id || toastsCounter++;
+const toastFunction = (message: JSXElement, data?: ExternalToast) => {
+  const id = createUniqueId();
   ToastState.addToast({ title: message, ...data, id } as ToastT);
   return id;
 };

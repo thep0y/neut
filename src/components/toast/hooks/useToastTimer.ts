@@ -29,7 +29,7 @@ export function useToastTimer(opts: UseToastTimerOptions) {
   const pauseTimer = () => {
     if (lastPauseTime < closeTimerStart) {
       const elapsed = Date.now() - closeTimerStart;
-      remainingTime = remainingTime - elapsed;
+      remainingTime = Math.max(0, remainingTime - elapsed);
     }
     lastPauseTime = Date.now();
   };

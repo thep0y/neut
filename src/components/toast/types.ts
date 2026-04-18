@@ -63,7 +63,7 @@ export interface Action {
 }
 
 export interface ToastT {
-  id: number | string;
+  id: string;
   toasterId?: string;
   title?: (() => JSXElement) | JSXElement;
   type?: ToastTypes;
@@ -198,7 +198,7 @@ export enum SwipeStateTypes {
 export type Theme = "light" | "dark";
 
 export interface ToastToDismiss {
-  id: number | string;
+  id: string;
   dismiss: boolean;
 }
 
@@ -206,6 +206,6 @@ export type ExternalToast = Omit<
   ToastT,
   "id" | "type" | "title" | "jsx" | "delete" | "promise"
 > & {
-  id?: number | string;
+  id?: string;
   toasterId?: string;
 };

@@ -3,13 +3,15 @@ import type { HeightT, Position, ToastT } from "../types";
 
 interface UseToastHeightOptions {
   toastRef: () => HTMLLIElement | undefined;
-  toast: ToastT;
+  toast: () => ToastT;
   mounted: () => boolean;
   setHeights: (updater: (prev: HeightT[]) => HeightT[]) => void;
 }
 
 export function useToastHeight(opts: UseToastHeightOptions) {
   const [initialHeight, setInitialHeight] = createSignal(0);
+
+  const toast = opts.toast();
 
   // Register height on first mount
   createEffect(() => {
@@ -19,16 +21,14 @@ export function useToastHeight(opts: UseToastHeightOptions) {
     setInitialHeight(h);
     opts.setHeights((prev) => [
       {
-        toastId: opts.toast.id,
+        toastId: toast.id,
         height: h,
-        position: opts.toast.position as Position,
+        position: toast.position as Position,
       },
       ...prev,
     ]);
     onCleanup(() =>
-      opts.setHeights((prev) =>
-        prev.filter((x) => x.toastId !== opts.toast.id),
-      ),
+      opts.setHeights((prev) => prev.filter((x) => x.toastId !== toast.id)),
     );
   });
 
@@ -39,11 +39,11 @@ export function useToastHeight(opts: UseToastHeightOptions) {
     if (!el) return;
 
     // Read deps so effect re-runs on content change
-    void opts.toast.title;
-    void opts.toast.description;
-    void opts.toast.jsx;
-    void opts.toast.action;
-    void opts.toast.cancel;
+    void toast.title;
+    void toast.description;
+    void toast.jsx;
+    void toast.action;
+    void toast.cancel;
 
     const orig = el.style.height;
     el.style.height = "auto";
@@ -52,19 +52,19 @@ export function useToastHeight(opts: UseToastHeightOptions) {
     setInitialHeight(newH);
 
     opts.setHeights((prev) => {
-      const exists = prev.find((x) => x.toastId === opts.toast.id);
+      const exists = prev.find((x) => x.toastId === toast.id);
       if (!exists) {
         return [
           {
-            toastId: opts.toast.id,
+            toastId: toast.id,
             height: newH,
-            position: opts.toast.position as Position,
+            position: toast.position as Position,
           },
           ...prev,
         ];
       }
       return prev.map((x) =>
-        x.toastId === opts.toast.id ? { ...x, height: newH } : x,
+        x.toastId === toast.id ? { ...x, height: newH } : x,
       );
     });
   });

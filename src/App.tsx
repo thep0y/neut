@@ -861,7 +861,7 @@ const App: Component = () => {
         </Field>
       </FieldGroup>
 
-      <Toaster position="top-center" closeButton />
+      <Toaster />
 
       <div class="flex flex-wrap gap-2">
         <Button
@@ -877,7 +877,9 @@ const App: Component = () => {
         </Button>
         <Button
           variant="outline"
-          onClick={() => toast.success("Event has been created")}
+          onClick={() =>
+            toast.success("Event has been created", { position: "top-right" })
+          }
         >
           Success
         </Button>

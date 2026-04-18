@@ -75,7 +75,7 @@ export const Toast: Component<ToastProps> = (props) => {
   // ─── Sub-hooks ───────────────────────────────────────────────────────────────
   const { initialHeight } = useToastHeight({
     toastRef: () => toastRef,
-    toast: props.toast,
+    toast: () => props.toast,
     mounted,
     setHeights: props.setHeights,
   });
