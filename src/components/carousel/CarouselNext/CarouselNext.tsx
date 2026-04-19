@@ -1,6 +1,6 @@
 import { ChevronRight } from "lucide-solid";
 import { mergeProps, splitProps } from "solid-js";
-import Button from "~/components/button";
+import { Button } from "~/components/button";
 import { clsx } from "~/lib/utils";
 import { useCarouselContext } from "../Carousel";
 import type { CarouselNextProps } from "./CarouselNext.types";

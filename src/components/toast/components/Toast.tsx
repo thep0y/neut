@@ -22,7 +22,7 @@ import { useToastHeight } from "../hooks/useToastHeight";
 import { TIME_BEFORE_UNMOUNT, TOAST_LIFETIME } from "../constants";
 import type { ToastProps } from "../types";
 import { clsx } from "~/lib/utils";
-import Button from "~/components/button";
+import { Button } from "~/components/button";
 import { X } from "lucide-solid";
 
 export const Toast: Component<ToastProps> = (props) => {

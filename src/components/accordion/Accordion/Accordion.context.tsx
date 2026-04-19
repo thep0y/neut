@@ -10,7 +10,6 @@ interface AccordionContextValue<T> {
   unregisterItem: (index: number) => void;
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: must be any to support generic types
 const AccordionContext = createContext<AccordionContextValue<any>>();
 
 export function AccordionProvider<T>(

@@ -1,7 +1,7 @@
 import { mergeProps, splitProps } from "solid-js";
 import type { PaginationLinkProps } from "./PaginationLink.types";
 import { clsx } from "~/lib/utils";
-import Button from "~/components/button";
+import { Button } from "~/components/button";
 
 export const PaginationLink = (props: PaginationLinkProps) => {
   const merged = mergeProps({ size: "md" } as const, props);
@@ -11,14 +11,12 @@ export const PaginationLink = (props: PaginationLinkProps) => {
     "isActive",
     "class",
     "classList",
-    // @ts-expect-error
     "page",
-    // @ts-expect-error
     "children",
   ]);
 
   return (
-    <Button
+    <Button<"a">
       as="a"
       variant={local.isActive ? "outline" : "ghost"}
       size={local.size}
@@ -29,7 +27,6 @@ export const PaginationLink = (props: PaginationLinkProps) => {
       icon={"page" in local ? (local.page as number) : undefined}
       {...others}
     >
-      {/* @ts-expect-error page和children只能存在一个*/}
       {local.children}
     </Button>
   );
