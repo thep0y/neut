@@ -86,7 +86,7 @@ bun i @dome/ui
 然后即可如同其他组件库一样导入并使用组件：
 
 ```tsx
-import { Button } from "./@dome/ui";
+import { Button } from "@dome/ui";
 
 const App = () => {
   return <Button>Click me</Button>;
