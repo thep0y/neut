@@ -79,20 +79,20 @@ bun i lucide-solid
 本组件库也支持作为依赖安装：
 
 ```bash
-bun i @dome/ui
+bun i @neut/ui
 ```
 
 安装后需要在根样式文件中导入样式及注册样式资源：
 
 ```css
-@import "../node_modules/@dome/ui/dist/styles/index.css";
-@source "../node_modules/@dome/ui/dist";
+@import "../node_modules/@neut/ui/dist/styles/index.css";
+@source "../node_modules/@neut/ui/dist";
 ```
 
 然后即可如同其他组件库一样导入并使用组件：
 
 ```tsx
-import { Button } from "@dome/ui";
+import { Button } from "@neut/ui";
 
 const App = () => {
   return <Button>Click me</Button>;
