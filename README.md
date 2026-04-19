@@ -2,6 +2,10 @@
 
 这是一个类似shadcn的solidjs组件库，与shadcn不同的是，本组件库不依赖于任何第三方组件库，相比shadcn的优势是能够避免上游组件库的bug，也更容易及时修复bug。
 
+> [!warning]
+> 本项目仍在开发中，不推荐用于生产项目。
+> 本项目中部分组件代码并未完全参考shadcn。
+
 ## 使用
 
 与shadcn类似，不需要安装本组件库，而是直接复制某个组件的代码，但也可安装本组件库作为依赖。
@@ -88,3 +92,8 @@ const App = () => {
   return <Button>Click me</Button>;
 };
 ```
+
+## 参考项目
+
+- shadcn: https://ui.shadcn.com/docs/installation
+- sonner: https://sonner.emilkowal.ski/getting-started
