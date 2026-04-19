@@ -56,6 +56,12 @@ export const clsx = (...classes: (string | undefined | false)[]): string => {
 };
 ```
 
+此外，本项目中的许多组件中使用了lucide-solid图标：
+
+```bash
+bun i lucide-solid
+```
+
 当然，并非所有组件都需要使用这两个样式依赖，具体可查看shacn文档。我正在考虑将这两个工具独立实现以减少对第三方库的依赖。
 
 现在假如你需要使用`Button`组件，则可以直接复制`button`目录中的代码，在复制时你可以看到，本组件库出于可维护性和单一职责原则的考虑，所有组件的实现都并非放在单文件中，因此建议你直接克隆本项目到本地，然后复制组件目录到你的项目中，否则请按`button`的目录结构创建相对应的文件后复制每个文件中的相应代码：
@@ -79,7 +85,7 @@ bun i @dome/ui
 安装后需要在根样式文件中导入样式及注册样式资源：
 
 ```css
-@import "../node_modules/@dome/ui/styles/index.css";
+@import "../node_modules/@dome/ui/dist/styles/index.css";
 @source "../node_modules/@dome/ui/dist";
 ```
 
