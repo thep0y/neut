@@ -99,6 +99,8 @@ const App = () => {
 };
 ```
 
+组件库的安装可以参考示例：https://github.com/thep0y/neut/tree/main/example
+
 ## 参考项目
 
 - shadcn: https://ui.shadcn.com/docs/installation
