@@ -1,5 +1,10 @@
 import type { JSXElement } from "solid-js";
-import type { BaseProps, MakeRequired, PolymorphicProps } from "~/types";
+import type {
+  BaseProps,
+  MakeRequired,
+  MouseEventHandler,
+  PolymorphicProps,
+} from "~/types";
 
 export type ButtonVariant =
   | "primary"
@@ -28,7 +33,7 @@ export type ButtonValidElement = "button" | "a";
 
 export type ButtonProps<T extends ButtonValidElement> = PolymorphicProps<
   T,
-  BaseButtonProps
+  BaseButtonProps & { onClick?: MouseEventHandler<T> }
 >;
 
 export type DefaultStyleProps = MakeRequired<
@@ -37,4 +42,4 @@ export type DefaultStyleProps = MakeRequired<
 > & { as: ButtonValidElement };
 
 export type ButtonPropsWithDefault<T extends ButtonValidElement> =
-  PolymorphicProps<T, BaseButtonProps>;
+  PolymorphicProps<T, BaseButtonProps & { onClick?: MouseEventHandler<T> }>;

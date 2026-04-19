@@ -30,6 +30,7 @@ export const Button = <T extends ButtonValidElement = "button">(
     "class",
     "classList",
     "children",
+    "onClick",
   ]);
 
   const iconOnly = () => !!local.icon && !local.children;
@@ -43,6 +44,7 @@ export const Button = <T extends ButtonValidElement = "button">(
     <Dynamic
       data-slot="button"
       component={local.as}
+      onClick={local.onClick}
       class={clsx(
         s({
           variant: local.variant,
