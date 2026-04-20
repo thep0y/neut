@@ -35,23 +35,9 @@ export default defineConfig({
     target: "esnext",
     lib: {
       entry: [path.resolve(__dirname, "src/index.ts")],
-      name: "dome",
+      name: "@neut/ui",
       formats: ["es"],
     },
-    // rolldownOptions: {
-    //   external: (id) => {
-    //     return (
-    //       !id.startsWith("~") && !id.startsWith(".") && !path.isAbsolute(id)
-    //     );
-    //   },
-    //   output: {
-    //     dir: "dist",
-    //     entryFileNames: "[name].js",
-    //     codeSplitting: true,
-    //     preserveModules: true,
-    //     preserveModulesRoot: "src",
-    //   },
-    // },
     rolldownOptions: {
       external: (id) => {
         // 1. 保留源码内模块（相对路径、别名路径）

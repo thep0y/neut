@@ -102,9 +102,9 @@ export const ScrollBar = (props: ScrollBarProps) => {
         Math.min(maxScroll, startScroll + delta * scrollRatio),
       );
       if (isVertical()) {
-        viewport.scrollTop = newScroll;
+        viewport!.scrollTop = newScroll;
       } else {
-        viewport.scrollLeft = newScroll;
+        viewport!.scrollLeft = newScroll;
       }
     }
 

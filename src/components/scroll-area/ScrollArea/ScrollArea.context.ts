@@ -8,7 +8,7 @@ import type { ScrollMetrics } from "./ScrollArea.types";
 
 interface ScrollAreaContextValue {
   hovering: Accessor<boolean>;
-  viewportRef: () => HTMLDivElement;
+  viewportRef: () => HTMLDivElement | undefined;
   dragging: Accessor<"vertical" | "horizontal" | null>;
   setDragging: Setter<"vertical" | "horizontal" | null>;
   vertical: Accessor<ScrollMetrics>;

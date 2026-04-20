@@ -1,4 +1,4 @@
-import { createSignal, onCleanup, onMount, splitProps } from "solid-js";
+import { createEffect, createSignal, onCleanup, splitProps } from "solid-js";
 import type { ScrollAreaProps, ScrollMetrics } from "./ScrollArea.types";
 import { clsx } from "~/lib/utils";
 import { ScrollBar } from "../ScrollBar";
@@ -6,7 +6,7 @@ import { ScrollAreaContext } from "./ScrollArea.context";
 import { computeMetrics } from "./ScrollArea.utils";
 
 export const ScrollArea = (props: ScrollAreaProps) => {
-  let viewportEl!: HTMLDivElement;
+  let viewportRef: HTMLDivElement | undefined;
 
   const [local, others] = splitProps(props, [
     "orientation",
@@ -33,9 +33,8 @@ export const ScrollArea = (props: ScrollAreaProps) => {
       scrollable: false,
     },
   );
-  function updateMetrics() {
-    const el = viewportEl;
-    if (!el) return;
+
+  function updateMetrics(el: HTMLElement) {
     setVerticalMetrics(
       computeMetrics(el.clientHeight, el.scrollTop, el.scrollHeight),
     );
@@ -44,25 +43,27 @@ export const ScrollArea = (props: ScrollAreaProps) => {
     );
   }
 
-  onMount(() => {
-    updateMetrics();
+  function setup(el: HTMLDivElement) {
+    viewportRef = el; // ref 赋值
 
-    // Watch content / viewport size changes
-    const ro = new ResizeObserver(updateMetrics);
-    ro.observe(viewportEl);
+    updateMetrics(el);
 
-    // Also observe the first child (content wrapper) if present
-    if (viewportEl.firstElementChild) {
-      ro.observe(viewportEl.firstElementChild);
+    const update = () => updateMetrics(el);
+
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+
+    if (el.firstElementChild) {
+      ro.observe(el.firstElementChild);
     }
 
-    viewportEl.addEventListener("scroll", updateMetrics, { passive: true });
+    el.addEventListener("scroll", update, { passive: true });
 
     onCleanup(() => {
       ro.disconnect();
-      viewportEl.removeEventListener("scroll", updateMetrics);
+      el.removeEventListener("scroll", update);
     });
-  });
+  }
 
   return (
     <div
@@ -75,7 +76,7 @@ export const ScrollArea = (props: ScrollAreaProps) => {
       <ScrollAreaContext.Provider
         value={{
           hovering,
-          viewportRef: () => viewportEl,
+          viewportRef: () => viewportRef,
           dragging,
           setDragging,
           vertical: verticalMetrics,
@@ -83,7 +84,7 @@ export const ScrollArea = (props: ScrollAreaProps) => {
         }}
       >
         <div
-          ref={viewportEl}
+          ref={setup}
           data-slot="scroll-area-viewport"
           role="region"
           aria-label={local["aria-label"] ?? "Scrollable content"}
