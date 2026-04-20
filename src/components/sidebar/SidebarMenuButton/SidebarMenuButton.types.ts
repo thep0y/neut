@@ -9,6 +9,5 @@ export type SidebarMenuButtonProps<T extends ValidComponent> = PolymorphicProps<
   BaseProps & {
     isActive?: boolean;
     tooltip?: string | TooltipContentProps;
-  } & VariantProps<typeof sidebarMenuButtonVariants>,
-  false
+  } & VariantProps<typeof sidebarMenuButtonVariants>
 >;
