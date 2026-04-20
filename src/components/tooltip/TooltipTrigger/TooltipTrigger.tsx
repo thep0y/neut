@@ -1,4 +1,4 @@
-import { children, type ParentProps } from "solid-js";
+import { children, type JSXElement, type ParentProps } from "solid-js";
 import { useTooltipTrigger } from "./useTooltipTrigger";
 
 export const TooltipTrigger = (props: ParentProps) => {
@@ -6,5 +6,5 @@ export const TooltipTrigger = (props: ParentProps) => {
 
   useTooltipTrigger(resolved);
 
-  return resolved();
+  return resolved as unknown as JSXElement;
 };

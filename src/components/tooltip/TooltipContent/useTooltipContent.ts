@@ -1,4 +1,10 @@
-import { createEffect, createSignal, onCleanup, onMount } from "solid-js";
+import {
+  createEffect,
+  createSignal,
+  onCleanup,
+  onMount,
+  untrack,
+} from "solid-js";
 import { computePosition } from "./TooltipContent.utils";
 import { createStore } from "solid-js/store";
 import type { TimeoutID } from "~/types";
@@ -16,19 +22,20 @@ export const useTooltipContent = (
   const [position, setPosition] = createStore({
     top: -9999,
     left: -9999,
-    side: local().side,
-    align: local().align,
+    side: untrack(() => local().side),
+    align: untrack(() => local().align),
   });
-  const [shouldRender, setShouldRender] = createSignal(open());
+  const [shouldRender, setShouldRender] = createSignal(untrack(open));
   let exitTimer: TimeoutID;
 
   const updatePosition = () => {
     const trigger = triggerRef();
-    if (!trigger || !ref()) return;
+    const content = ref();
+    if (!trigger || !content) return;
 
     const { top, left, side, align } = computePosition(
       trigger,
-      ref()!,
+      content,
       local().side,
       local().align,
       local().alignOffset,
@@ -46,6 +53,7 @@ export const useTooltipContent = (
   onMount(() => {
     window.addEventListener("scroll", updatePosition);
     window.addEventListener("resize", updatePosition);
+
     updatePositionNextFrame();
   });
 
@@ -56,6 +64,7 @@ export const useTooltipContent = (
 
   createEffect(() => {
     const isOpen = open();
+
     if (isOpen) {
       updatePositionNextFrame();
       setShouldRender(true);

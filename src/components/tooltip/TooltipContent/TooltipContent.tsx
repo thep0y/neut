@@ -7,6 +7,8 @@ import { TooltipContentContext } from "./TooltipContent.context";
 import { useTooltipContent } from "./useTooltipContent";
 
 export const TooltipContent = (props: TooltipContentProps) => {
+  const ctx = useTooltipContext();
+
   const merged = mergeProps(
     { side: "top", align: "center", alignOffset: 0, sideOffset: 4 } as const,
     props,
@@ -21,7 +23,6 @@ export const TooltipContent = (props: TooltipContentProps) => {
     "children",
   ]);
 
-  const ctx = useTooltipContext();
   let ref: HTMLDivElement | undefined;
 
   const { shouldRender, position } = useTooltipContent(
