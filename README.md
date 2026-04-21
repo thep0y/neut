@@ -36,7 +36,8 @@
 
 ```css
 @import "tailwindcss";
-@import "../node_modules/@neut/ui/dist/ui.css";
+@import "./styles/animate.css";
+@import "./styles/toast.css";
 ```
 
 除了样式文件外，还需要安装样式合并依赖`tailwind-merge`及样式定义依赖`class-variance-authority`：
@@ -84,8 +85,8 @@ bun i @neut/ui
 安装后需要在根样式文件中导入样式及注册样式资源：
 
 ```css
-@import "../node_modules/@neut/ui/dist/styles/index.css";
-@source "../node_modules/@neut/ui/dist";
+@import "tailwindcss";
+@import "../node_modules/@neut/ui/dist/ui.css";
 ```
 
 然后即可如同其他组件库一样导入并使用组件：
