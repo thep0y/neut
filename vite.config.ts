@@ -3,11 +3,9 @@ import { defineConfig } from "vite";
 import solidPlugin from "vite-plugin-solid";
 import devtools from "solid-devtools/vite";
 import dts from "vite-plugin-dts";
-import { viteStaticCopy } from "vite-plugin-static-copy";
 import path from "node:path";
 
 export default defineConfig({
-  base: "/dev",
   resolve: {
     alias: {
       "~": path.resolve(__dirname, "./src"),
@@ -17,16 +15,7 @@ export default defineConfig({
     devtools(),
     solidPlugin(),
     tailwindcss(),
-    dts({ entryRoot: "./src" }),
-    viteStaticCopy({
-      targets: [
-        {
-          src: "src/styles/**/*",
-          dest: "styles",
-          rename: { stripBase: 2 },
-        },
-      ],
-    }),
+    dts({ entryRoot: "src" }),
   ],
   server: {
     port: 5173,
@@ -40,11 +29,9 @@ export default defineConfig({
     },
     rolldownOptions: {
       external: (id) => {
-        // 1. 保留源码内模块（相对路径、别名路径）
         if (id.startsWith("~") || id.startsWith(".") || path.isAbsolute(id)) {
           return false;
         }
-        // 2. 排除所有 node_modules 依赖
         return true;
       },
       output: {
