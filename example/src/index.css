@@ -1,2 +1,2 @@
-@import "../node_modules/@neut/ui/dist/styles/index.css";
-@source "../node_modules/@neut/ui/dist";
+@import "tailwindcss";
+@import "../node_modules/@neut/ui/dist/ui.css";
