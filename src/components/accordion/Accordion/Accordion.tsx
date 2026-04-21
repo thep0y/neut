@@ -2,10 +2,9 @@ import { mergeProps, splitProps } from "solid-js";
 import { clsx } from "~/lib/utils";
 import { AccordionProvider } from "./Accordion.context";
 import type { AccordionProps } from "./Accordion.types";
+import { useAccordion } from "./useAccordion";
 
-export const Accordion = <T extends string | number>(
-  props: AccordionProps<T>,
-) => {
+export const Accordion = (props: AccordionProps) => {
   const merged = mergeProps(
     {
       hiddenUntilFound: false,
@@ -35,12 +34,15 @@ export const Accordion = <T extends string | number>(
     "children",
   ]);
 
+  const { handleKeyDown } = useAccordion();
+
   return (
     <section
       class={clsx("flex", "w-full", "flex-col", "max-w-lg", local.class)}
       data-orientation={local.orientation}
       data-slot="accordion"
       dir={local.dir}
+      onKeyDown={handleKeyDown}
       {...others}
     >
       <AccordionProvider

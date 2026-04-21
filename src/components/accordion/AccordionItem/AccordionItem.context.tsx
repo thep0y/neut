@@ -1,32 +1,15 @@
-import { createContext, type ParentProps, useContext } from "solid-js";
+import { createContext, useContext } from "solid-js";
+import type { AccordionValue } from "../Accordion";
 
 interface AccordionItemContextValue {
-  index: number;
+  value: AccordionValue;
+  triggerId: string;
+  contentId: string;
   open: () => boolean;
   disabled?: boolean;
 }
 
-const AccordionItemContext = createContext<AccordionItemContextValue>();
-
-export function AccordionItemProvider(
-  props: ParentProps & {
-    index: number;
-    open: () => boolean;
-    disabled?: boolean;
-  },
-) {
-  return (
-    <AccordionItemContext.Provider
-      value={{
-        index: props.index,
-        open: props.open,
-        disabled: props.disabled,
-      }}
-    >
-      {props.children}
-    </AccordionItemContext.Provider>
-  );
-}
+export const AccordionItemContext = createContext<AccordionItemContextValue>();
 
 export const useAccordionItemContext = () => {
   const context = useContext(AccordionItemContext);

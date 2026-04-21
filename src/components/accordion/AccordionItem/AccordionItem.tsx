@@ -1,14 +1,11 @@
-import { onCleanup, splitProps } from "solid-js";
+import { createUniqueId, splitProps } from "solid-js";
 import { clsx } from "~/lib/utils";
 import { useAccordionContext } from "../Accordion/Accordion.context";
-import { AccordionItemProvider } from "./AccordionItem.context";
+import { AccordionItemContext } from "./AccordionItem.context";
 import type { AccordionItemProps } from "./AccordionItem.types";
 
-export const AccordionItem = <T extends string | number>(
-  props: AccordionItemProps<T>,
-) => {
-  const { orientation, isOpen, registerItem, unregisterItem } =
-    useAccordionContext<T>();
+export const AccordionItem = (props: AccordionItemProps) => {
+  const { orientation, isOpen } = useAccordionContext();
 
   const [local, others] = splitProps(props, [
     "value",
@@ -19,30 +16,34 @@ export const AccordionItem = <T extends string | number>(
     "children",
   ]);
 
-  const index = registerItem(local.value);
+  const id = createUniqueId();
+  const triggerId = `accordion-trigger-${id}`;
+  const contentId = `accordion-content-${id}`;
 
-  onCleanup(() => unregisterItem(index));
+  const value = () => local.value ?? id;
 
-  const open = () => isOpen(index);
+  const open = () => isOpen(value());
 
   return (
     <div
       class={clsx("not-last:border-b", local.class)}
       data-slot="accordion-item"
       data-orientation={orientation}
-      data-open={open() ? "" : null}
-      data-closed={open() ? null : ""}
-      data-index={index}
+      data-open={open()}
       data-disabled={props.disabled ? "" : null}
       {...others}
     >
-      <AccordionItemProvider
-        index={index}
-        open={open}
-        disabled={props.disabled}
+      <AccordionItemContext.Provider
+        value={{
+          value: value(),
+          triggerId,
+          contentId,
+          open,
+          disabled: props.disabled,
+        }}
       >
         {local.children}
-      </AccordionItemProvider>
+      </AccordionItemContext.Provider>
     </div>
   );
 };

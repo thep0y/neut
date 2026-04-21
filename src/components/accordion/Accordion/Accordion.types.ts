@@ -1,9 +1,11 @@
 import type { BaseProps, PolymorphicProps } from "~/types";
 
-interface BaseAccordionProps<T> extends BaseProps {
-  defaultValue?: T[];
-  value?: T[];
-  onValueChange?: (value: T[]) => void;
+export type AccordionValue = string | number;
+
+interface BaseAccordionProps extends BaseProps {
+  defaultValue?: AccordionValue[];
+  value?: AccordionValue[];
+  onValueChange?: (value: AccordionValue[]) => void;
   hiddenUntilFound?: boolean;
   loopFocus?: boolean;
   multiple?: boolean;
@@ -12,14 +14,14 @@ interface BaseAccordionProps<T> extends BaseProps {
   keepMounted?: boolean;
 }
 
-export type AccordionProps<T> = PolymorphicProps<
+export type AccordionProps = PolymorphicProps<
   "section",
-  BaseAccordionProps<T>,
+  BaseAccordionProps,
   false
 >;
 
-export interface ItemEntry<T> {
+export interface ItemEntry {
   id: symbol;
-  value?: T;
+  value?: AccordionValue;
   isOpen: boolean;
 }

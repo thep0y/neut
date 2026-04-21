@@ -1,9 +1,10 @@
 import {
   createEffect,
   createSignal,
-  onCleanup,
+  on,
   Show,
   splitProps,
+  untrack,
 } from "solid-js";
 import { clsx } from "~/lib/utils";
 import { useAccordionContext } from "../Accordion/Accordion.context";
@@ -12,7 +13,7 @@ import type { AccordionContentProps } from "./AccordionContent.types";
 
 export const AccordionContent = (props: AccordionContentProps) => {
   const { orientation } = useAccordionContext();
-  const { index, open } = useAccordionItemContext();
+  const { triggerId, open, contentId } = useAccordionItemContext();
 
   const [local, others] = splitProps(props, [
     "hiddenUntilFound",
@@ -23,66 +24,51 @@ export const AccordionContent = (props: AccordionContentProps) => {
     "style",
   ]);
 
-  // 控制 DOM 是否存在（延迟卸载，等关闭动画完成）
-  const [mounted, setMounted] = createSignal(open());
+  // 控制 DOM 是否存在，用untrack避免追踪open变化
+  const [mounted, setMounted] = createSignal(untrack(open));
   // 记录测量到的真实高度
   const [panelHeight, setPanelHeight] = createSignal<number | null>(null);
 
   let contentRef: HTMLDivElement | undefined;
-  let outerRef: HTMLDivElement | undefined;
 
-  createEffect(() => {
-    if (open()) {
-      // 打开：先挂载 DOM
-      setMounted(true);
-    }
-    // 关闭时不立即卸载，等 animationend
-  });
+  createEffect(
+    on(open, (isOpen) => {
+      if (isOpen) {
+        setMounted(true);
+      }
+    }),
+  );
 
   // 挂载后测量高度
   createEffect(() => {
     if (mounted() && contentRef) {
       // 临时让内容可见以测量真实高度
-      const height = contentRef.scrollHeight;
-      setPanelHeight(height);
+      setPanelHeight(contentRef.scrollHeight);
     }
   });
 
-  // 监听关闭动画结束 → 卸载
-  createEffect(() => {
-    if (!open() && outerRef) {
-      const el = outerRef;
-
-      const handleAnimationEnd = (e: AnimationEvent) => {
-        // 只处理 accordion-up 动画结束
-        if (e.animationName === "accordion-up") {
-          setMounted(false);
-          setPanelHeight(null);
-        }
-      };
-
-      el.addEventListener("animationend", handleAnimationEnd);
-      onCleanup(() =>
-        el.removeEventListener("animationend", handleAnimationEnd),
-      );
+  const handleAnimationEnd = (e: AnimationEvent) => {
+    if (!open() && e.animationName === "accordion-up") {
+      setMounted(false);
+      setPanelHeight(null);
     }
-  });
+  };
 
   return (
     <Show when={mounted()}>
       <div
-        ref={outerRef}
-        class="overflow-hidden text-sm data-open:animate-accordion-down data-closed:animate-accordion-up"
+        id={contentId}
+        role="region"
+        aria-labelledby={triggerId}
+        class="overflow-hidden text-sm data-[open=true]:animate-accordion-down data-[open=false]:animate-accordion-up"
         data-slot="accordion-content"
         data-orientation={orientation}
-        data-open={open() ? "" : null}
-        data-closed={open() ? null : ""}
-        data-index={index}
+        data-open={open() ? "true" : "false"}
         style={{
-          "--accordion-panel-height": panelHeight()
-            ? `${panelHeight()}px`
-            : "auto",
+          "--accordion-panel-height":
+            panelHeight() !== null ? `${panelHeight()}px` : "auto",
         }}
+        onAnimationEnd={handleAnimationEnd}
         {...others}
       >
         <div

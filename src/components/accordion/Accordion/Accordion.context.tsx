@@ -1,95 +1,108 @@
 import { createContext, type ParentProps, useContext } from "solid-js";
+import type { AccordionValue } from "./Accordion.types";
 import { createStore, produce } from "solid-js/store";
-import type { ItemEntry } from "./Accordion.types";
 
-interface AccordionContextValue<T> {
+interface AccordionContextValue {
   orientation: "horizontal" | "vertical";
-  isOpen: (index: number) => boolean;
-  toggle: (index: number) => void;
-  registerItem: (value?: T) => number;
-  unregisterItem: (index: number) => void;
+  isOpen: (value: string | number) => boolean;
+  toggle: (value: string | number) => void;
 }
 
-const AccordionContext = createContext<AccordionContextValue<any>>();
+const AccordionContext = createContext<AccordionContextValue>();
 
-export function AccordionProvider<T>(
+export function AccordionProvider(
   props: ParentProps & {
     orientation: "horizontal" | "vertical";
-    defaultValue?: T[];
-    value?: T[];
+    defaultValue?: AccordionValue[];
+    value?: AccordionValue[];
     multiple?: boolean;
-    onValueChange?: (value: T[]) => void;
+    onValueChange?: (value: (string | number)[]) => void;
   },
 ) {
-  const [items, setItems] = createStore<ItemEntry<T>[]>([]);
+  const [openMap, setOpenMap] = createStore<
+    Record<string, AccordionValue | undefined>
+  >(
+    (props.defaultValue ?? []).reduce(
+      (acc, val) => {
+        acc[String(val)] = val;
+        return acc;
+      },
+      {} as Record<string, AccordionValue | undefined>,
+    ),
+  );
 
-  const registerItem = (value?: T) => {
-    const id = Symbol();
-
-    // 初始 open 状态：value 存在且在 defaultValue 中才默认开启
-    const initialOpen =
-      value !== undefined ? (props.defaultValue ?? []).includes(value) : false;
-
-    const index = items.length;
-
-    setItems(items.length, { id, value, isOpen: initialOpen });
-
-    return index;
+  const isOpen = (value: AccordionValue) => {
+    if (props.value) {
+      // 受控模式：依赖外部传入的数据
+      return props.value.includes(value);
+    }
+    // 非受控模式：O(1) 的细粒度追踪，只订阅该 value 对应的 key
+    return openMap[String(value)] !== undefined;
   };
 
-  const isOpen = (index: number) => items[index].isOpen ?? false;
+  const toggle = (value: string | number) => {
+    // 【受控模式】只通知外部，不改本地状态
+    if (props.value) {
+      const current = props.value;
+      const next = current.includes(value)
+        ? current.filter((v) => v !== value)
+        : props.multiple
+          ? [...current, value]
+          : [value];
+      props.onValueChange?.(next);
+      return;
+    }
 
-  const unregisterItem = (index: number) => {
-    setItems((prev) => prev.filter((_, idx) => idx !== index));
-  };
+    // 非受控模式：细粒度更新，只改动涉及的 key
+    const key = String(value);
 
-  const toggle = (index: number) => {
-    // 单选模式，关闭其他所有
     if (!props.multiple) {
-      setItems(
-        produce((items) => {
-          const target = items[index];
-          const next = !target.isOpen;
-          target.isOpen = next;
+      // 单选：关闭其他，切换自己
+      setOpenMap(
+        produce((draft) => {
+          const isCurrentlyOpen = draft[key] !== undefined;
 
-          if (next)
-            items.forEach((item, idx) => {
-              if (idx === index) return;
+          for (const k in draft) {
+            draft[k] = undefined;
+          }
 
-              item.isOpen = false;
-            });
-          // https://base-ui.com/react/components/accordion#root 文档有问题，value为undefined时onValueChange的参数不可能是T[]
-          props.onValueChange?.(
-            items
-              .filter((v) => v.isOpen && v.value)
-              .map(({ value }) => value) as T[],
-          );
+          if (!isCurrentlyOpen) {
+            draft[key] = value;
+          }
         }),
       );
     } else {
-      setItems(index, "isOpen", (prev) => !prev);
+      // 多选：切换自己
+      setOpenMap(key, (prev) => (prev !== undefined ? undefined : value));
     }
+
+    // 通知外部
+    const next = Object.values(openMap).filter(
+      (v): v is AccordionValue => v !== undefined,
+    );
+    props.onValueChange?.(next);
+  };
+
+  const contextValue: AccordionContextValue = {
+    // 使用 getter 确保 props.orientation 改变时能响应
+    get orientation() {
+      return props.orientation;
+    },
+    isOpen,
+    toggle,
   };
 
   return (
-    <AccordionContext.Provider
-      value={{
-        orientation: props.orientation,
-        isOpen,
-        toggle,
-        registerItem,
-        unregisterItem,
-      }}
-    >
+    <AccordionContext.Provider value={contextValue}>
       {props.children}
     </AccordionContext.Provider>
   );
 }
 
-export const useAccordionContext = <T extends string | number>() => {
+export const useAccordionContext = () => {
   const context = useContext(AccordionContext);
   if (!context)
     throw new Error("useAccordionContext must be used in AccordionProvider");
 
-  return context as AccordionContextValue<T>;
+  return context;
 };
