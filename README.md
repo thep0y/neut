@@ -36,8 +36,7 @@
 
 ```css
 @import "tailwindcss";
-@import "./styles/animate.css";
-@import "./styles/toast.css";
+@import "../node_modules/@neut/ui/dist/ui.css";
 ```
 
 除了样式文件外，还需要安装样式合并依赖`tailwind-merge`及样式定义依赖`class-variance-authority`：
