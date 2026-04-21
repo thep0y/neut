@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp } from "lucide-solid";
+import { ChevronDown } from "lucide-solid";
 import { splitProps } from "solid-js";
 import { clsx } from "~/lib/utils";
 import { useAccordionContext } from "../Accordion/Accordion.context";
@@ -43,17 +43,14 @@ export const AccordionTrigger = (props: AccordionTriggerProps) => {
         )}
         onClick={handleClick}
         data-orientation={orientation}
-        data-panel-open={open() ? "" : null}
+        data-open={open()}
         disabled={disabled}
       >
         {local.children}
         <ChevronDown
-          class="pointer-events-none shrink-0 group-aria-expanded/accordion-trigger:hidden"
+          class="pointer-events-none shrink-0 data-[open=true]:-rotate-180 transition-[rotate] duration-200"
           data-slot="accordion-trigger-icon"
-        />
-        <ChevronUp
-          class="pointer-events-none hidden shrink-0 group-aria-expanded/accordion-trigger:inline"
-          data-slot="accordion-trigger-icon"
+          data-open={open()}
         />
       </button>
     </h3>
