@@ -1,5 +1,3 @@
-/*@import "~/styles/index.css";*/
-/*@source "../src";*/
-/*@import "tailwindcss";*/
-@import "../dist/styles/index.css";
-@source "../dist";
+@import "tailwindcss";
+@import "~/styles/index.css";
+@source "../src";
