@@ -1,0 +1,178 @@
+name: "Bump new version"
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: "Version bump type"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      release_id: ${{ steps.create-release.outputs.result }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Setup Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Bump version
+        run: |
+          npm version ${{ github.event.inputs.bump_type }} --no-git-tag-version
+          VERSION=$(node -p "require('./package.json').version")
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Bumping version to: $VERSION"
+
+      - name: Create and push release branch
+        run: |
+          git checkout -b release
+          git add package.json
+          git commit -m "Bump version to ${{ env.VERSION }}"
+          git push origin release --force
+
+      - name: Build changelog
+        id: github_release_changelog
+        uses: mikepenz/release-changelog-builder-action@v3
+        with:
+          configuration: ".github/changelog-configuration.json"
+          toTag: "refs/heads/main"
+          failOnError: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release draft
+        id: create-release
+        uses: actions/github-script@v7
+        env:
+          changelog: ${{ steps.github_release_changelog.outputs.changelog }}
+        with:
+          retries: 3
+          retry-exempt-status-codes: 400,401,403,404,422
+          script: |
+            const { data } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: `v${process.env.VERSION}`,
+              name: `v${process.env.VERSION}`,
+              body: process.env.changelog,
+              draft: true,
+              prerelease: process.env.VERSION.indexOf('alpha') >= 0,
+            })
+            return data.id
+
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs: create-release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: release
+
+      - name: Set node version to lts
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          registry-url: https://registry.npmjs.org/
+
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Cache frontend dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun
+            node_modules/
+          key: ${{ runner.os }}-frontend-${{ hashFiles('**/bun.lockb', '**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-
+
+      - name: Install deps
+        run: bun install
+
+      - name: Build
+        run: bun run build
+
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish release
+        id: publish-release
+        uses: actions/github-script@v7
+        env:
+          release_id: ${{ needs.create-release.outputs.release_id }}
+        with:
+          script: |
+            github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: process.env.release_id,
+              draft: false,
+            })
+
+  update-main-branch-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs: publish
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Push version update to main
+        run: |
+          git fetch origin release:release
+          git checkout main
+          git merge release --ff-only
+          git push origin main
+
+  cleanup-release-branch:
+    needs: update-main-branch-version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: success()
+    steps:
+      - name: Delete release branch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.git.deleteRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'heads/release'
+            })
