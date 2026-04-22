@@ -1,7 +1,7 @@
 import { splitProps } from "solid-js";
 import type { InputGroupTextareaProps } from "./InputGroupTextarea.types";
 import { Textarea } from "~/components/textarea";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 export const InputGroupTextarea = (props: InputGroupTextareaProps) => {
   const [local, others] = splitProps(props, ["class", "classList"]);

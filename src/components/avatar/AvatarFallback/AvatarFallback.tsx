@@ -1,5 +1,5 @@
 import { Show, splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import type { AvatarFallbackProps } from "./AvatarFallback.types";
 import { useAvatarContext } from "../Avatar/Avatar.context";
 

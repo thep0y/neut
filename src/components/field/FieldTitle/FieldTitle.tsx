@@ -1,5 +1,5 @@
 import { splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import type { FieldTitleProps } from "./FieldTitle.types";
 
 export const FieldTitle = (props: FieldTitleProps) => {

@@ -1,6 +1,6 @@
 import { createUniqueId, type JSX, mergeProps, splitProps } from "solid-js";
 import type { InputProps } from "./Input.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 export const Input = (props: InputProps) => {
   const merged = mergeProps(

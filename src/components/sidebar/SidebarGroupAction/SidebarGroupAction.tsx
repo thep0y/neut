@@ -1,6 +1,6 @@
 import { mergeProps, splitProps, type ValidComponent } from "solid-js";
 import type { SidebarGroupActionProps } from "./SidebarGroupAction.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { Dynamic } from "solid-js/web";
 
 export const SidebarGroupAction = <T extends ValidComponent = "button">(

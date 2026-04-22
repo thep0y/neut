@@ -1,6 +1,6 @@
 import { splitProps } from "solid-js";
 import type { PaginationContentProps } from "./PaginationContent.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 export const PaginationContent = (props: PaginationContentProps) => {
   const [local, others] = splitProps(props, ["class", "classList"]);

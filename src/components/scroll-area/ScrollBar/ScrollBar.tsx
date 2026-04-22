@@ -6,7 +6,7 @@ import {
   splitProps,
 } from "solid-js";
 import type { ScrollBarProps } from "./ScrollBar.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { useScrollAreaContext } from "../ScrollArea";
 
 // Minimum thumb length in px so it's always clickable

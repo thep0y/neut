@@ -1,6 +1,6 @@
 import { splitProps } from "solid-js";
 import type { SidebarRailProps } from "./SidebarRail.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { useSidebar } from "../SidebarProvider";
 
 export const SidebarRail = (props: SidebarRailProps) => {

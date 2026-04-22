@@ -1,7 +1,7 @@
 import { mergeProps, splitProps } from "solid-js";
 import type { PaginationNextProps } from "./PaginationNext.types";
 import { PaginationLink } from "../PaginationLink";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { ChevronRight } from "lucide-solid";
 
 export const PaginationNext = (props: PaginationNextProps) => {

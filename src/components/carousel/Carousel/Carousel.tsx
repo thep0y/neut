@@ -1,5 +1,5 @@
 import { splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { CarouselContext } from "./Carousel.context";
 import type { CarouselProps } from "./Carousel.types";
 import { useAutoPlay } from "./useAutoPlay";

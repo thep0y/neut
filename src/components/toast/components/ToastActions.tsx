@@ -1,7 +1,7 @@
 import { type JSX, Show, type Component } from "solid-js";
 import { isAction } from "../types";
 import type { ToastT, ToastClassnames, Action } from "../types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 interface ToastActionsProps {
   toast: ToastT;

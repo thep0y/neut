@@ -1,6 +1,6 @@
 import { mergeProps, splitProps } from "solid-js";
 import type { PaginationLinkProps } from "./PaginationLink.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { Button } from "~/components/button";
 
 export const PaginationLink = (props: PaginationLinkProps) => {

@@ -21,7 +21,7 @@ import { useSwipe } from "../hooks/useSwipe";
 import { useToastHeight } from "../hooks/useToastHeight";
 import { TIME_BEFORE_UNMOUNT, TOAST_LIFETIME } from "../constants";
 import type { ToastProps } from "../types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { Button } from "~/components/button";
 import { X } from "lucide-solid";
 

@@ -1,4 +1,4 @@
-import { createEffect, onCleanup, type ChildrenReturn } from "solid-js";
+import { onCleanup, onMount, type ChildrenReturn } from "solid-js";
 import type { TimeoutID } from "~/types";
 import { useTooltipContext } from "../Tooltip/Tooltip.context";
 
@@ -7,7 +7,6 @@ export const useTooltipTrigger = (resolved: ChildrenReturn) => {
 
   let openTimer: TimeoutID;
   let closeTimer: TimeoutID;
-  let el: HTMLElement | undefined;
 
   const open = () => {
     clearTimeout(closeTimer);
@@ -19,30 +18,80 @@ export const useTooltipTrigger = (resolved: ChildrenReturn) => {
     closeTimer = setTimeout(() => setOpen(false), closeDelay);
   };
 
-  createEffect(() => {
-    el = resolved() as HTMLElement | undefined;
+  const handleMouseEnter = (ev: PointerEvent) => {
+    console.log("鼠标移入", ev.type);
+    open();
+  };
+  const handleMouseLeave = (ev: PointerEvent | FocusEvent) => {
+    console.log("鼠标移出", ev.type);
+    close();
+  };
+  const handleMouseDown = (ev: Event) => {
+    console.log("鼠标按下", ev.type);
+    close();
+  };
+
+  onMount(() => {
+    const trigger = resolved.toArray();
+    if (trigger.length !== 1) {
+      console.warn("[Tooltip] TooltipTrigger should have exactly one child");
+    }
+
+    const el = trigger[0] as HTMLElement | undefined;
+
     if (!el) return;
 
-    const handleMouseEnter = () => open();
-    const handleMouseLeave = () => close();
-    const handleMouseDown = () => close();
+    if (!(el instanceof HTMLElement)) {
+      console.error("[Tooltip] TooltipTrigger child should be an HTMLElement");
+      return;
+    }
 
     setTriggerRef(el);
-    el.addEventListener("mouseenter", handleMouseEnter);
-    el.addEventListener("mouseleave", handleMouseLeave);
+    el.addEventListener("pointerenter", handleMouseEnter);
+    el.addEventListener("pointerleave", handleMouseLeave);
     el.addEventListener("mousedown", handleMouseDown);
     el.addEventListener("blur", handleMouseLeave);
 
     onCleanup(() => {
-      el!.removeEventListener("mouseenter", handleMouseEnter);
-      el!.removeEventListener("mouseleave", handleMouseLeave);
-      el!.removeEventListener("mousedown", handleMouseDown);
-      el!.removeEventListener("blur", handleMouseLeave);
+      clearTimeout(openTimer);
+      clearTimeout(closeTimer);
+
+      if (!el) return;
+      el.removeEventListener("pointerenter", handleMouseEnter);
+      el.removeEventListener("pointerleave", handleMouseLeave);
+      el.removeEventListener("mousedown", handleMouseDown);
+      el.removeEventListener("blur", handleMouseLeave);
     });
   });
 
-  onCleanup(() => {
-    clearTimeout(openTimer);
-    clearTimeout(closeTimer);
-  });
+  // createEffect(() => {
+  //   el = resolved() as HTMLElement | undefined;
+  //   if (!el) return;
+
+  //   const handleMouseEnter = () => {
+  //     open();
+  //   };
+  //   const handleMouseLeave = () => {
+  //     close();
+  //   };
+  //   const handleMouseDown = () => close();
+
+  //   untrack(() => setTriggerRef(el!));
+  //   el.addEventListener("mouseenter", handleMouseEnter);
+  //   el.addEventListener("mouseleave", handleMouseLeave);
+  //   el.addEventListener("mousedown", handleMouseDown);
+  //   el.addEventListener("blur", handleMouseLeave);
+
+  //   onCleanup(() => {
+  //     el!.removeEventListener("mouseenter", handleMouseEnter);
+  //     el!.removeEventListener("mouseleave", handleMouseLeave);
+  //     el!.removeEventListener("mousedown", handleMouseDown);
+  //     el!.removeEventListener("blur", handleMouseLeave);
+  //   });
+  // });
+
+  // onCleanup(() => {
+  //   clearTimeout(openTimer);
+  //   clearTimeout(closeTimer);
+  // });
 };

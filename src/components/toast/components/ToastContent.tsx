@@ -1,6 +1,6 @@
 import { Show, type Component } from "solid-js";
 import type { ToastT, ToastClassnames } from "../types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 interface ToastContentProps {
   toast: ToastT;

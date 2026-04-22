@@ -1,5 +1,5 @@
 import { mergeProps, splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { classes } from "./Separator.styles";
 import type { SeparatorProps } from "./Separator.types";
 

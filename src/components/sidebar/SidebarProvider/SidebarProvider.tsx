@@ -15,7 +15,7 @@ import {
   SIDEBAR_WIDTH_ICON,
 } from "./SidebarProvider.consts";
 import { SidebarContext } from "./SidebarProvider.context";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 export const SidebarProvider = (props: SidebarProviderProps) => {
   const merged = mergeProps({ defaultOpen: true } as const, props);

@@ -7,7 +7,6 @@ import {
 } from "solid-js";
 import { computePosition } from "./TooltipContent.utils";
 import { createStore } from "solid-js/store";
-import type { TimeoutID } from "~/types";
 import { useTooltipContext } from "../Tooltip/Tooltip.context";
 import type { TooltipContentProps } from "./TooltipContent.types";
 
@@ -17,24 +16,21 @@ export const useTooltipContent = (
     Pick<TooltipContentProps, "side" | "align" | "alignOffset" | "sideOffset">
   >,
 ) => {
-  const { open, triggerRef } = useTooltipContext();
+  const ctx = useTooltipContext();
 
   const [position, setPosition] = createStore({
-    top: -9999,
-    left: -9999,
+    top: 0,
+    left: 0,
     side: untrack(() => local().side),
     align: untrack(() => local().align),
   });
-  const [shouldRender, setShouldRender] = createSignal(untrack(open));
-  let exitTimer: TimeoutID;
+  const [shouldRender, setShouldRender] = createSignal(untrack(ctx.open));
 
-  const updatePosition = () => {
-    const trigger = triggerRef();
-    const content = ref();
-    if (!trigger || !content) return;
+  const updatePosition = (content: HTMLElement | undefined) => {
+    if (!ctx.triggerRef || !content) return;
 
     const { top, left, side, align } = computePosition(
-      trigger,
+      ctx.triggerRef,
       content,
       local().side,
       local().align,
@@ -44,52 +40,43 @@ export const useTooltipContent = (
     setPosition({ top, left, side, align });
   };
 
-  const updatePositionNextFrame = () => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(updatePosition);
-    });
-  };
+  const updatePositionWithContentRef = () => updatePosition(ref());
 
   onMount(() => {
-    window.addEventListener("scroll", updatePosition);
-    window.addEventListener("resize", updatePosition);
-
-    updatePositionNextFrame();
+    window.addEventListener("scroll", updatePositionWithContentRef, {
+      passive: true,
+    });
+    window.addEventListener("resize", updatePositionWithContentRef, {
+      passive: true,
+    });
   });
 
   onCleanup(() => {
-    window.removeEventListener("scroll", updatePosition);
-    window.removeEventListener("resize", updatePosition);
+    window.removeEventListener("scroll", updatePositionWithContentRef);
+    window.removeEventListener("resize", updatePositionWithContentRef);
   });
 
   createEffect(() => {
-    const isOpen = open();
+    const isOpen = ctx.open();
 
     if (isOpen) {
-      updatePositionNextFrame();
       setShouldRender(true);
-    } else {
-      const el = ref();
-      if (el) {
-        el.setAttribute("data-closed", "");
-        el.removeAttribute("data-open");
-        const onFinish = () => {
-          setShouldRender(false);
-          el.removeEventListener("animationend", onFinish);
-          el.removeEventListener("transitionend", onFinish);
-        };
-        el.addEventListener("animationend", onFinish);
-        el.addEventListener("transitionend", onFinish);
-        // 超时保护
-        exitTimer = setTimeout(() => setShouldRender(false), 300);
-      } else {
-        setShouldRender(false);
-      }
+      // 等待 DOM 完成布局后再计算，双 rAF 确保内容节点已完成首次渲染
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => updatePosition(ref()));
+      });
+      return;
     }
-  });
 
-  onCleanup(() => {
-    if (exitTimer) clearTimeout(exitTimer);
+    const el = ref();
+    if (!el) {
+      setShouldRender(false);
+      return;
+    }
+
+    const onFinish = () => setShouldRender(false);
+    el.addEventListener("animationend", onFinish, { once: true });
+    el.addEventListener("transitionend", onFinish, { once: true });
   });
 
   return { shouldRender, position };

@@ -1,4 +1,4 @@
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { classes } from "./ButtonGroupText.styles";
 import type { ButtonGroupTextProps } from "./ButtonGroupText.types";
 

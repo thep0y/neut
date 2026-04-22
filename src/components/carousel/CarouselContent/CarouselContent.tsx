@@ -1,5 +1,5 @@
 import { splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { useCarouselContext } from "../Carousel";
 import type { CarouselContentProps } from "./CarouselContent.types";
 import { useItemSizeMeasure } from "./useItemSizeMeasure";

@@ -1,7 +1,7 @@
 import { mergeProps, splitProps, type ValidComponent } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import type { SidebarMenuSubButtonProps } from "./SidebarMenuSubButton.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 export const SidebarMenuSubButton = <T extends ValidComponent = "a">(
   props: SidebarMenuSubButtonProps<T>,

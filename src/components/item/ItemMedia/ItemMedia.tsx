@@ -1,5 +1,5 @@
 import { mergeProps, splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import type { ItemMediaProps } from "./ItemMedia.types";
 import { itemMediaVariants } from "./ItemMedia.styles";
 

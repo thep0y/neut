@@ -1,5 +1,5 @@
 import { splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import type { FieldGroupProps } from "./FieldGroup.types";
 
 export const FieldGroup = (props: FieldGroupProps) => {

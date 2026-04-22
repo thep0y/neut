@@ -1,6 +1,6 @@
 import { mergeProps, Show, splitProps } from "solid-js";
 import type { SidebarProps } from "./Sidebar.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { useSidebar } from "../SidebarProvider";
 
 export const Sidebar = (props: SidebarProps) => {

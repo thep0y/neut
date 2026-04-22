@@ -27,3 +27,4 @@ export * from "~/components/toast";
 export * from "~/components/tooltip";
 
 export * from "~/hooks";
+export * from "~/utils";

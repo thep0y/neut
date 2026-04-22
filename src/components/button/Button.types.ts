@@ -27,6 +27,8 @@ interface BaseButtonProps extends BaseProps {
   icon?: JSXElement;
 
   iconPosition?: "left" | "right";
+
+  id?: string;
 }
 
 export type ButtonValidElement = "button" | "a";

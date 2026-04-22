@@ -1,7 +1,8 @@
 import { createContext, useContext } from "solid-js";
 
 interface TooltipContentContextValue {
-  side: () => "top" | "bottom" | "left" | "right";
+  side: "top" | "bottom" | "left" | "right";
+  align: "start" | "center" | "end";
 }
 
 export const TooltipContentContext =

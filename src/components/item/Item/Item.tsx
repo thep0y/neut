@@ -1,5 +1,5 @@
 import { mergeProps, splitProps, type ValidComponent } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import type { ItemProps } from "./Item.types";
 import { itemVariants } from "./Item.styles";
 import { Dynamic } from "solid-js/web";

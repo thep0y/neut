@@ -1,5 +1,5 @@
 import { splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { badgeVariants } from "./Badge.styles";
 import type { BadgeProps } from "./Badge.types";
 

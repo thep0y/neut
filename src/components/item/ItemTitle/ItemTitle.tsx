@@ -1,5 +1,5 @@
 import { splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import type { ItemTitleProps } from "./ItemTitle.types";
 
 export const ItemTitle = (props: ItemTitleProps) => {

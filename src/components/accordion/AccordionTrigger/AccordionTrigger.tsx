@@ -1,6 +1,6 @@
 import { ChevronDown } from "lucide-solid";
 import { splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { useAccordionContext } from "../Accordion/Accordion.context";
 import { useAccordionItemContext } from "../AccordionItem/AccordionItem.context";
 import type { AccordionTriggerProps } from "./AccordionTrigger.types";

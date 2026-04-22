@@ -1,6 +1,12 @@
-import { mergeProps, Show, splitProps } from "solid-js";
+import {
+  createMemo,
+  createUniqueId,
+  mergeProps,
+  Show,
+  splitProps,
+} from "solid-js";
 import { Dynamic } from "solid-js/web";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import s from "./Button.styles";
 import type {
   ButtonProps,
@@ -17,6 +23,7 @@ export const Button = <T extends ButtonValidElement = "button">(
       size: "md",
       as: "button",
       iconPosition: "left",
+      id: createUniqueId(),
     } satisfies Partial<DefaultStyleProps>,
     props,
   );
@@ -33,7 +40,7 @@ export const Button = <T extends ButtonValidElement = "button">(
     "onClick",
   ]);
 
-  const iconOnly = () => !!local.icon && !local.children;
+  const iconOnly = createMemo(() => !!local.icon && !local.children);
 
   const iconWithAttr = (position: "inline-start" | "inline-end") => (
     <span data-icon={position}>{local.icon}</span>

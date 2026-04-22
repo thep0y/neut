@@ -1,6 +1,6 @@
 import { splitProps } from "solid-js";
 import type { InputGroupProps } from "./InputGroup.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 export const InputGroup = (props: InputGroupProps) => {
   const [local, others] = splitProps(props, ["class", "classList"]);

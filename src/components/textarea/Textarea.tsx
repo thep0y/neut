@@ -1,6 +1,6 @@
 import { splitProps } from "solid-js";
 import type { TextareaProps } from "./Textarea.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 export const Textarea = (props: TextareaProps) => {
   const [local, others] = splitProps(props, ["class", "classList"]);

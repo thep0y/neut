@@ -1,5 +1,5 @@
 import { splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { classes } from "./CardFooter.styles";
 import type { CardFooterProps } from "./CardFooter.types";
 

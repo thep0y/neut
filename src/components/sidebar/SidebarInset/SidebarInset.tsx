@@ -1,6 +1,6 @@
 import { splitProps } from "solid-js";
 import type { SidebarInsetProps } from "./SidebarInset.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 export const SidebarInset = (props: SidebarInsetProps) => {
   const [local, others] = splitProps(props, ["class", "classList"]);

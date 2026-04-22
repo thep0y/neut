@@ -1,6 +1,6 @@
 import { mergeProps, splitProps, type ValidComponent } from "solid-js";
 import type { SidebarGroupLabelProps } from "./SidebarGroupLabel.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { Dynamic } from "solid-js/web";
 
 export const SidebarGroupLabel = <T extends ValidComponent = "div">(

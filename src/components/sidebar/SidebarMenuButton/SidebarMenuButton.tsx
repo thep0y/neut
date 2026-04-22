@@ -6,7 +6,7 @@ import {
   type ValidComponent,
 } from "solid-js";
 import type { SidebarMenuButtonProps } from "./SidebarMenuButton.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { useSidebar } from "../SidebarProvider";
 import { Dynamic } from "solid-js/web";
 import { sidebarMenuButtonVariants } from "./SidebarMenuButton.styles";

@@ -1,6 +1,6 @@
 import { splitProps } from "solid-js";
 import type { SkeletonProps } from "./Skeleton.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 export const Skeleton = (props: SkeletonProps) => {
   const [local, others] = splitProps(props, ["class", "classList"]);

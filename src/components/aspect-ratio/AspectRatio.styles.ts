@@ -1,3 +1,3 @@
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 export const classes = clsx("relative", "aspect-(--ratio)");

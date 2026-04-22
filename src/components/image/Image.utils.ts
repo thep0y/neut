@@ -5,7 +5,7 @@
  */
 
 import { mergeProps, splitProps } from "solid-js";
-import { warnOnce } from "~/lib/utils";
+import { warnOnce } from "~/utils";
 import { imageConfigDefault } from "./Image.config";
 import type {
   ImageConfig,

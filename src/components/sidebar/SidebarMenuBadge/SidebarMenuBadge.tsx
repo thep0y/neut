@@ -1,6 +1,6 @@
 import { splitProps } from "solid-js";
 import type { SidebarMenuBadgeProps } from "./SidebarMenuBadge.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 export const SidebarMenuBadge = (props: SidebarMenuBadgeProps) => {
   const [local, others] = splitProps(props, ["class", "classList"]);

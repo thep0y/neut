@@ -1,5 +1,5 @@
 import { splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import type { AvatarBadgeProps } from "./AvatarBadge.types";
 
 export const AvatarBadge = (props: AvatarBadgeProps) => {

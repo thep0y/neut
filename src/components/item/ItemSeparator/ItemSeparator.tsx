@@ -1,5 +1,5 @@
 import { splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import type { ItemSeparatorProps } from "./ItemSeparator.types";
 import { Separator } from "~/components/separator";
 

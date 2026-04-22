@@ -1,6 +1,6 @@
 import { splitProps } from "solid-js";
 import type { SidebarMenuSubItemProps } from "./SidebarMenuSubItem.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 export const SidebarMenuSubItem = (props: SidebarMenuSubItemProps) => {
   const [local, others] = splitProps(props, ["class", "classList"]);

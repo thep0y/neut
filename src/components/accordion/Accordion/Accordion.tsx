@@ -1,5 +1,5 @@
 import { mergeProps, splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { AccordionProvider } from "./Accordion.context";
 import type { AccordionProps } from "./Accordion.types";
 import { useAccordion } from "./useAccordion";

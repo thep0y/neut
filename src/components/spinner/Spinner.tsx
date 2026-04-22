@@ -1,6 +1,6 @@
 import { LoaderCircle } from "lucide-solid";
 import { splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { classes } from "./Spinner.styles";
 import type { SpinnerProps } from "./Spinner.types";
 

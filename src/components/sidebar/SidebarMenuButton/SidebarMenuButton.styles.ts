@@ -1,5 +1,5 @@
 import { cva } from "class-variance-authority";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 export const sidebarMenuButtonVariants = cva(
   clsx(

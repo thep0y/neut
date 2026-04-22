@@ -1,6 +1,6 @@
 import { mergeProps } from "solid-js";
 import { Separator } from "~/components/separator";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { classes } from "./ButtonGroupSeparator.styles";
 import type { ButtonGroupSeparatorProps } from "./ButtonGroupSeparator.types";
 

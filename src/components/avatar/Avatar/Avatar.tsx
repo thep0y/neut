@@ -1,5 +1,5 @@
 import { createSignal, mergeProps, splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import type { AvatarProps } from "./Avatar.types";
 import { AvatarContext } from "./Avatar.context";
 

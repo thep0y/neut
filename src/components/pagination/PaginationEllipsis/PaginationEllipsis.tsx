@@ -1,6 +1,6 @@
 import { splitProps } from "solid-js";
 import type { PaginationEllipsisProps } from "./PaginationEllipsis.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { Ellipsis } from "lucide-solid";
 
 export const PaginationEllipsis = (props: PaginationEllipsisProps) => {

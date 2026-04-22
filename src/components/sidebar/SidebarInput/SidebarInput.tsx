@@ -1,6 +1,6 @@
 import { splitProps } from "solid-js";
 import type { SidebarInputProps } from "./SidebarInput.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { Input } from "~/components/input";
 
 export const SidebarInput = (props: SidebarInputProps) => {

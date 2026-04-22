@@ -1,6 +1,6 @@
 import { splitProps } from "solid-js";
 import type { KbdGroupProps, KbdProps } from "./Kbd.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 export const Kbd = (props: KbdProps) => {
   const [local, others] = splitProps(props, ["class", "classList"]);

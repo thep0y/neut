@@ -3,7 +3,7 @@ import { createContext, useContext } from "solid-js";
 type TooltipContextValue = {
   open: () => boolean;
   setOpen: (v: boolean) => void;
-  triggerRef: () => HTMLElement | undefined;
+  triggerRef: HTMLElement | undefined;
   setTriggerRef: (el: HTMLElement) => void;
   contentId: string;
   openDelay: number;

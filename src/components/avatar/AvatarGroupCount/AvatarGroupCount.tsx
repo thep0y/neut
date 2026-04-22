@@ -1,5 +1,5 @@
 import { splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import type { AvatarGroupCountProps } from "./AvatarGroupCount.types";
 
 export const AvatarGroupCount = (props: AvatarGroupCountProps) => {

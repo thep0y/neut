@@ -1,7 +1,7 @@
 import type { InputGroupAddonProps } from "./InputGroupAddon.types";
 import { inputGroupAddonVariants } from "./InputGroupAddon.styles";
 import { mergeProps, splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 export const InputGroupAddon = (props: InputGroupAddonProps) => {
   const merged = mergeProps({ align: "inline-start" } as const, props);

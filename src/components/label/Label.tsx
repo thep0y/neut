@@ -1,6 +1,6 @@
 import { splitProps } from "solid-js";
 import type { LabelProps } from "./Label.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 export const Label = (props: LabelProps) => {
   const [local, others] = splitProps(props, ["class", "classList"]);

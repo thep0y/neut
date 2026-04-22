@@ -1,6 +1,6 @@
 import { createSignal, mergeProps, splitProps } from "solid-js";
 import type { SwitchProps } from "./Switch.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { classes } from "./Switch.styles";
 
 export const Switch = (props: SwitchProps) => {

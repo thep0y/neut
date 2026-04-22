@@ -1,6 +1,6 @@
 import { createEffect, createSignal, onCleanup, splitProps } from "solid-js";
 import type { ScrollAreaProps, ScrollMetrics } from "./ScrollArea.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { ScrollBar } from "../ScrollBar";
 import { ScrollAreaContext } from "./ScrollArea.context";
 import { computeMetrics } from "./ScrollArea.utils";

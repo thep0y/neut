@@ -1,7 +1,7 @@
 import { Button } from "~/components/button/Button";
 import type { InputGroupButtonProps } from "./InputGroupButton.types";
 import { mergeProps, splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { inputGroupButtonVariants } from "./InputGroupButton.styles";
 
 export const InputGroupButton = (props: InputGroupButtonProps) => {

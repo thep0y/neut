@@ -1,5 +1,5 @@
 import { mergeProps, splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import type { FieldProps } from "./Field.types";
 import { fieldVariants } from "./Field.styles";
 

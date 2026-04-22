@@ -1,5 +1,5 @@
 import { createUniqueId, splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { useAccordionContext } from "../Accordion/Accordion.context";
 import { AccordionItemContext } from "./AccordionItem.context";
 import type { AccordionItemProps } from "./AccordionItem.types";

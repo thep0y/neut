@@ -1,6 +1,6 @@
 import { splitProps } from "solid-js";
 import type { SidebarSeparatorProps } from "./SidebarSeparator.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import { Separator } from "~/components/separator";
 
 export const SidebarSeparator = (props: SidebarSeparatorProps) => {

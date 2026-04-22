@@ -1,6 +1,6 @@
 import { splitProps } from "solid-js";
 import type { SidebarContentProps } from "./SidebarContent.types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 export const SidebarContent = (props: SidebarContentProps) => {
   const [local, others] = splitProps(props, ["class", "classList"]);

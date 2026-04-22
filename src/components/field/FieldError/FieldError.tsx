@@ -1,5 +1,5 @@
 import { children, Show, splitProps } from "solid-js";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 import type { FieldErrorProps } from "./FieldError.types";
 
 export const FieldError = (props: FieldErrorProps) => {

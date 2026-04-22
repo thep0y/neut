@@ -1,7 +1,7 @@
 import { Show, type Component } from "solid-js";
 import { Loader, getAsset } from "./Assets";
 import type { ToastT, ToastIcons, ToastClassnames } from "../types";
-import { clsx } from "~/lib/utils";
+import { clsx } from "~/utils";
 
 interface ToastIconProps {
   toast: ToastT;
