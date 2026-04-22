@@ -16,6 +16,7 @@ export * from "~/components/item";
 export * from "~/components/kbd";
 export * from "~/components/label";
 export * from "~/components/pagination";
+export * from "~/components/progress";
 export * from "~/components/scroll-area";
 export * from "~/components/separator";
 export * from "~/components/sidebar";
