@@ -5,6 +5,7 @@ import {
   ChevronRight,
   Copy,
   CornerDownLeft,
+  CornerLeftUp,
   CreditCard,
   GitBranch,
   GitFork,
@@ -14,6 +15,7 @@ import {
   Mail,
   Minus,
   Moon,
+  MoveUp,
   Plus,
   RefreshCcw,
   Save,
@@ -26,6 +28,8 @@ import {
   type Component,
   createEffect,
   createSignal,
+  For,
+  type JSXElement,
   type ParentProps,
 } from "solid-js";
 import {
@@ -144,6 +148,26 @@ const Layout = (props: ParentProps) => {
 
 const App: Component = () => {
   const [theme, setTheme] = createSignal<"light" | "dark">("light");
+
+  const tooltipSides = ["top", "right", "bottom", "left"] as const;
+  const tooltipAligns = ["start", "center", "end"] as const;
+  const arrows: Record<
+    `${(typeof tooltipSides)[number]}-${(typeof tooltipAligns)[number]}`,
+    JSXElement
+  > = {
+    "top-start": <CornerLeftUp />,
+    "top-center": <MoveUp />,
+    "top-end": <CornerLeftUp class="rotate-y-180" />,
+    "right-start": <CornerLeftUp class="rotate-90" />,
+    "right-center": <MoveUp class="rotate-90" />,
+    "right-end": <CornerLeftUp class="rotate-90 rotate-y-180" />,
+    "bottom-start": <CornerLeftUp class="rotate-x-180" />,
+    "bottom-center": <MoveUp class="rotate-180" />,
+    "bottom-end": <CornerLeftUp class="rotate-180" />,
+    "left-start": <CornerLeftUp class="rotate-90 rotate-x-180" />,
+    "left-center": <MoveUp class="-rotate-90" />,
+    "left-end": <CornerLeftUp class="-rotate-90" />,
+  };
 
   createEffect(() => {
     document.documentElement.setAttribute("data-theme", theme());
@@ -556,6 +580,39 @@ const App: Component = () => {
             </TooltipContent>
           </Tooltip>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>文字提示</CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <div class="grid gap-2 [grid-template-areas:'._top-start_top-center_top-end_.''left-start_._._._right-start''left-center_._._._right-center''left-end_._._._right-end''._bottom-start_bottom-center_bottom-end_.']">
+              <For each={tooltipSides}>
+                {(side) => (
+                  <For each={tooltipAligns}>
+                    {(align) => (
+                      <Tooltip closeDelay={10000000000}>
+                        <TooltipTrigger>
+                          <Button
+                            variant="outline"
+                            style={{ "grid-area": `${side}-${align}` }}
+                            icon={arrows[`${side}-${align}`]}
+                          />
+                        </TooltipTrigger>
+
+                        <TooltipContent side={side} align={align}>
+                          {`This is a tooltip on the ${side} side aligned to ${align}`}
+                          <TooltipArrow />
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </For>
+                )}
+              </For>
+            </div>
+          </CardContent>
+        </Card>
 
         <div class="flex flex-col gap-3">
           <Input
