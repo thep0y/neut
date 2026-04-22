@@ -1,6 +1,6 @@
 {
   "name": "@neut/ui",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "type": "module",
   "private": false,
@@ -34,6 +34,51 @@
   "sideEffects": [
     "**/*.css"
   ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./hooks": {
+      "types": "./dist/hooks/index.d.ts",
+      "import": "./dist/hooks/index.js"
+    },
+    "./hooks/*": {
+      "types": "./dist/hooks/*.d.ts",
+      "import": "./dist/hooks/*.js"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "import": "./dist/utils/index.js"
+    },
+    "./utils/*": {
+      "types": "./dist/utils/*.d.ts",
+      "import": "./dist/utils/*.js"
+    },
+    "./components/*": {
+      "types": "./dist/components/*/index.d.ts",
+      "import": "./dist/components/*/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "module": "./dist/index.js",
-  "typings": "./dist/index.d.ts"
+  "typesVersions": {
+    "*": {
+      "hooks": [
+        "dist/hooks/index.d.ts"
+      ],
+      "hooks/*": [
+        "dist/hooks/*"
+      ],
+      "utils": [
+        "dist/utils/index.d.ts"
+      ],
+      "utils/*": [
+        "dist/utils/*"
+      ],
+      "components/*": [
+        "dist/components/*"
+      ]
+    }
+  }
 }
