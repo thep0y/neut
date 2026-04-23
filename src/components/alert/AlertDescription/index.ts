@@ -1,0 +1,1 @@
+export { AlertDescription } from "./AlertDescription";
