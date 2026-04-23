@@ -1,18 +1,18 @@
 import type { BaseProps, PolymorphicProps } from "~/types";
 
-interface BaseSliderProps {
-  defaultValue?: number[];
-  value?: number[];
+interface BaseSliderProps<T> {
+  defaultValue?: T;
+  value?: T;
   min?: number;
   max?: number;
   step?: number;
   orientation?: "horizontal" | "vertical";
-  onValueChange?: (value: number[]) => void;
+  onValueChange?: (value: T) => void;
   disabled?: boolean;
 }
 
-export type SliderProps = PolymorphicProps<
+export type SliderProps<T extends number | number[]> = PolymorphicProps<
   "div",
-  BaseProps & BaseSliderProps,
+  BaseProps & BaseSliderProps<T>,
   false
 >;

@@ -9,7 +9,7 @@ import { SliderThumb } from "../SliderThumb";
 import { useSlider } from "./useSlider";
 import { SliderContext } from "./Slider.context";
 
-export const Slider = (props: SliderProps) => {
+export const Slider = <T extends number | number[]>(props: SliderProps<T>) => {
   const merged = mergeProps(
     {
       orientation: "horizontal",

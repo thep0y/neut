@@ -2,12 +2,12 @@ import { createMemo, createSignal } from "solid-js";
 import type { SliderProps } from "./Slider.types";
 import type { NonNullableProps } from "~/types";
 
-export const useSlider = ({
+export const useSlider = <T extends number | number[]>({
   local,
 }: {
   local: NonNullableProps<
     Pick<
-      SliderProps,
+      SliderProps<T>,
       | "defaultValue"
       | "value"
       | "max"
@@ -20,21 +20,28 @@ export const useSlider = ({
     "max" | "min" | "step" | "orientation" | "disabled"
   >;
 }) => {
+  // 由初始传入的类型一次性决定，运行时不再改变
+  const isArray = Array.isArray(local.value ?? local.defaultValue);
+
+  // 将外部的 T 统一转为内部 number[]
+  const toArray = (v: T | undefined): number[] => {
+    if (v === undefined) return [local.min];
+    return Array.isArray(v) ? v : [v as number];
+  };
+
   // 受控 / 非受控模式
   const isControlled = () => local.value !== undefined;
 
-  const initialValues = () => {
-    if (Array.isArray(local.defaultValue)) return local.defaultValue;
-    // 单 thumb 默认为 min，range 模式若传了 value 则交给 controlled
-    return [local.min];
-  };
-
-  const [internalValues, setInternalValues] =
-    createSignal<number[]>(initialValues());
+  const [internalValues, setInternalValues] = createSignal<number[]>(
+    toArray(local.defaultValue),
+  );
 
   const values = createMemo<number[]>(() =>
-    isControlled() ? (local.value as number[]) : internalValues(),
+    isControlled() ? toArray(local.value) : internalValues(),
   );
+
+  // 将内部 number[] 还原为外部类型 T
+  const toExternal = (arr: number[]): T => (isArray ? arr : arr[0]) as T;
 
   // 当前被拖拽的 thumb 索引
   const [activeThumbIndex, setActiveThumbIndex] = createSignal(0);
@@ -76,7 +83,7 @@ export const useSlider = ({
     next[index] = snapped;
 
     if (!isControlled()) setInternalValues(next);
-    local.onValueChange?.(next);
+    local.onValueChange?.(toExternal(next));
   };
 
   const context = {
