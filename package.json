@@ -4,6 +4,9 @@
   "description": "",
   "type": "module",
   "private": false,
+  "repository": {
+    "url": "https://github.com/thep0y/neut"
+  },
   "scripts": {
     "start": "vite",
     "dev": "vite ./dev",
