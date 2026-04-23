@@ -1,5 +1,4 @@
 import { onCleanup, onMount, type ChildrenReturn } from "solid-js";
-import type { TimeoutID } from "~/types";
 import { useAlertDialogContext } from "../AlertDialog";
 
 export const useAlertDialogTrigger = (resolved: ChildrenReturn) => {
