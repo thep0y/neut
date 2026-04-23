@@ -1,6 +1,7 @@
 import "~/styles/index.css";
 
 export * from "~/components/accordion";
+export * from "~/components/alert";
 export * from "~/components/aspect-ratio";
 export * from "~/components/avatar";
 export * from "~/components/badge";
