@@ -32,3 +32,7 @@ export interface BaseProps {
   classList?: Record<string, boolean | undefined>;
   dir?: "ltr" | "rtl" | "auto";
 }
+
+export type NonNullableProps<T, K extends keyof T> = Omit<T, K> & {
+  [P in K]-?: Exclude<T[P], null | undefined>;
+};
