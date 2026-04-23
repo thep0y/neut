@@ -116,8 +116,6 @@ jobs:
       - name: Install deps
         run: bun install
 
-      - run: npm ci
-
       - name: Build
         run: bun run build
 
