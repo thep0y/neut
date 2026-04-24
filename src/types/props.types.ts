@@ -3,7 +3,7 @@ import type { ComponentProps, ValidComponent } from "solid-js";
 export type EmptyObject = Record<never, never>;
 
 export type MouseEventHandler<T extends keyof HTMLElementTagNameMap> = (
-  e: MouseEvent & {
+  e?: MouseEvent & {
     currentTarget: HTMLElementTagNameMap[T];
     target: Element;
   },
@@ -44,7 +44,9 @@ export type NonNullableProps<T, K extends keyof T> = Omit<T, K> & {
  * - 否则回退到 TDefault 的 ComponentProps
  */
 export type ResolvedProps<TProps, TDefault extends ValidComponent> = (
-  "as" extends keyof TProps ? NonNullable<TProps["as"]> : TDefault
+  "as" extends keyof TProps
+    ? NonNullable<TProps["as"]>
+    : TDefault
 ) extends infer TComp
   ? TComp extends ValidComponent
     ? Omit<TProps, "as"> & ComponentProps<TComp> & { as?: ValidComponent }

@@ -1,8 +1,9 @@
 import {
+  children,
   createMemo,
   createUniqueId,
+  type JSXElement,
   mergeProps,
-  Show,
   splitProps,
 } from "solid-js";
 import { Dynamic } from "solid-js/web";
@@ -12,6 +13,7 @@ import type {
   ButtonProps,
   ButtonValidElement,
   DefaultStyleProps,
+  ResolvedButtonProps,
 } from "./Button.types";
 
 export const Button = <T extends ButtonValidElement = "button">(
@@ -22,10 +24,9 @@ export const Button = <T extends ButtonValidElement = "button">(
       variant: "primary",
       size: "md",
       as: "button",
-      iconPosition: "left",
       id: createUniqueId(),
     } satisfies Partial<DefaultStyleProps>,
-    props,
+    props as ResolvedButtonProps<T>,
   );
 
   const [local, others] = splitProps(merged, [
@@ -40,10 +41,41 @@ export const Button = <T extends ButtonValidElement = "button">(
     "onClick",
   ]);
 
-  const iconOnly = createMemo(() => !!local.icon && !local.children);
+  const iconOnly = createMemo(
+    () =>
+      (local.icon &&
+        typeof local.icon === "object" &&
+        "ariaLabel" in local.icon &&
+        "icon" in local.icon) ||
+      (!!local.icon && !local.children),
+  );
 
-  const iconWithAttr = (position: "inline-start" | "inline-end") => (
-    <span data-icon={position}>{local.icon}</span>
+  const iconWithAttr = (
+    icon: JSXElement,
+    position: "inline-start" | "inline-end",
+  ) => <span data-icon={position}>{icon}</span>;
+
+  const resolved = children(() =>
+    local.icon ? (
+      typeof local.icon === "object" &&
+      "ariaLabel" in local.icon &&
+      "icon" in local.icon ? (
+        <>
+          {local.icon.icon}
+          <span class="sr-only">{local.icon.ariaLabel}</span>
+        </>
+      ) : (
+        <>
+          {(!local.iconPosition || local.iconPosition === "left") &&
+            iconWithAttr(local.icon, "inline-start")}
+          {local.children}
+          {local.iconPosition === "right" &&
+            iconWithAttr(local.icon, "inline-end")}
+        </>
+      )
+    ) : (
+      local.children
+    ),
   );
 
   return (
@@ -51,6 +83,7 @@ export const Button = <T extends ButtonValidElement = "button">(
     <Dynamic
       data-slot="button"
       component={local.as}
+      type={local.as === "button" ? (others.type ?? "button") : undefined}
       onClick={local.onClick}
       class={clsx(
         s({
@@ -62,17 +95,7 @@ export const Button = <T extends ButtonValidElement = "button">(
       )}
       {...others}
     >
-      <Show when={local.icon && local.iconPosition === "left"}>
-        <Show when={!iconOnly()} fallback={local.icon}>
-          {iconWithAttr("inline-start")}
-        </Show>
-      </Show>
-      {local.children}
-      <Show when={local.icon && local.iconPosition === "right"}>
-        <Show when={!iconOnly()} fallback={local.icon}>
-          {iconWithAttr("inline-end")}
-        </Show>
-      </Show>
+      {resolved()}
     </Dynamic>
   );
 };

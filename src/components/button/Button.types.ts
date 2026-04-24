@@ -16,27 +16,45 @@ export type ButtonVariant =
 
 export type ButtonSize = "md" | "xs" | "sm" | "lg";
 
-interface BaseButtonProps extends BaseProps {
+export interface BaseButtonProps extends BaseProps {
   variant?: ButtonVariant;
 
   size?: ButtonSize;
 
-  /** Button content */
-  children?: JSXElement;
-
-  icon?: JSXElement;
-
-  iconPosition?: "left" | "right";
-
   id?: string;
 }
 
+export type ButtonIconProps =
+  | {
+      /** Button content */
+      children: JSXElement;
+
+      icon?: JSXElement;
+
+      iconPosition?: "left" | "right";
+    }
+  | { icon: { icon: JSXElement; ariaLabel: string } };
+
 export type ButtonValidElement = "button" | "a";
 
-export type ButtonProps<T extends ButtonValidElement> = PolymorphicProps<
-  T,
-  BaseButtonProps & { onClick?: MouseEventHandler<T> }
->;
+export type ButtonProps<T extends ButtonValidElement> = Omit<
+  PolymorphicProps<T, BaseButtonProps & { onClick?: MouseEventHandler<T> }>,
+  "children"
+> &
+  ButtonIconProps;
+
+export type ResolvedBaseButtonProps = {
+  /** Button content */
+  children?: JSXElement;
+
+  icon?: JSXElement | { icon: JSXElement; ariaLabel: string };
+
+  iconPosition?: "left" | "right";
+};
+
+export type ResolvedButtonProps<T extends ButtonValidElement> =
+  PolymorphicProps<T, BaseButtonProps & { onClick?: MouseEventHandler<T> }> &
+    ResolvedBaseButtonProps;
 
 export type DefaultStyleProps = MakeRequired<
   BaseButtonProps,

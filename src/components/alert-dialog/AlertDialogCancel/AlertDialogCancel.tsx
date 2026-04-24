@@ -10,8 +10,8 @@ export const AlertDialogCancel = (props: AlertDialogCancelProps) => {
 
   return (
     <Button
-      data-slot="alert-dialog-cancel"
       {...merged}
+      data-slot="alert-dialog-cancel"
       onClick={() => setOpen(false)}
     />
   );
