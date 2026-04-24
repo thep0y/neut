@@ -12,7 +12,7 @@
     "dev": "vite ./dev",
     "build": "vite build",
     "serve": "vite preview",
-    "lint:types": "tsc --noEmit"
+    "check": "tsc --noEmit && biome check src"
   },
   "license": "MIT",
   "devDependencies": {
