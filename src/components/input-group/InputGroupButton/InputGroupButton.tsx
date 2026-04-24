@@ -1,6 +1,6 @@
 import { Button } from "~/components/button/Button";
 import type { InputGroupButtonProps } from "./InputGroupButton.types";
-import { mergeProps, splitProps } from "solid-js";
+import { createMemo, mergeProps, splitProps } from "solid-js";
 import { clsx } from "~/utils";
 import { inputGroupButtonVariants } from "./InputGroupButton.styles";
 
@@ -16,10 +16,20 @@ export const InputGroupButton = (props: InputGroupButtonProps) => {
     "classList",
   ]);
 
-  const iconOnly = () => !!others.icon && !others.children;
+  const iconOnly = createMemo(
+    () =>
+      (others.icon &&
+        typeof others.icon === "object" &&
+        "ariaLabel" in others.icon &&
+        "icon" in others.icon) ||
+      // @ts-expect-error
+      (!!others.icon && !others.children),
+  );
 
   return (
+    // @ts-expect-error
     <Button
+      {...others}
       data-size={local.size}
       variant={local.variant}
       class={clsx(
@@ -29,7 +39,6 @@ export const InputGroupButton = (props: InputGroupButtonProps) => {
         }),
         local.class,
       )}
-      {...others}
     />
   );
 };

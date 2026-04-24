@@ -12,12 +12,13 @@ export const CollapsibleTrigger = (props: CollapsibleTriggerProps) => {
   };
 
   return (
+    // @ts-expect-error
     <Button
+      {...props}
       data-slot="collapsible-trigger"
       data-panel-open={open()}
       aria-expanded={open()}
       onClick={handleClick}
-      {...props}
     />
   );
 };
