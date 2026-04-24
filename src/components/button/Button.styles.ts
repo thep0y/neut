@@ -11,18 +11,17 @@ export default cva(base, {
         "bg-neutral-900 text-neutral-50 [a]:hover:bg-neutral-900/80",
         "dark:bg-neutral-200 dark:text-neutral-900 [a]:hover:bg-neutral-200/80",
       ),
-      // "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
       outline: clsx(
-        "border-neutral-200 bg-white hover:bg-neutral-100 hover:text-neutral-950 aria-expanded:bg-neutral-100 aria-expanded:text-neutral-950",
-        "dark:border-white/15 dark:bg-white/4 dark:hover:bg-white/5 dark:hover:text-neutral-50 dark:aria-expanded:bg-neutral-800 dark:aria-expanded:text-neutral-50",
+        "border-neutral-200 bg-white hover:bg-neutral-100 hover:text-neutral-950 aria-[expanded=true]:bg-neutral-100 aria-[expanded=true]:text-neutral-950",
+        "dark:border-white/15 dark:bg-white/4 dark:hover:bg-white/5 dark:hover:text-neutral-50 dark:aria-[expanded=true]:bg-neutral-800 dark:aria-[expanded=true]:text-neutral-50",
       ),
       secondary: clsx(
-        "bg-neutral-100 text-neutral-900 hover:bg-neutral-100/80 aria-expanded:bg-neutral-100 aria-expanded:text-neutral-900",
-        "dark:bg-neutral-800 dark:text-neutral-50 dark:hover:bg-neutral-800/80 aria-expanded:bg-neutral-800 aria-expanded:text-neutral-50",
+        "bg-neutral-100 text-neutral-900 hover:bg-neutral-100/80 aria-[expanded=true]:bg-neutral-100 aria-[expanded=true]:text-neutral-900",
+        "dark:bg-neutral-800 dark:text-neutral-50 dark:hover:bg-neutral-800/80 aria-[expanded=true]:bg-neutral-800 aria-[expanded=true]:text-neutral-50",
       ),
       ghost: clsx(
-        "hover:bg-neutral-100 hover:text-neutral-950 aria-expanded:bg-neutral-100 aria-expanded:text-neutral-950",
-        "dark:hover:bg-neutral-800/50 dark:hover:text-neutral-50 dark:aria-expanded:bg-neutral-800 dark:aria-expanded:text-neutral-50",
+        "hover:bg-neutral-100 hover:text-neutral-950 aria-[expanded=true]:bg-neutral-100 aria-[expanded=true]:text-neutral-950",
+        "dark:hover:bg-neutral-800/50 dark:hover:text-neutral-50 dark:aria-[expanded=true]:bg-neutral-800 dark:aria-[expanded=true]:text-neutral-50",
       ),
       destructive: clsx(
         "bg-red-600/10 text-red-600 hover:bg-red-600/20 focus-visible:border-red-600/40 focus-visible:ring-red-600/20",
