@@ -30,12 +30,14 @@ export interface NumberInputSpecifics {
   type: "number";
   onChange?: (value: number) => void;
   onInput?: (value: number) => void;
+  defaultValue?: number;
 }
 
 interface TextInputSpecifics {
   type?: Exclude<InputType, "number">;
   onChange?: (value: string) => void;
   onInput?: (value: string) => void;
+  defaultValue?: string;
 }
 
 export type InputProps =
