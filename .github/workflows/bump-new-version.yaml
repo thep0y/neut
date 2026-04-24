@@ -114,7 +114,7 @@ jobs:
             ${{ runner.os }}-frontend-
 
       - name: Install deps
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Build
         run: bun run build
