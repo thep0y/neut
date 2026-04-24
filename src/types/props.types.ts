@@ -36,3 +36,17 @@ export interface BaseProps {
 export type NonNullableProps<T, K extends keyof T> = Omit<T, K> & {
   [P in K]-?: Exclude<T[P], null | undefined>;
 };
+
+/**
+ * 将任意含 `as` 属性的多态 Props 解析为内部确定类型
+ *
+ * - 若 TProps 含 `as?: T`，则展开 T 对应的 ComponentProps
+ * - 否则回退到 TDefault 的 ComponentProps
+ */
+export type ResolvedProps<TProps, TDefault extends ValidComponent> = (
+  "as" extends keyof TProps ? NonNullable<TProps["as"]> : TDefault
+) extends infer TComp
+  ? TComp extends ValidComponent
+    ? Omit<TProps, "as"> & ComponentProps<TComp> & { as?: ValidComponent }
+    : TProps & { as?: ValidComponent }
+  : never;
