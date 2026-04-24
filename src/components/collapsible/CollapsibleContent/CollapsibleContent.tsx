@@ -3,7 +3,7 @@ import type { CollapsibleContentProps } from "./CollapsibleContent.types";
 import { useCollapsibleContext } from "../Collapsible";
 
 export const CollapsibleContent = (props: CollapsibleContentProps) => {
-  const { onOpenChange, open, setInternalOpen } = useCollapsibleContext();
+  const { open } = useCollapsibleContext();
 
   const [local, others] = splitProps(props, ["children"]);
 
