@@ -12,6 +12,7 @@ export * from "~/components/button-group";
 export * from "~/components/card";
 export * from "~/components/carousel";
 export * from "~/components/checkbox";
+export * from "~/components/collapsible";
 export * from "~/components/field";
 export * from "~/components/image";
 export * from "~/components/input";
