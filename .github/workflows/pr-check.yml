@@ -30,6 +30,9 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Setup Biome CLI
+        uses: biomejs/setup-biome@v2
+
       - name: Cache frontend dependencies
         uses: actions/cache@v4
         with:
