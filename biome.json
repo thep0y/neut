@@ -7,11 +7,8 @@
       }
     }
   },
-  "css": {
-    "formatter": { "indentStyle": "space", "indentWidth": 2 },
-    "parser": {
-      "tailwindDirectives": true
-    }
+  "files": {
+    "includes": ["**", "!!**/*.css"]
   },
   "formatter": {
     "indentStyle": "space",
