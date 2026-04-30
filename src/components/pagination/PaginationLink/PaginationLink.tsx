@@ -16,7 +16,7 @@ export const PaginationLink = (props: PaginationLinkProps) => {
   ]);
 
   return (
-    <Button<"a">
+    <Button
       as="a"
       variant={local.isActive ? "outline" : "ghost"}
       size={local.size}
