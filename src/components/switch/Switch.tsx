@@ -18,7 +18,7 @@ export const Switch = (props: SwitchProps) => {
   ]);
 
   const [internalChecked, setInternalChecked] = createSignal(
-    local.defaultChecked,
+    local.defaultChecked ?? false,
   );
 
   const handleClick = () => {
