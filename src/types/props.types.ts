@@ -1,4 +1,4 @@
-import type { ComponentProps, ValidComponent } from "solid-js";
+import type { ComponentProps, JSX, ValidComponent } from "solid-js";
 
 export type EmptyObject = Record<never, never>;
 
@@ -31,6 +31,7 @@ export interface BaseProps {
   class?: string;
   classList?: Record<string, boolean | undefined>;
   dir?: "ltr" | "rtl" | "auto";
+  style?: JSX.CSSProperties;
 }
 
 export type NonNullableProps<T, K extends keyof T> = Omit<T, K> & {
@@ -52,3 +53,9 @@ export type ResolvedProps<TProps, TDefault extends ValidComponent> = (
     ? Omit<TProps, "as"> & ComponentProps<TComp> & { as?: ValidComponent }
     : TProps & { as?: ValidComponent }
   : never;
+
+export type HTMLAttributes<T extends ValidComponent> = Omit<
+  ComponentProps<T>,
+  keyof BaseProps
+> &
+  BaseProps;
