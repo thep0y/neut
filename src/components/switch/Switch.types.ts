@@ -7,7 +7,8 @@ export type SwitchProps = Omit<
       size?: "sm" | "md";
       disabled?: boolean;
       defaultChecked?: boolean;
-      onChange?: (checked: boolean) => void;
+      checked?: boolean;
+      onCheckedChange?: (checked: boolean) => void;
     },
     false
   >,
