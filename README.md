@@ -1,110 +1,137 @@
-## Dome
+# Neut
 
-这是一个类似shadcn的solidjs组件库，与shadcn不同的是，本组件库不依赖于任何第三方组件库，相比shadcn的优势是能够避免上游组件库的bug，也更容易及时修复bug。
+> **SolidJS Native Component Library, Zero External Dependencies**
 
-> [!warning]
-> 本项目仍在开发中，不推荐用于生产项目。
-> 本项目中部分组件代码并未完全参考shadcn。
+Neut is inspired by [shadcn/ui](https://ui.shadcn.com), but reimplemented entirely from scratch with SolidJS. Unlike shadcn, Neut **does not depend on any upstream component library** (like `@radix-ui` or `@base-ui`).
 
-## 使用
+**Advantages:**
 
-与shadcn类似，不需要安装本组件库，而是直接复制某个组件的代码，但也可安装本组件库作为依赖。
+- **Fully Controllable**: All component source code lives in your project — modify them however you want.
+- **No Upstream Limitations**: You won't get blocked by third-party component bugs (styling or logic). Fix issues without waiting for a release.
+- **SolidJS Native**: Leverages SolidJS's fine-grained reactivity for better performance.
 
-### 复制组件代码
+**Let's be clear about the downsides:**
 
-> [!NOTE]
-> 为了尽最大可能实现组件的复制即可用，非基础组件之间虽然存在功能重叠但并没有引为依赖，比如`AlertDialog`和`Dialog`二者代码存在高度重叠，但相互独立，并未复用。
+To be honest, because Neut doesn't rely on more mature upstream component libraries, it may not cover all edge cases. There will be fixable but still unresolved issues — such as bugs, accessibility gaps, etc. Therefore, **it is not recommended for large projects or scenarios with strict quality requirements**.
 
-本组件的代码基于tailwindcss样式库，因此你需要安装tailwindcss作为开发依赖，具体安装方式请参考tailwindcss文档。
+> [!WARNING]
+>
+> **Under active development — use with caution**
+>
+> The project is still evolving rapidly, APIs may change. **Do not use in production yet.**
 
-除了tailwindcss外，本组件库还内置了两个样式文件：
+---
 
-- animate.css
-- toast.css
+## 🚀 Quick Start
 
-在使用时需要在你项目的主样式文件中导入animate.css，如果你要复制或使用toast组件，也需要导入toast.css。
+Neut follows a **"copy-paste, then use"** pattern (similar to shadcn), though you can also install it as a regular dependency.
 
-需要注意的是，toast.css本身是临时性的样式文件，因为toast组件移植自sonner，尚未针对性地对toast的组件样式进行相应修改，但在未来的版本中一定会删除这个样式文件。
+### 1. Prerequisites (Peer Dependencies)
 
-最终的项目结构类似于：
+Before using any components, make sure these dependencies are installed in your project:
 
-```
-- styles
-  - animate.css
-  - toast.css
-- index.css
-```
+| Dependency                   | Purpose                  | Install Command                  |
+| :--------------------------- | :----------------------- | :------------------------------- |
+| **Tailwind CSS**             | Styling engine           | `bun i -D tailwindcss`           |
+| **Lucide Solid**             | Icon library             | `bun i lucide-solid`             |
+| **Tailwind Merge**           | Style merging tool       | `bun i tailwind-merge`           |
+| **Class Variance Authority** | Style variant definition | `bun i class-variance-authority` |
 
-`index.css`文件头：
+**Configure your stylesheet**
+
+In your main stylesheet (e.g., `index.css` or `globals.css`), import in this order:
 
 ```css
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Neut built-in styles (from animate.css and toast.css) */
 @import "./styles/animate.css";
 @import "./styles/toast.css";
 ```
 
-除了样式文件外，还需要安装样式合并依赖`tailwind-merge`及样式定义依赖`class-variance-authority`：
+**Create a utility function**
 
-```bash
-bun i tailwind-merge class-variance-authority
-```
-
-然后在`lib/utils`中创建一个`clsx.ts`文件，内容如下：
+Write a style merging function in `src/lib/utils/clsx.ts`:
 
 ```ts
 import { twMerge } from "tailwind-merge";
 
 export const clsx = (...classes: (string | undefined | false)[]): string => {
-  return twMerge(classes.filter(Boolean));
+    return twMerge(classes.filter(Boolean));
 };
 ```
 
-此外，本项目中的许多组件中使用了lucide-solid图标：
+> [!NOTE]
+> **About the stylesheet files**
+> `toast.css` is currently a temporary solution (ported from Sonner). We will rewrite the styles later to remove this external dependency.
+
+### 2. Method A: Copy the source code (recommended)
+
+This is the most flexible approach. Non-primitive components may have overlapping functionality (e.g., `AlertDialog` and `Dialog`), but they are standalone and independent.
+
+1.  Check the component source code in the [GitHub repo - Components](https://github.com/thep0y/neut).
+2.  Copy the directory of the component you need (e.g., `button`) into your project.
+
+**Example directory structure:**
 
 ```bash
-bun i lucide-solid
+src/
+└── components/
+    └── button/
+        ├── Button.styles.ts   # Styling logic
+        ├── Button.tsx         # Component implementation
+        ├── Button.types.ts    # Type definitions
+        └── index.ts           # Export entry
 ```
 
-当然，并非所有组件都需要使用这两个样式依赖，具体可查看shacn文档。我正在考虑将这两个工具独立实现以减少对第三方库的依赖。
+### 3. Method B: Install as a dependency
 
-现在假如你需要使用`Button`组件，则可以直接复制`button`目录中的代码，在复制时你可以看到，本组件库出于可维护性和单一职责原则的考虑，所有组件的实现都并非放在单文件中，因此建议你直接克隆本项目到本地，然后复制组件目录到你的项目中，否则请按`button`的目录结构创建相对应的文件后复制每个文件中的相应代码：
+If you prefer version management, you can also install via a package manager.
 
-```
-./src/components/button/
-└── Button.styles.ts
-└── Button.tsx
-└── Button.types.ts
-└── index.ts
-```
-
-### 安装
-
-本组件库也支持作为依赖安装：
+**Install:**
 
 ```bash
 bun i @neut/ui
 ```
 
-安装后需要在根样式文件中导入样式及注册样式资源：
+**Import styles:**
+
+Add this to your root stylesheet:
 
 ```css
-@import "tailwindcss";
 @import "../node_modules/@neut/ui/dist/ui.css";
 ```
 
-然后即可如同其他组件库一样导入并使用组件：
+**Use components:**
 
 ```tsx
 import { Button } from "@neut/ui";
 
-const App = () => {
-  return <Button>Click me</Button>;
-};
+function App() {
+    return <Button>Neut Button</Button>;
+}
 ```
 
-组件库的安装可以参考示例：https://github.com/thep0y/neut/tree/main/example
+**Full example:** [Neut Example Project](https://github.com/thep0y/neut/tree/main/example)
 
-## 参考项目
+---
 
-- shadcn: https://ui.shadcn.com/docs/installation
-- sonner: https://sonner.emilkowal.ski/getting-started
+## 📚 References & Acknowledgements
+
+The project's design and inspiration come from these great projects:
+
+- **shadcn/ui**: [Installation Guide](https://ui.shadcn.com/docs/installation)
+- **Sonner**: [Getting Started](https://sonner.emilkowal.ski/getting-started)
+- **SolidJS**: [Official Website](https://www.solidjs.com/)
+
+---
+
+## 💡 Why this pattern?
+
+Neut follows the philosophy of **"headless components"** and **"building your own blocks"**. That means:
+
+1.  **No overhead**: Only the code you actually include is used.
+2.  **Freely customizable styles**: Tailwind classes are right in front of you — tweak them anytime.
+3.  **Leverage SolidJS strengths**: Compared to React, SolidJS's fine-grained reactivity gives you high-performance components with less code and cleaner logic.
