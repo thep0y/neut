@@ -26,7 +26,7 @@ const loaded = new Set<string>();
 function filterValidLangs(langs: string[]): Lang[] {
   return langs.filter((lang): lang is Lang => {
     if (lang in FONT_MAP) return true;
-    if (process.env.NODE_ENV !== "production") {
+    if (!import.meta.env.PROD) {
       console.warn(
         `[useFontLoader] unsupported lang: "${lang}". ` +
           `Supported values: ${Object.keys(FONT_MAP).join(", ")}`,
