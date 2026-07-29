@@ -1,20 +1,12 @@
 import { createContext, useContext } from "solid-js";
-
-type TooltipContextValue = {
-  open: () => boolean;
-  setOpen: (v: boolean) => void;
-  triggerRef: HTMLElement | undefined;
-  setTriggerRef: (el: HTMLElement) => void;
-  contentId: string;
-  openDelay: number;
-  closeDelay: number;
-};
+import type { TooltipContextValue } from "./Tooltip.types";
 
 export const TooltipContext = createContext<TooltipContextValue>();
 
-export function useTooltipContext() {
+export function useTooltipContext(component: string): TooltipContextValue {
   const ctx = useContext(TooltipContext);
-  if (!ctx)
-    throw new Error("Tooltip components must be used within Tooltip.Root");
+  if (!ctx) {
+    throw new Error(`<${component}> 必须渲染在 <Tooltip> 内部`);
+  }
   return ctx;
 }

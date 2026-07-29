@@ -1,120 +1,119 @@
-export function computePosition(
-  trigger: HTMLElement,
-  content: HTMLElement,
-  side: "top" | "bottom" | "left" | "right",
-  align: "start" | "center" | "end",
-  alignOffset: number,
-  sideOffset: number,
-) {
-  const rect = trigger.getBoundingClientRect();
-  const contentWidth = content.offsetWidth;
-  const contentHeight = content.offsetHeight;
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const MARGIN = 4;
+import {
+  offset,
+  flip,
+  shift,
+  arrow,
+  hide,
+  containingBlockOffset,
+  getSide,
+  getAlignment,
+  type Middleware,
+  type Placement,
+  type Side,
+  type Alignment,
+} from "~/lib";
 
-  let top = 0;
-  let left = 0;
-  let resolvedSide = side;
-  let resolvedAlign = align;
+/**
+ * 把 shadcn/Radix 风格的 side + align 拆分参数，转换成核心库统一用的
+ * `Placement` 字符串（比如 side='top' + align='start' → 'top-start'）。
+ * align 是 'center'（默认对齐、不偏移）时不带后缀，直接是 side 本身。
+ */
+export function toPlacement(
+  side: Side,
+  align: Alignment | "center",
+): Placement {
+  return align === "center" ? side : (`${side}-${align}` as Placement);
+}
 
-  // --- Flip：优先检测对侧是否有足够空间，再决定最终 side ---
+/**
+ * 根据最终生效的 placement，算出缩放动画应该以哪个点为锚点（CSS transform-origin）。
+ * 锚点应该落在"贴近 trigger 的那条边"上——比如 placement 是 'top'（content 在
+ * trigger 上方），锚点就该是 content 自己的底边，缩放动画看起来才会像是
+ * "从 trigger 那里长出来"，而不是原地放大缩小（默认的 transform-origin 是
+ * 几何中心 50% 50%，视觉上和"从哪个方向冒出来"没有任何关联）。
+ * 交叉轴（对齐方向）同理：align 是 start 就贴左/上边，end 就贴右/下边。
+ */
+export function getTransformOrigin(placement: Placement): string {
+  const side = getSide(placement);
+  const align = getAlignment(placement);
+  const crossAxisOrigin =
+    align === "start" ? "0%" : align === "end" ? "100%" : "50%";
+
   switch (side) {
     case "top":
-      if (
-        rect.top < contentHeight + sideOffset &&
-        rect.bottom + sideOffset + contentHeight <= vh
-      ) {
-        resolvedSide = "bottom";
-      }
-      break;
+      return `${crossAxisOrigin} 100%`;
     case "bottom":
-      if (
-        rect.bottom + sideOffset + contentHeight > vh &&
-        rect.top - sideOffset - contentHeight >= 0
-      ) {
-        resolvedSide = "top";
-      }
-      break;
+      return `${crossAxisOrigin} 0%`;
     case "left":
-      if (
-        rect.left < contentWidth + sideOffset &&
-        rect.right + sideOffset + contentWidth <= vw
-      ) {
-        resolvedSide = "right";
-      }
-      break;
+      return `100% ${crossAxisOrigin}`;
     case "right":
-      if (
-        rect.right + sideOffset + contentWidth > vw &&
-        rect.left - sideOffset - contentWidth >= 0
-      ) {
-        resolvedSide = "left";
-      }
-      break;
+      return `0% ${crossAxisOrigin}`;
   }
+}
 
-  // --- 主轴位置（基于 resolvedSide）---
-  switch (resolvedSide) {
-    case "top":
-      top = rect.top - contentHeight - sideOffset;
-      break;
-    case "bottom":
-      top = rect.bottom + sideOffset;
-      break;
-    case "left":
-      left = rect.left - contentWidth - sideOffset;
-      break;
-    case "right":
-      left = rect.right + sideOffset;
-      break;
-  }
+/**
+ * Tooltip 内容框的默认背景色 class。
+ * 单独抽成常量是为了让 TooltipArrow 的默认填充色（fill="currentColor" 读的是
+ * `color`，不是 `background-color`）能用同一个色值——避免两处分别硬编码同一个
+ * neutral-900/neutral-100，改一个忘了改另一个导致箭头和背景对不上颜色。
+ * 如果你自定义了 TooltipContent 的 class 换了背景色，记得同时给
+ * <TooltipArrow class="text-你的颜色" /> 传一个匹配的 class。
+ */
+export const TOOLTIP_SURFACE_BG_CLASS = "bg-neutral-900 dark:bg-neutral-100";
+/** 上面背景色对应的 `text-*` 版本，给 TooltipArrow 当默认填充色用 */
+export const TOOLTIP_SURFACE_FILL_CLASS =
+  "text-neutral-900 dark:text-neutral-100";
 
-  // --- 交叉轴位置（align）---
-  if (resolvedSide === "top" || resolvedSide === "bottom") {
-    switch (align) {
-      case "start":
-        left = rect.left + alignOffset;
-        break;
-      case "center":
-        left = rect.left + rect.width / 2 - contentWidth / 2 + alignOffset;
-        break;
-      case "end":
-        left = rect.right - contentWidth - alignOffset;
-        break;
-    }
-  } else {
-    switch (align) {
-      case "start":
-        top = rect.top + alignOffset;
-        break;
-      case "center":
-        top = rect.top + rect.height / 2 - contentHeight / 2 + alignOffset;
-        break;
-      case "end":
-        top = rect.bottom - contentHeight - alignOffset;
-        break;
-    }
-  }
+export interface BuildTooltipMiddlewareOptions {
+  sideOffset: number;
+  /** 沿交叉轴（对齐方向）的偏移，对应 offset middleware 的 crossAxis */
+  alignOffset: number;
+  collisionPadding: number;
+  arrowElement: () => Element | undefined;
+}
 
-  // --- Shift：贴边平移，并更新 resolvedAlign ---
-  if (resolvedSide === "top" || resolvedSide === "bottom") {
-    if (left < MARGIN) {
-      left = MARGIN;
-      resolvedAlign = "start";
-    } else if (left + contentWidth > vw - MARGIN) {
-      left = vw - contentWidth - MARGIN;
-      resolvedAlign = "end";
-    }
-  } else {
-    if (top < MARGIN) {
-      top = MARGIN;
-      resolvedAlign = "start";
-    } else if (top + contentHeight > vh - MARGIN) {
-      top = vh - contentHeight - MARGIN;
-      resolvedAlign = "end";
-    }
-  }
-
-  return { top, left, side: resolvedSide, align: resolvedAlign };
+/**
+ * Tooltip 定位管线的固定配方：
+ *
+ * 1. offset      — 沿主轴保持 sideOffset 间距，沿交叉轴偏移 alignOffset
+ * 2. flip        — 主轴方向放不下就翻到对面（比如上方没空间就翻到下方）
+ * 3. shift       — 翻转后仍溢出，就在不换边的前提下贴边平移
+ * 4. arrow       — 算出箭头相对 content 的偏移，让它始终指向 trigger 中心
+ * 5. hide        — trigger 被自己的滚动容器完全裁掉时标记隐藏
+ * 6. containingBlockOffset — 修正祖先元素 transform 等属性导致的 position:fixed
+ *    包含块偏移（demo 里通常不出现，放进有大量 transform 的真实项目后才会暴露，
+ *    详见该 middleware 自身的注释）。放在最后一位，因为它修正的是"最终要写进
+ *    DOM 的坐标"，前面几步都在统一的视口坐标系里计算，不受这个偏移影响。
+ *
+ * 特意没有用 size 中间件去动态限制 max-height、允许内容超长时滚动——
+ * tooltip 不应该出现滚动条（这不是本库的一般性限制，是 tooltip 这个组件
+ * 类型本身该有的样子，shadcn/Radix 的 Tooltip 也是这么做的）。宽度上限
+ * 靠 TooltipContent.tsx 里静态的 `max-w-xs` class 兜底，让文字自然换行；
+ * 高度完全不做限制，交给内容自身的实际高度决定。
+ *
+ * 这个决定还有一个技术上的原因：早先的实现里试过用 size 中间件动态算
+ * max-height 配合 overflow:auto 实现"超长内容可滚动"，结果发现内层元素
+ * 一旦同时具备 overflow:auto 和入场动画（zoom-in-95 会给它加一个 transform），
+ * 动画播放期间 transform 会让这个元素变成箭头新的包含块（CSS 规范：非 none
+ * 的 transform 会创建包含块），箭头戳出内层边缘的那部分又会被算进内层的
+ * 可滚动溢出区域——于是出现了"打开瞬间闪一下滚动条，箭头跟着被遮住，
+ * 动画播完滚动条消失、箭头才重新出现"这种诡异现象。去掉滚动能力后，
+ * 这个耦合从根上就不存在了。
+ *
+ * 顺序不能随便换：arrow 必须在 shift/flip 之后（要用最终坐标才能算对偏移），
+ * containingBlockOffset 必须在所有其他 middleware 之后。
+ *
+ * 单独抽成函数是为了让 useTooltipContent 保持简洁，也方便针对这套管线单独测试。
+ */
+export function createTooltipMiddleware(
+  options: BuildTooltipMiddlewareOptions,
+): Middleware[] {
+  return [
+    offset({ mainAxis: options.sideOffset, crossAxis: options.alignOffset }),
+    flip(),
+    shift({ padding: options.collisionPadding }),
+    arrow({ element: options.arrowElement, padding: 6 }),
+    hide(),
+    containingBlockOffset(),
+  ];
 }
