@@ -5,10 +5,6 @@ import { clsx } from "~/utils";
 import { classes } from "./DialogClose.styles";
 import { X } from "lucide-solid";
 import { useDialogContext } from "../Dialog";
-import type {
-  ButtonProps,
-  ResolvedButtonProps,
-} from "~/components/button/Button.types";
 
 export const DialogClose = (props: DialogCloseProps) => {
   const { setOpen } = useDialogContext();
@@ -18,7 +14,7 @@ export const DialogClose = (props: DialogCloseProps) => {
       variant: "ghost",
       size: "sm",
     } as const,
-    props as ResolvedButtonProps<"button">,
+    props,
   );
 
   const handleClick = () => {
@@ -28,21 +24,18 @@ export const DialogClose = (props: DialogCloseProps) => {
 
   return (
     <Show
-      when={!merged.children && !merged.icon}
+      when={!merged.icon && !merged.children}
       fallback={
-        <Button
-          {...(merged as ButtonProps<"button">)}
-          data-slot="dialog-close"
-          onClick={handleClick}
-        />
+        <Button {...merged} data-slot="dialog-close" onClick={handleClick} />
       }
     >
       <Button
-        {...(merged as ButtonProps<"button">)}
+        {...merged}
         data-slot="dialog-close"
         class={clsx(classes)}
         onClick={handleClick}
-        icon={{ icon: <X />, ariaLabel: "Close" }}
+        icon={<X />}
+        aria-label="Close Dialog"
       />
     </Show>
   );

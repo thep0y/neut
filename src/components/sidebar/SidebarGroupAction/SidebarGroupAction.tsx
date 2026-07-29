@@ -6,14 +6,17 @@ import { Dynamic } from "solid-js/web";
 export const SidebarGroupAction = <T extends ValidComponent = "button">(
   props: SidebarGroupActionProps<T>,
 ) => {
-  const merged = mergeProps({ as: "button" as T } as const, props);
+  const merged = mergeProps({ component: "button" } as const, props);
 
-  const [local, others] = splitProps(merged, ["as", "class", "classList"]);
+  const [local, others] = splitProps(merged, [
+    "component",
+    "class",
+    "classList",
+  ]);
 
   return (
-    // @ts-expect-error
     <Dynamic
-      component={local.as}
+      component={local.component as ValidComponent}
       data-slot="sidebar-group-action"
       data-sidebar="group-action"
       class={clsx(

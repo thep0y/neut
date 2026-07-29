@@ -5,16 +5,14 @@ import {
   type JSXElement,
   mergeProps,
   splitProps,
+  type ValidComponent,
 } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import { clsx } from "~/utils";
+import { clsx, logger } from "~/utils";
 import s from "./Button.styles";
-import type {
-  ButtonProps,
-  ButtonValidElement,
-  DefaultStyleProps,
-  ResolvedButtonProps,
-} from "./Button.types";
+import type { ButtonProps, ButtonValidElement } from "./Button.types";
+
+const log = logger.child("Button");
 
 export const Button = <T extends ButtonValidElement = "button">(
   props: ButtonProps<T>,
@@ -23,14 +21,14 @@ export const Button = <T extends ButtonValidElement = "button">(
     {
       variant: "primary",
       size: "md",
-      as: "button",
+      component: "button",
       id: createUniqueId(),
-    } satisfies Partial<DefaultStyleProps>,
-    props as ResolvedButtonProps<T>,
+    } as const,
+    props,
   );
 
   const [local, others] = splitProps(merged, [
-    "as",
+    "component",
     "variant",
     "size",
     "icon",
@@ -41,28 +39,23 @@ export const Button = <T extends ButtonValidElement = "button">(
     "onClick",
   ]);
 
-  const iconOnly = createMemo(
-    () =>
-      (local.icon &&
-        typeof local.icon === "object" &&
-        "ariaLabel" in local.icon &&
-        "icon" in local.icon) ||
-      (!!local.icon && !local.children),
-  );
+  const iconOnly = createMemo(() => !!local.icon && !local.children);
 
   const iconWithAttr = (
     icon: JSXElement,
     position: "inline-start" | "inline-end",
   ) => <span data-icon={position}>{icon}</span>;
 
-  const resolved = children(() =>
-    local.icon ? (
-      typeof local.icon === "object" &&
-      "ariaLabel" in local.icon &&
-      "icon" in local.icon ? (
+  const resolved = children(() => {
+    if (import.meta.env.DEV && iconOnly() && !others["aria-label"]) {
+      log.warn("icon-only button must have an aria-label");
+    }
+
+    return local.icon ? (
+      iconOnly() ? (
         <>
-          {local.icon.icon}
-          <span class="sr-only">{local.icon.ariaLabel}</span>
+          {local.icon}
+          <span class="sr-only">{others["aria-label"]}</span>
         </>
       ) : (
         <>
@@ -75,15 +68,16 @@ export const Button = <T extends ButtonValidElement = "button">(
       )
     ) : (
       local.children
-    ),
-  );
+    );
+  });
 
   return (
-    // @ts-expect-error
     <Dynamic
       data-slot="button"
-      component={local.as}
-      type={local.as === "button" ? (others.type ?? "button") : undefined}
+      component={local.component as ValidComponent}
+      type={
+        local.component === "button" ? (others.type ?? "button") : undefined
+      }
       onClick={local.onClick}
       class={clsx(
         s({

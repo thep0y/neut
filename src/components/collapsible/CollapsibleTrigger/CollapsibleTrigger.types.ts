@@ -1,3 +1,3 @@
 import type { ButtonProps } from "~/components/button";
 
-export type CollapsibleTriggerProps = Omit<ButtonProps<"button">, "onClick">;
+export type CollapsibleTriggerProps = ButtonProps<"button">;

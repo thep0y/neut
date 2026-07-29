@@ -6,12 +6,12 @@ import { Dynamic } from "solid-js/web";
 
 export const Item = <T extends ValidComponent = "div">(props: ItemProps<T>) => {
   const merged = mergeProps(
-    { variant: "ghost", size: "sm", as: "div" } as const,
+    { variant: "ghost", size: "sm", component: "div" } as const,
     props,
   );
 
   const [local, others] = splitProps(merged, [
-    "as",
+    "component",
     "variant",
     "size",
     "class",
@@ -19,9 +19,8 @@ export const Item = <T extends ValidComponent = "div">(props: ItemProps<T>) => {
   ]);
 
   return (
-    // @ts-expect-error
     <Dynamic
-      component={local.as}
+      component={local.component as ValidComponent}
       data-slot="item"
       class={clsx(
         itemVariants({ variant: local.variant, size: local.size }),

@@ -174,7 +174,7 @@ export const Toast: Component<ToastProps> = (props) => {
                   props.toast.onDismiss?.(props.toast);
                 }
           }
-          icon={{ icon: <X />, ariaLabel: "Close" }}
+          icon={<X />}
           size="xs"
         />
       </Show>

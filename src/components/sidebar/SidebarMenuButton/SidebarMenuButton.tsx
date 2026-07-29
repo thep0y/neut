@@ -1,14 +1,8 @@
-import {
-  children,
-  mergeProps,
-  Show,
-  splitProps,
-  type ValidComponent,
-} from "solid-js";
+import { mergeProps, Show, splitProps, type ValidComponent } from "solid-js";
+import { Dynamic } from "solid-js/web";
 import type { SidebarMenuButtonProps } from "./SidebarMenuButton.types";
 import { clsx } from "~/utils";
 import { useSidebar } from "../SidebarProvider";
-import { Dynamic } from "solid-js/web";
 import { sidebarMenuButtonVariants } from "./SidebarMenuButton.styles";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/tooltip";
 
@@ -18,12 +12,17 @@ export const SidebarMenuButton = <T extends ValidComponent = "button">(
   const { isMobile, state } = useSidebar();
 
   const merged = mergeProps(
-    { isActive: false, variant: "ghost", size: "md", as: "button" as T },
+    {
+      isActive: false,
+      variant: "ghost",
+      size: "md",
+      component: "button",
+    } as const,
     props,
   );
 
   const [local, others] = splitProps(merged, [
-    "as",
+    "component",
     "isActive",
     "variant",
     "size",
@@ -32,26 +31,43 @@ export const SidebarMenuButton = <T extends ValidComponent = "button">(
     "classList",
   ]);
 
-  const comp = children(() => (
-    // @ts-expect-error
-    <Dynamic
-      component={local.as}
-      data-slot="sidebar-menu-button"
-      data-sidebar="menu-button"
-      data-size={local.size}
-      data-active={local.isActive}
-      class={clsx(
-        sidebarMenuButtonVariants({ variant: local.variant, size: local.size }),
-        local.class,
-      )}
-      {...others}
-    />
-  ));
-
   return (
-    <Show when={local.tooltip} fallback={comp()}>
+    <Show
+      when={local.tooltip}
+      fallback={
+        <Dynamic
+          component={local.component as ValidComponent}
+          data-slot="sidebar-menu-button"
+          data-sidebar="menu-button"
+          data-size={local.size}
+          data-active={local.isActive}
+          class={clsx(
+            sidebarMenuButtonVariants({
+              variant: local.variant,
+              size: local.size,
+            }),
+            local.class,
+          )}
+          {...others}
+        />
+      }
+    >
       <Tooltip>
-        <TooltipTrigger>{comp()}</TooltipTrigger>
+        <TooltipTrigger
+          component={local.component as ValidComponent}
+          data-slot="sidebar-menu-button"
+          data-sidebar="menu-button"
+          data-size={local.size}
+          data-active={local.isActive}
+          class={clsx(
+            sidebarMenuButtonVariants({
+              variant: local.variant,
+              size: local.size,
+            }),
+            local.class,
+          )}
+          {...others}
+        />
         <TooltipContent
           side="right"
           align="center"

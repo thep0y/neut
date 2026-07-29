@@ -17,17 +17,22 @@ export const PaginationLink = (props: PaginationLinkProps) => {
 
   return (
     <Button
-      as="a"
+      component="a"
       variant={local.isActive ? "outline" : "ghost"}
       size={local.size}
       aria-current={local.isActive ? "page" : undefined}
       data-slot="pagination-link"
       data-active={local.isActive}
       class={clsx(local.class)}
-      icon={"page" in local ? (local.page as number) : undefined}
+      icon={local.page}
+      aria-label={
+        local.page !== undefined && !local.children
+          ? `Page ${local.page}`
+          : undefined
+      }
       {...others}
     >
-      {local.children}
+      {local.page === undefined && local.children}
     </Button>
   );
 };

@@ -7,12 +7,12 @@ export const SidebarMenuSubButton = <T extends ValidComponent = "a">(
   props: SidebarMenuSubButtonProps<T>,
 ) => {
   const merged = mergeProps(
-    { isActive: false, size: "md", as: "a" as T },
+    { isActive: false, size: "md", component: "a" },
     props,
   );
 
   const [local, others] = splitProps(merged, [
-    "as",
+    "component",
     "isActive",
     "size",
     "class",
@@ -20,9 +20,8 @@ export const SidebarMenuSubButton = <T extends ValidComponent = "a">(
   ]);
 
   return (
-    // @ts-expect-error
     <Dynamic
-      component={local.as}
+      component={local.component as ValidComponent}
       data-slot="sidebar-menu-sub-button"
       data-sidebar="menu-sub-button"
       data-size={local.size}

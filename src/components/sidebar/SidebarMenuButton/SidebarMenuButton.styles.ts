@@ -13,7 +13,7 @@ export const sidebarMenuButtonVariants = cva(
         ghost:
           "hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-50",
         outline: clsx(
-          "bg-white shadow-[0_0_0_1px_(var(--color-neutral-200)] hover:bg-neutral-100 hover:text-neutral-900 hover:shadow-[0_0_0_1px_var(--color-neutral-100)]",
+          "bg-white shadow-[0_0_0_1px_(var(--color-neutral-200))] hover:bg-neutral-100 hover:text-neutral-900 hover:shadow-[0_0_0_1px_var(--color-neutral-100)]",
           "dark:bg-neutral-950 dark:shadow-[0_0_0_1px_hsl(var(--sidebar-border))] dark:hover:bg-neutral-800 dark:hover:text-neutral-50 dark:hover:shadow-[0_0_0_1px_--alpha(var(--color-white) / 10%)]]",
         ),
       },
