@@ -2,7 +2,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 import solidPlugin from "vite-plugin-solid";
 import devtools from "solid-devtools/vite";
-import dts from "vite-plugin-dts";
+import dts from "unplugin-dts/vite";
 import path from "node:path";
 import fs from "node:fs";
 
