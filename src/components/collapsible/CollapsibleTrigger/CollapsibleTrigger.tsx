@@ -9,10 +9,10 @@ export const CollapsibleTrigger = (props: CollapsibleTriggerProps) => {
     const next = !open();
     setInternalOpen(next);
     onOpenChange?.(next);
+    props.onClick?.();
   };
 
   return (
-    // @ts-expect-error
     <Button
       {...props}
       data-slot="collapsible-trigger"

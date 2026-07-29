@@ -16,18 +16,9 @@ export const InputGroupButton = (props: InputGroupButtonProps) => {
     "classList",
   ]);
 
-  const iconOnly = createMemo(
-    () =>
-      (others.icon &&
-        typeof others.icon === "object" &&
-        "ariaLabel" in others.icon &&
-        "icon" in others.icon) ||
-      // @ts-expect-error
-      (!!others.icon && !others.children),
-  );
+  const iconOnly = createMemo(() => !!others.icon && !others.children);
 
   return (
-    // @ts-expect-error
     <Button
       {...others}
       data-size={local.size}

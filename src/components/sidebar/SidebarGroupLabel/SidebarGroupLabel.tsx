@@ -6,14 +6,17 @@ import { Dynamic } from "solid-js/web";
 export const SidebarGroupLabel = <T extends ValidComponent = "div">(
   props: SidebarGroupLabelProps<T>,
 ) => {
-  const merged = mergeProps({ as: "div" } as const, props);
+  const merged = mergeProps({ component: "div" } as const, props);
 
-  const [local, others] = splitProps(merged, ["as", "class", "classList"]);
+  const [local, others] = splitProps(merged, [
+    "component",
+    "class",
+    "classList",
+  ]);
 
   return (
-    // @ts-expect-error
     <Dynamic
-      component={local.as}
+      component={local.component as ValidComponent}
       data-slot="sidebar-group-label"
       data-sidebar="group-label"
       class={clsx(

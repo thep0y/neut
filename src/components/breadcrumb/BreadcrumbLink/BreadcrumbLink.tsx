@@ -11,12 +11,12 @@ export const BreadcrumbLink = <T extends ValidComponent = "a">(
   props: BreadcrumbLinkProps<T>,
 ) => {
   const merged = mergeProps(
-    { as: "a" as ValidComponent } as const,
+    { component: "a" as ValidComponent } as const,
     props as ResolvedBreadcrumbLinkProps,
   );
 
   const [local, others] = splitProps(merged, [
-    "as",
+    "component",
     "href",
     "class",
     "classList",
@@ -24,7 +24,7 @@ export const BreadcrumbLink = <T extends ValidComponent = "a">(
 
   return (
     <Dynamic
-      component={local.as}
+      component={local.component}
       href={local.href}
       data-slot="breadcrumb-link"
       class={clsx(classes, local.class)}

@@ -1,1 +1,2 @@
 export { AccordionContent } from "./AccordionContent";
+export type { AccordionContentProps } from "./AccordionContent.types";

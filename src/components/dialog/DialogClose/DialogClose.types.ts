@@ -1,3 +1,3 @@
-import type { ResolvedButtonProps } from "~/components/button/Button.types";
+import type { ButtonProps } from "~/components/button";
 
-export type DialogCloseProps = ResolvedButtonProps<"button">;
+export type DialogCloseProps = ButtonProps<"button">;

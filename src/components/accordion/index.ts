@@ -1,4 +1,4 @@
-export { Accordion } from "./Accordion";
-export { AccordionContent } from "./AccordionContent";
-export { AccordionItem } from "./AccordionItem";
-export { AccordionTrigger } from "./AccordionTrigger";
+export * from "./Accordion";
+export * from "./AccordionContent";
+export * from "./AccordionItem";
+export * from "./AccordionTrigger";

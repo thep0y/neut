@@ -1,10 +1,6 @@
 import type { VariantProps } from "class-variance-authority";
-import type { PolymorphicProps } from "~/types";
 import type { inputGroupButtonVariants } from "./InputGroupButton.styles";
-import type { Button } from "~/components/button/Button";
+import type { ButtonProps } from "~/components/button";
 
-export type InputGroupButtonProps = PolymorphicProps<
-  typeof Button,
-  VariantProps<typeof inputGroupButtonVariants>,
-  false
->;
+export type InputGroupButtonProps = Omit<ButtonProps<"button">, "size"> &
+  Pick<VariantProps<typeof inputGroupButtonVariants>, "size">;
