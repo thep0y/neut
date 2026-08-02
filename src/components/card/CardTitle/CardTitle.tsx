@@ -1,6 +1,6 @@
 import { splitProps } from "solid-js";
 import { clsx } from "~/utils";
-import { classes } from "./CardTitle.styles";
+import classes from "./CardTitle.styles";
 import type { CardTitleProps } from "./CardTitle.types";
 
 export const CardTitle = (props: CardTitleProps) => {

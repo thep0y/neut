@@ -8,7 +8,7 @@ export const InputGroupText = (props: InputGroupTextProps) => {
   return (
     <span
       class={clsx(
-        "flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
+        "flex items-center gap-2 text-sm text-muted-foreground [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
         local.class,
       )}
       {...others}

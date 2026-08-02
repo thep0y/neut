@@ -5,6 +5,7 @@ import type { CarouselProps } from "./Carousel.types";
 import { useAutoPlay } from "./useAutoPlay";
 import { useCarousel } from "./useCarousel";
 import { useKeyboardNavigation } from "./useKeyboardNavigation";
+import classes from "./Carousel.styles";
 
 export const Carousel = (props: CarouselProps) => {
   const [local, options, rest] = splitProps(
@@ -36,7 +37,7 @@ export const Carousel = (props: CarouselProps) => {
         data-slot="carousel"
         aria-label={local["aria-label"] ?? "Carousel"}
         aria-roledescription="carousel"
-        class={clsx("relative", local.class)}
+        class={clsx(classes, local.class)}
         {...rest}
       />
     </CarouselContext.Provider>

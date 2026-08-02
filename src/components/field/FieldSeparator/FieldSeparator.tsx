@@ -20,11 +20,7 @@ export const FieldSeparator = (props: FieldSeparatorProps) => {
 
       <Show when={local.children}>
         <span
-          class={clsx(
-            "relative mx-auto block w-fit px-2",
-            "bg-white text-neutral-500",
-            "dark:bg-neutral-950 dark:text-neutral-400",
-          )}
+          class="relative mx-auto block w-fit bg-background px-2 text-muted-foreground"
           data-slot="field-separator-content"
         >
           {local.children}

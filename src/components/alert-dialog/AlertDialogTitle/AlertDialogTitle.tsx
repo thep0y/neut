@@ -1,7 +1,7 @@
 import { createUniqueId, onMount, splitProps } from "solid-js";
 import type { AlertDialogTitleProps } from "./AlertDialogTitle.types";
 import { clsx } from "~/utils";
-import { classes } from "./AlertDialogTitle.styles";
+import classes from "./AlertDialogTitle.styles";
 import { useAlertDialogContentContext } from "../AlertDialogContent";
 
 export const AlertDialogTitle = (props: AlertDialogTitleProps) => {

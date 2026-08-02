@@ -23,12 +23,12 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
     "unplugin-dts": "^1.0.3",
-    "vite": "^8.1.5",
+    "vite": "^8.2.0",
     "vite-plugin-solid": "^2.11.14"
   },
   "peerDependencies": {
     "class-variance-authority": "^0.7.1",
-    "lucide-solid": "^1.27.0",
+    "lucide-solid": "^1.28.0",
     "solid-js": "^1.9.14",
     "tailwind-merge": "^3.6.0"
   },

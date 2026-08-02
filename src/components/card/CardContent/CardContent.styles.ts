@@ -1,1 +1,3 @@
-export const classes = "px-4 group-data-[size=sm]/card:px-3";
+const classes = "px-(--card-spacing)";
+
+export default classes;

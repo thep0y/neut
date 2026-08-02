@@ -1,5 +1,5 @@
+import { clsx } from "~/utils";
 import { useTooltipContentContext } from "../TooltipContent/TooltipContent.context";
-import { TOOLTIP_SURFACE_FILL_CLASS } from "../TooltipContent/TooltipContent.utils";
 
 export interface TooltipArrowProps {
   /** 箭头沿 tooltip 边缘方向的长度（像素），默认 8 */
@@ -92,7 +92,11 @@ export function TooltipArrow(props: TooltipArrowProps) {
       }
       data-state={ctx.animationState()}
       style={{ position: "absolute", ...positionStyle() }}
-      class={`${props.class ?? TOOLTIP_SURFACE_FILL_CLASS} data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95`}
+      class={clsx(
+        "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+        "text-foreground",
+        props.class,
+      )}
       aria-hidden="true"
     >
       <polygon points={points()} fill="currentColor" />

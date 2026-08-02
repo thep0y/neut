@@ -51,19 +51,6 @@ export function getTransformOrigin(placement: Placement): string {
   }
 }
 
-/**
- * Tooltip 内容框的默认背景色 class。
- * 单独抽成常量是为了让 TooltipArrow 的默认填充色（fill="currentColor" 读的是
- * `color`，不是 `background-color`）能用同一个色值——避免两处分别硬编码同一个
- * neutral-900/neutral-100，改一个忘了改另一个导致箭头和背景对不上颜色。
- * 如果你自定义了 TooltipContent 的 class 换了背景色，记得同时给
- * <TooltipArrow class="text-你的颜色" /> 传一个匹配的 class。
- */
-export const TOOLTIP_SURFACE_BG_CLASS = "bg-neutral-900 dark:bg-neutral-100";
-/** 上面背景色对应的 `text-*` 版本，给 TooltipArrow 当默认填充色用 */
-export const TOOLTIP_SURFACE_FILL_CLASS =
-  "text-neutral-900 dark:text-neutral-100";
-
 export interface BuildTooltipMiddlewareOptions {
   sideOffset: number;
   /** 沿交叉轴（对齐方向）的偏移，对应 offset middleware 的 crossAxis */

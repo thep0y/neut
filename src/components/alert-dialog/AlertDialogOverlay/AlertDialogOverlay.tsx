@@ -1,7 +1,7 @@
 import { splitProps } from "solid-js";
 import type { AlertDialogOverlayProps } from "./AlertDialogOverlay.types";
 import { clsx } from "~/utils";
-import { classes } from "./AlertDialogOverlay.styles";
+import classes from "./AlertDialogOverlay.styles";
 import { useAlertDialogContext } from "../AlertDialog";
 
 export const AlertDialogOverlay = (props: AlertDialogOverlayProps) => {

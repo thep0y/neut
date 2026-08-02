@@ -3,6 +3,7 @@ import { clsx } from "~/utils";
 import { AccordionProvider } from "./Accordion.context";
 import type { AccordionProps } from "./Accordion.types";
 import { useAccordion } from "./useAccordion";
+import s from "./Accordion.styles";
 
 export const Accordion = (props: AccordionProps) => {
   const merged = mergeProps(
@@ -38,7 +39,7 @@ export const Accordion = (props: AccordionProps) => {
 
   return (
     <section
-      class={clsx("flex", "w-full", "flex-col", "max-w-lg", local.class)}
+      class={clsx(s, local.class)}
       data-orientation={local.orientation}
       data-slot="accordion"
       dir={local.dir}

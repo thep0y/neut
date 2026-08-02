@@ -1,7 +1,7 @@
 import { splitProps } from "solid-js";
 import type { AlertDialogHeaderProps } from "./AlertDialogHeader.types";
 import { clsx } from "~/utils";
-import { classes } from "./AlertDialogHeader.styles";
+import classes from "./AlertDialogHeader.styles";
 
 export const AlertDialogHeader = (props: AlertDialogHeaderProps) => {
   const [local, others] = splitProps(props, ["class", "classList"]);

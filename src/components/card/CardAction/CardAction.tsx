@@ -1,6 +1,6 @@
 import { splitProps } from "solid-js";
 import { clsx } from "~/utils";
-import { classes } from "./CardAction.styles";
+import classes from "./CardAction.styles";
 import type { CardActionProps } from "./CardAction.types";
 
 export const CardAction = (props: CardActionProps) => {

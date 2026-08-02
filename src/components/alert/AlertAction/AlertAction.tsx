@@ -1,7 +1,7 @@
 import { splitProps } from "solid-js";
 import type { AlertActionProps } from "./AlertAction.types";
 import { clsx } from "~/utils";
-import { classes } from "./AlertAction.styles";
+import classes from "./AlertAction.styles";
 
 export const AlertAction = (props: AlertActionProps) => {
   const [local, others] = splitProps(props, ["class", "classList"]);

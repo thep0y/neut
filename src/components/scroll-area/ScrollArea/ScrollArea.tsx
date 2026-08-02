@@ -92,12 +92,12 @@ export const ScrollArea = (props: ScrollAreaProps) => {
             // "size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-neutral-400/50 dark:focus-visible:ring-neutral-500/50 focus-visible:outline-1",
             // "overflow-scroll",
             // "[scrollbar-width:none]",
-            "size-full rounded-[inherit] outline-none",
+            "size-full rounded-[inherit] transition-[color,box-shadow] outline-none",
             // Native scrollbars hidden via CSS; custom ones provided below
-            "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+            "scrollbar-none [&::-webkit-scrollbar]:hidden",
             // Focus ring — meets WCAG 2.4.7
             "focus-visible:ring-2 focus-visible:ring-offset-1",
-            "focus-visible:ring-neutral-400/70 dark:focus-visible:ring-neutral-500/70",
+            "focus-visible:ring-ring/50",
             // Overflow based on which scrollbars are active
             local.orientation === "vertical"
               ? "overflow-y-scroll overflow-x-hidden"

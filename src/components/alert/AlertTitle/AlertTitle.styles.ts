@@ -1,2 +1,4 @@
-export const classes =
-  "col-start-2 line-clamp-1 min-h-4 font-medium tracking-tight";
+const classes =
+  "font-medium group-has-[>svg]/alert:col-start-2 [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground";
+
+export default classes;

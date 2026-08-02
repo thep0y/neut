@@ -3,6 +3,7 @@ import { clsx } from "~/utils";
 import { useAccordionContext } from "../Accordion/Accordion.context";
 import { AccordionItemContext } from "./AccordionItem.context";
 import type { AccordionItemProps } from "./AccordionItem.types";
+import s from "./AccordionItem.styles";
 
 export const AccordionItem = (props: AccordionItemProps) => {
   const { orientation, isOpen } = useAccordionContext();
@@ -26,7 +27,7 @@ export const AccordionItem = (props: AccordionItemProps) => {
 
   return (
     <div
-      class={clsx("not-last:border-b", local.class)}
+      class={clsx(s, local.class)}
       data-slot="accordion-item"
       data-orientation={orientation}
       data-open={open()}
