@@ -1,2 +1,4 @@
-export const classes =
-  "col-start-2 grid justify-items-start gap-1 text-sm text-neutral-500 dark:text-neutral-400 [&_p]:leading-relaxed";
+const classes =
+  "text-sm text-balance text-muted-foreground md:text-pretty [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground [&_p:not(:last-child)]:mb-4";
+
+export default classes;

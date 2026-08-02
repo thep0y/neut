@@ -1,5 +1,5 @@
 import { mergeProps, splitProps } from "solid-js";
-import { classes } from "~/components/card/Card/Card.styles";
+import classes from "~/components/card/Card/Card.styles";
 import { clsx } from "~/utils";
 import type { CardProps } from "./Card.types";
 

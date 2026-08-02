@@ -4,6 +4,7 @@ import { clsx } from "~/utils";
 import { useAccordionContext } from "../Accordion/Accordion.context";
 import { useAccordionItemContext } from "../AccordionItem/AccordionItem.context";
 import type { AccordionTriggerProps } from "./AccordionTrigger.types";
+import classes from "./AccordionTrigger.styles";
 
 export const AccordionTrigger = (props: AccordionTriggerProps) => {
   const { orientation, toggle } = useAccordionContext();
@@ -24,7 +25,7 @@ export const AccordionTrigger = (props: AccordionTriggerProps) => {
 
   return (
     <h3
-      class="flex"
+      class={classes.title}
       data-orientation={orientation}
       data-open={open()}
       data-disabled={disabled ? "" : null}
@@ -37,10 +38,7 @@ export const AccordionTrigger = (props: AccordionTriggerProps) => {
         aria-expanded={open()}
         aria-disabled={disabled}
         data-accordion-trigger=""
-        class={clsx(
-          "group/accordion-trigger relative flex flex-1 items-start justify-between rounded-lg border border-transparent py-2.5 text-left text-sm font-medium transition-all outline-none hover:underline focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:after:border-ring aria-disabled:pointer-events-none aria-disabled:select-none aria-disabled:opacity-50 **:data-[slot=accordion-trigger-icon]:ml-auto **:data-[slot=accordion-trigger-icon]:size-4 **:data-[slot=accordion-trigger-icon]:text-neutral-500 dark:**:data-[slot=accordion-trigger-icon]:text-neutral-400",
-          local.class,
-        )}
+        class={clsx(classes.button, local.class)}
         onClick={handleClick}
         data-orientation={orientation}
         data-open={open()}
@@ -48,7 +46,7 @@ export const AccordionTrigger = (props: AccordionTriggerProps) => {
       >
         {local.children}
         <ChevronDown
-          class="pointer-events-none shrink-0 data-[open=true]:-rotate-180 transition-[rotate] duration-200"
+          class={classes.chevron}
           data-slot="accordion-trigger-icon"
           data-open={open()}
         />

@@ -1,7 +1,7 @@
 import { createSignal, mergeProps, Show, splitProps } from "solid-js";
 import type { AlertDialogContentProps } from "./AlertDialogContent.types";
 import { clsx } from "~/utils";
-import { classes } from "./AlertDialogContent.styles";
+import classes from "./AlertDialogContent.styles";
 import { AlertDialogPortal } from "../AlertDialogPortal";
 import { AlertDialogOverlay } from "../AlertDialogOverlay";
 import { AlertDialogContentContext } from "./AlertDialogContent.context";

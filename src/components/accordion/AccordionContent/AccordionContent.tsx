@@ -10,6 +10,7 @@ import { clsx } from "~/utils";
 import { useAccordionContext } from "../Accordion/Accordion.context";
 import { useAccordionItemContext } from "../AccordionItem/AccordionItem.context";
 import type { AccordionContentProps } from "./AccordionContent.types";
+import s from "./AccordionContent.styles";
 
 export const AccordionContent = (props: AccordionContentProps) => {
   const { orientation } = useAccordionContext();
@@ -60,7 +61,7 @@ export const AccordionContent = (props: AccordionContentProps) => {
         id={contentId}
         role="region"
         aria-labelledby={triggerId}
-        class="overflow-hidden text-sm data-[open=true]:animate-accordion-down data-[open=false]:animate-accordion-up"
+        class={s.content}
         data-slot="accordion-content"
         data-orientation={orientation}
         data-open={open() ? "true" : "false"}
@@ -71,13 +72,7 @@ export const AccordionContent = (props: AccordionContentProps) => {
         onAnimationEnd={handleAnimationEnd}
         {...others}
       >
-        <div
-          ref={contentRef}
-          class={clsx(
-            "pb-2.5 pt-0 [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground [&_p:not(:last-child)]:mb-4",
-            local.class,
-          )}
-        >
+        <div ref={contentRef} class={clsx(s.wrapper, local.class)}>
           {local.children}
         </div>
       </div>

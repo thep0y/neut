@@ -8,10 +8,7 @@ export const Skeleton = (props: SkeletonProps) => {
   return (
     <div
       data-slot="skeleton"
-      class={clsx(
-        "animate-pulse rounded-md bg-neutral-100 dark:bg-neutral-800",
-        local.class,
-      )}
+      class={clsx("animate-pulse rounded-md bg-muted", local.class)}
       {...others}
     />
   );

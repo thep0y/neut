@@ -1,1 +1,3 @@
-export const classes = "text-sm text-neutral-500 dark:text-neutral-400";
+const classes = "text-sm text-muted-foreground";
+
+export default classes;

@@ -7,12 +7,12 @@ import path from "node:path";
 import fs from "node:fs";
 
 const dirs = {
-  components: path.resolve(__dirname, "src/components"),
-  hooks: path.resolve(__dirname, "src/hooks"),
-  utils: path.resolve(__dirname, "src/utils"),
+  components: path.resolve(import.meta.dirname, "src/components"),
+  hooks: path.resolve(import.meta.dirname, "src/hooks"),
+  utils: path.resolve(import.meta.dirname, "src/utils"),
 };
 const entries: Record<string, string> = {
-  index: path.resolve(__dirname, "src/index.ts"),
+  index: path.resolve(import.meta.dirname, "src/index.ts"),
 };
 
 for (const [dirName, dirPath] of Object.entries(dirs)) {
@@ -39,7 +39,7 @@ for (const [dirName, dirPath] of Object.entries(dirs)) {
 export default defineConfig({
   resolve: {
     alias: {
-      "~": path.resolve(__dirname, "./src"),
+      "~": path.resolve(import.meta.dirname, "./src"),
     },
   },
   plugins: [
@@ -55,7 +55,7 @@ export default defineConfig({
     sourcemap: true,
     target: "esnext",
     lib: {
-      // entry: [path.resolve(__dirname, "src/index.ts")],
+      // entry: [path.resolve(import.meta.dirname, "src/index.ts")],
       entry: entries,
       name: "@neut/ui",
       formats: ["es"],

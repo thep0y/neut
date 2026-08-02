@@ -1,5 +1,4 @@
-import { clsx } from "~/utils";
+const classes =
+  "relative self-stretch bg-input data-horizontal:mx-px data-horizontal:w-auto data-vertical:my-px data-vertical:h-auto";
 
-export const classes = clsx(
-  "relative self-stretch bg-neutral-200 dark:bg-white/15 data-horizontal:mx-px data-horizontal:w-auto data-vertical:my-px data-vertical:h-auto",
-);
+export default classes;

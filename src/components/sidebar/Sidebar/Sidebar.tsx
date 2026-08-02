@@ -28,8 +28,7 @@ export const Sidebar = (props: SidebarProps) => {
           data-slot="sidebar"
           class={clsx(
             "flex h-full w-(--sidebar-width) flex-col",
-            "bg-neutral-50 text-neutral-950",
-            "dark:bg-neutral-900 dark:text-neutral-50",
+            "bg-sidebar text-sidebar-foreground",
             local.class,
           )}
           {...others}
@@ -40,7 +39,7 @@ export const Sidebar = (props: SidebarProps) => {
     >
       <Show when={!isMobile} fallback={null}>
         <div
-          class="group peer hidden text-neutral-950 dark:text-neutral-50 md:block"
+          class="group peer hidden text-sidebar-foreground md:block"
           data-state={state()}
           data-collapsible={state() === "collapsed" ? local.collapsible : ""}
           data-variant={local.variant}
@@ -63,7 +62,7 @@ export const Sidebar = (props: SidebarProps) => {
             data-slot="sidebar-container"
             data-side={local.side}
             class={clsx(
-              "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)] data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)] md:flex",
+              "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:-left-(--sidebar-width) data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:-right-(--sidebar-width) md:flex",
               // Adjust the padding for floating and inset variants.
               local.variant === "floating" || local.variant === "inset"
                 ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
@@ -75,8 +74,7 @@ export const Sidebar = (props: SidebarProps) => {
             <div
               data-sidebar="sidebar"
               data-slot="sidebar-inner"
-              // "flex size-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-sidebar-border"
-              class="flex size-full flex-col bg-neutral-50 dark:bg-neutral-900 group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-neutral-200 dark:group-data-[variant=floating]:ring-white/10"
+              class="flex size-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-sidebar-border"
             >
               {local.children}
             </div>

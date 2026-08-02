@@ -9,8 +9,6 @@ export {
   createTooltipMiddleware,
   getTransformOrigin,
   toPlacement,
-  TOOLTIP_SURFACE_BG_CLASS,
-  TOOLTIP_SURFACE_FILL_CLASS,
 } from "./TooltipContent.utils";
 export type { BuildTooltipMiddlewareOptions } from "./TooltipContent.utils";
 export { useTooltipContent } from "./useTooltipContent";

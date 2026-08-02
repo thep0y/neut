@@ -243,9 +243,7 @@ export const ScrollBar = (props: ScrollBarProps) => {
         onPointerDown={onThumbPointerDown}
         data-orientation={local.orientation}
         class={clsx(
-          "relative rounded-full",
-          // Thumb colour
-          "bg-neutral-300 dark:bg-white/20",
+          "relative rounded-full bg-border",
           // Hover / active state
           "hover:bg-neutral-400 dark:hover:bg-white/30",
           active() ? "bg-neutral-500 dark:bg-white/40" : "",
