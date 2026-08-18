@@ -5,10 +5,7 @@ import { TooltipContentContext } from "./TooltipContent.context";
 import { getTransformOrigin } from "./TooltipContent.utils";
 import { getSide, getAlignment } from "~/lib";
 import type { TooltipContentProps } from "./TooltipContent.types";
-
-function cn(...classes: Array<string | false | undefined | null>): string {
-  return classes.filter(Boolean).join(" ");
-}
+import { clsx } from "~/utils";
 
 /**
  * Tooltip 的浮层内容。挂 Portal 到 body，用 position:fixed 定位。
@@ -139,7 +136,7 @@ export function TooltipContent(props: TooltipContentProps) {
                 "transform-origin": getTransformOrigin(pos.placement()),
                 ...(typeof local.style === "object" ? local.style : undefined),
               }}
-              class={cn(
+              class={clsx(
                 "max-w-xs rounded-md px-3 py-1.5 text-xs leading-relaxed shadow-md",
                 "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
                 "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
