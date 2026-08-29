@@ -36,7 +36,7 @@ export function useSelectContent(
   const [contentElement, setContentElement] = createSignal<HTMLElement>();
   const [fallbackMaxHeight, setFallbackMaxHeight] = createSignal<number>();
 
-  const hasValue = createMemo(() => ctx.value() !== undefined);
+  const hasValue = createMemo(() => ctx.value() != null);
 
   const pos = createPositioner(ctx.reference, ctx.floating, {
     placement: () => props().placement ?? "bottom-start",
@@ -67,6 +67,16 @@ export function useSelectContent(
   const isVisible = createMemo(
     () => ctx.open() && !pos.middlewareData().hide?.referenceHidden,
   );
+
+  // SelectContent 关闭时也不会卸载（为了保住 ctx.items 的注册信息），因此
+  // createPositioner 不会像 Tooltip/Popover 那样在每次打开时重新创建并自动
+  // 算一次位置。这里在每次打开时显式重新计算一次，修复“触发器第一次打开后
+  // 因外部布局变化移动了位置，第二次打开时面板还停留在旧坐标”的问题。
+  createEffect(() => {
+    if (ctx.open()) {
+      pos.update();
+    }
+  });
 
   // --- 打开时延迟一帧再触发动画 class ---
   // "选中项对齐"策略要读子元素（SelectItem 渲染出来的 <li data-value>）才能

@@ -8,7 +8,7 @@ export function SelectValue(props: SelectValueProps) {
 
   const label = createMemo(() => {
     const v = ctx.value();
-    if (v === undefined) return undefined;
+    if (v === undefined || v === null) return undefined;
     return ctx.items.find((it) => it.value === v)?.label ?? v;
   });
 
