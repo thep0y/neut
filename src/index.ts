@@ -27,6 +27,7 @@ export * from "~/components/label";
 export * from "~/components/pagination";
 export * from "~/components/popover";
 export * from "~/components/progress";
+export * from "~/components/radio-group";
 export * from "~/components/scroll-area";
 export * from "~/components/select";
 export * from "~/components/separator";
