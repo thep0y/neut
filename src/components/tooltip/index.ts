@@ -1,3 +1,8 @@
+export { TooltipProvider } from "./TooltipProvider";
+export type {
+  TooltipProviderProps,
+  TooltipProviderContextValue,
+} from "./TooltipProvider";
 export { Tooltip } from "./Tooltip";
 export type { TooltipProps, TooltipContextValue } from "./Tooltip";
 

@@ -7,11 +7,12 @@ import {
   type JSX,
 } from "solid-js";
 import { TooltipContext } from "./Tooltip.context";
+import { useTooltipProviderContext } from "../TooltipProvider/TooltipProvider.context";
 import { useTooltipGroupContext } from "../TooltipGroup/TooltipGroup.context";
 import type { TooltipContextValue, TooltipProps } from "./Tooltip.types";
 import type { Rect } from "~/lib";
 
-const DEFAULT_OPEN_DELAY = 300;
+const DEFAULT_OPEN_DELAY = 0;
 const DEFAULT_CLOSE_DELAY = 150;
 
 /**
@@ -34,6 +35,7 @@ const DEFAULT_CLOSE_DELAY = 150;
  */
 export function Tooltip(props: TooltipProps): JSX.Element {
   const group = useTooltipGroupContext(); // undefined 是正常情况，代表没用 TooltipGroup
+  const provider = useTooltipProviderContext();
 
   const [internalOpen, setInternalOpen] = createSignal(
     props.defaultOpen ?? false,
@@ -85,7 +87,7 @@ export function Tooltip(props: TooltipProps): JSX.Element {
 
     openTimer = window.setTimeout(
       () => commit(true),
-      props.openDelay ?? DEFAULT_OPEN_DELAY,
+      props.openDelay ?? provider?.delay() ?? DEFAULT_OPEN_DELAY,
     );
   };
 
@@ -93,7 +95,7 @@ export function Tooltip(props: TooltipProps): JSX.Element {
     clearTimers();
     closeTimer = window.setTimeout(
       () => commit(false),
-      props.closeDelay ?? DEFAULT_CLOSE_DELAY,
+      props.closeDelay ?? provider?.closeDelay() ?? DEFAULT_CLOSE_DELAY,
     );
   };
 

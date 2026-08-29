@@ -1,9 +1,11 @@
 import type { Alignment, Side } from "~/lib";
 import type { BaseProps, PolymorphicProps } from "~/types";
 
+export type TooltipSide = Side | "inline-start" | "inline-end";
+
 interface BaseTooltipContentProps extends BaseProps {
-  /** 贴 trigger 的哪一侧，默认 'top' */
-  side?: Side;
+  /** 贴 trigger 的哪一侧，默认 'top'。支持 Base UI 的 logical side。 */
+  side?: TooltipSide;
   /** 沿边对齐方式，默认 'center'（不偏移，居中对齐） */
   align?: Alignment | "center";
   /** 沿主轴（side 指向的方向）与 trigger 之间的间距（像素），默认 8 */

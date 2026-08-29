@@ -4,6 +4,8 @@ import type { MiddlewareData, Placement } from "~/lib";
 export interface TooltipContentContextValue {
   /** createPositioner 产出的 middlewareData，TooltipArrow 从里面取 arrow 中间件算好的偏移量 */
   middlewareData: Accessor<MiddlewareData>;
+  /** 触发器元素访问器，TooltipArrow 用它计算 --arrow-offset */
+  reference: Accessor<Element | undefined>;
   /** 经过 flip 调整后的最终 placement，决定箭头贴哪条边、朝哪个方向 */
   placement: Accessor<Placement>;
   /** TooltipArrow 挂载时用来把自己的 DOM 节点注册给 arrow middleware（Element 而不是 HTMLElement，兼容 SVG 箭头） */
