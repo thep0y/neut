@@ -1,6 +1,3 @@
-export { Toaster } from "./Toaster";
-export type { Offset, ToastOptions, ToasterProps } from "./Toaster";
-
 export { Toast } from "./Toast";
 export type {
   Action,
@@ -17,6 +14,4 @@ export type {
   ToastT,
   ToastTypes,
   isAction,
-} from "./Toast";
-
-export { getHistory, getToasts, toast, useSonner } from "./state";
+} from "./Toast.types";
