@@ -14,6 +14,7 @@ export * from "~/components/calendar";
 export * from "~/components/carousel";
 export * from "~/components/checkbox";
 export * from "~/components/collapsible";
+export * from "~/components/date-picker";
 export * from "~/components/dialog";
 export * from "~/components/field";
 export * from "~/components/image";
