@@ -35,7 +35,7 @@ export function SelectItem(props: SelectItemProps) {
       ref={attachListeners}
       role="option"
       tabIndex={isSelected() ? 0 : -1}
-      data-value={local.value}
+      data-value={String(local.value)}
       aria-selected={isSelected()}
       aria-disabled={local.disabled}
       class={clsx(

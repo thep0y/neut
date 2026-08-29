@@ -95,7 +95,7 @@ export function SelectContent(props: SelectContentProps) {
     const el = contentElement();
     if (!active || !el) return;
     el.querySelector<HTMLElement>(
-      `[data-value="${CSS.escape(active)}"]`,
+      `[data-value="${CSS.escape(String(active))}"]`,
     )?.scrollIntoView({ block: "nearest" });
   });
 
@@ -114,6 +114,7 @@ export function SelectContent(props: SelectContentProps) {
         本身一致；隐藏只是视觉/交互上的关闭，不影响数据。
       */}
       <div
+        data-slot="select-content"
         ref={(el) => {
           ctx.setFloating(el);
           // 元素卸载时清空 ctx.floating()，避免后续读到已从 DOM 摘除的

@@ -9,6 +9,7 @@ import {
   type Placement,
 } from "~/lib";
 import { getViewportBoundary } from "~/lib/positioner/utils/dom";
+import type { SelectOptionValue } from "../Select/Select.types";
 
 /** 让浮层宽度和 trigger 对齐——不改坐标，只把 reference 宽度透传给上层当 style.width 用 */
 function matchReferenceWidth(): Middleware {
@@ -44,7 +45,7 @@ function matchReferenceWidth(): Middleware {
  * 位置，不会凭空往上多留空间。
  */
 function alignSelectedItem(
-  getValue: () => string | undefined,
+  getValue: () => SelectOptionValue | null | undefined,
   getScrollElement: () => HTMLElement | undefined,
 ): Middleware {
   return {
@@ -52,10 +53,10 @@ function alignSelectedItem(
     fn(state) {
       const value = getValue();
       const scrollEl = getScrollElement();
-      if (value === undefined || !scrollEl) return {};
+      if (value == null || !scrollEl) return {};
 
       const itemEl = scrollEl.querySelector<HTMLElement>(
-        `[data-value="${CSS.escape(value)}"]`,
+        `[data-value="${CSS.escape(String(value))}"]`,
       );
       if (!itemEl) return {};
 
@@ -111,7 +112,7 @@ function alignSelectedItem(
 export interface BuildSelectMiddlewareOptions {
   /** 当前是否已经有选中值——决定走"选中项对齐"还是普通的贴边下拉 */
   hasValue: boolean;
-  selectedValue: () => string | undefined;
+  selectedValue: () => SelectOptionValue | null | undefined;
   /** 真正会滚动、承载选项列表的那个元素（内层），不是外层的定位容器 */
   scrollElement: () => HTMLElement | undefined;
   placement: Placement;
