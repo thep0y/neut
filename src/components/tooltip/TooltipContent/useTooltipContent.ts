@@ -59,11 +59,15 @@ export function useTooltipContent(
 
   const pos = createPositioner(ctx.reference, ctx.floating, {
     placement: () =>
-      toPlacement(props().side ?? "top", props().align ?? "center"),
+      toPlacement(
+        props().side ?? "top",
+        props().align ?? "center",
+        props().dir,
+      ),
     strategy: "fixed",
     middleware: () =>
       createTooltipMiddleware({
-        sideOffset: props().sideOffset ?? 8,
+        sideOffset: props().sideOffset ?? 4,
         alignOffset: props().alignOffset ?? 0,
         collisionPadding: props().collisionPadding ?? 8,
         arrowElement,
@@ -99,6 +103,8 @@ export function useTooltipContent(
     x: number;
     y: number;
   }>();
+
+  const [mounted, setMounted] = createSignal(isVisible());
 
   createEffect(() => {
     if (!mounted()) return;
@@ -140,8 +146,6 @@ export function useTooltipContent(
   // isVisible 从 true 变 false 的瞬间，不立刻让 <Show> 卸载节点：先把 data-state
   // 切到 closed（触发退场动画的 CSS class），等这个节点自己的 animationend 触发
   // （或者兜底超时）之后，才真正把 mounted 设为 false，交给 <Show> 卸载。
-  const [mounted, setMounted] = createSignal(isVisible());
-
   createEffect((wasVisible: boolean) => {
     const visible = isVisible();
     const el = contentElement();

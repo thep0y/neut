@@ -18,11 +18,26 @@ import {
  * `Placement` 字符串（比如 side='top' + align='start' → 'top-start'）。
  * align 是 'center'（默认对齐、不偏移）时不带后缀，直接是 side 本身。
  */
+export function toPhysicalSide(
+  side: Side | "inline-start" | "inline-end",
+  dir?: string,
+): Side {
+  if (side === "inline-start") {
+    return dir === "rtl" ? "right" : "left";
+  }
+  if (side === "inline-end") {
+    return dir === "rtl" ? "left" : "right";
+  }
+  return side;
+}
+
 export function toPlacement(
-  side: Side,
+  side: Side | "inline-start" | "inline-end",
   align: Alignment | "center",
+  dir?: string,
 ): Placement {
-  return align === "center" ? side : (`${side}-${align}` as Placement);
+  const physical = toPhysicalSide(side, dir);
+  return align === "center" ? physical : (`${physical}-${align}` as Placement);
 }
 
 /**
