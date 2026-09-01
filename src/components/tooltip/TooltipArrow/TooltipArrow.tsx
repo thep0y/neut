@@ -28,7 +28,7 @@ export function TooltipArrow(props: TooltipArrowProps) {
       data-align={align()}
       style={{ "--arrow-offset": `${triggerWidth() / 2}px` }}
       class={clsx(
-        "absolute size-2.5 z-50 translate-y-[calc(-50%-2px)] rotate-45 rounded-[2px] bg-foreground fill-foreground",
+        "absolute size-2.5 z-50 translate-y-[calc(-50%-2px)] rotate-45 rounded-xs bg-foreground fill-foreground",
         "data-[side=inline-end]:top-1/2! data-[side=inline-end]:-left-1 data-[side=inline-end]:-translate-y-1/2",
         "data-[side=inline-start]:top-1/2! data-[side=inline-start]:-right-1 data-[side=inline-start]:-translate-y-1/2",
         "data-[side=left]:top-1/2! data-[side=left]:right-[-0.175rem] data-[side=left]:-translate-y-1/2",
