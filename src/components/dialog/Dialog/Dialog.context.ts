@@ -9,7 +9,8 @@ interface DialogContextValue {
   show: Accessor<boolean>;
   setShow: Setter<boolean>;
   open: Accessor<boolean>;
-  setOpen: Setter<boolean>;
+  /** 打开/关闭 Dialog；内部会同时处理受控与非受控模式 */
+  setOpen: (open: boolean) => void;
 }
 
 export const DialogContext = createContext<DialogContextValue>();

@@ -1,9 +1,29 @@
-import { children, untrack, type JSXElement, type ParentProps } from "solid-js";
+import type { ValidComponent } from "solid-js";
+import { Dynamic } from "solid-js/web";
+
 import { useDialogTrigger } from "./useDialogTrigger";
+import type { DialogTriggerProps } from "./DialogTrigger.types";
 
-export const DialogTrigger = (props: ParentProps) => {
-  const resolved = children(() => untrack(() => props.children));
-  useDialogTrigger(resolved);
+import { Button } from "~/components/button";
+import { mergeRefs } from "~/utils";
 
-  return resolved as unknown as JSXElement;
+export const DialogTrigger = <
+  T extends ValidComponent = typeof Button<"button">,
+>(
+  props: DialogTriggerProps<T>,
+) => {
+  const { open, isDisabled, attachListeners } = useDialogTrigger(() => props);
+
+  return (
+    <Dynamic
+      {...props}
+      component={(props.component as ValidComponent) ?? Button<"button">}
+      ref={mergeRefs(props.ref, attachListeners)}
+      disabled={isDisabled()}
+      data-slot="dialog-trigger"
+      aria-haspopup="dialog"
+      aria-expanded={open()}
+      data-state={open() ? "open" : "closed"}
+    />
+  );
 };
