@@ -20,7 +20,9 @@ import {
 } from "~/index";
 
 const DatePickerPage = lazy(() => import("./pages/date-picker-page"));
+const DialogPage = lazy(() => import("./pages/dialog-page"));
 const CalendarPage = lazy(() => import("./pages/calendar-page"));
+const ComboboxPage = lazy(() => import("./pages/combobox-page"));
 const PopoverPage = lazy(() => import("./pages/popover-page"));
 const RadioGroupPage = lazy(() => import("./pages/radio-group-page"));
 const TogglePage = lazy(() => import("./pages/toggle-page"));
@@ -30,8 +32,10 @@ const TooltipPage = lazy(() => import("./pages/tooltip-page"));
 const ToastPage = lazy(() => import("./pages/toast-page"));
 
 const componentLinks = [
+  { href: "/dialog", title: "Dialog" },
   { href: "/date-picker", title: "Date Picker" },
   { href: "/calendar", title: "Calendar" },
+  { href: "/combobox", title: "Combobox" },
   { href: "/popover", title: "Popover" },
   { href: "/radio-group", title: "Radio Group" },
   { href: "/tooltip", title: "Tooltip" },
@@ -91,8 +95,10 @@ const App = () => {
   return (
     <Router root={AppLayout}>
       <Route path="/" component={DatePickerPage} />
+      <Route path="/dialog" component={DialogPage} />
       <Route path="/date-picker" component={DatePickerPage} />
       <Route path="/calendar" component={CalendarPage} />
+      <Route path="/combobox" component={ComboboxPage} />
       <Route path="/popover" component={PopoverPage} />
       <Route path="/radio-group" component={RadioGroupPage} />
       <Route path="/tooltip" component={TooltipPage} />
