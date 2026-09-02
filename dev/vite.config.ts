@@ -7,6 +7,8 @@ import path from "node:path";
 export default defineConfig({
   resolve: {
     alias: {
+      // dev 下阻断 src/index.ts 对库样式的二次导入，避免与 dev/index.css 重复注入 Tailwind
+      "~/styles/index.css": path.resolve(__dirname, "empty.css"),
       "~": path.resolve(__dirname, "../src"),
     },
   },
