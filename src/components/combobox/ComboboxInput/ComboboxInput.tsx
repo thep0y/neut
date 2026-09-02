@@ -32,7 +32,6 @@ export function ComboboxInput(props: {
 
   const hasValue = () => {
     const current = ctx.value();
-    console.log(local.showClear, current);
     if (current == null) return false;
     if (Array.isArray(current)) return current.length > 0;
     return current !== "";
