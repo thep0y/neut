@@ -6,7 +6,7 @@ import {
   ToggleGroupContext,
 } from "./ToggleGroup.context";
 import { toggleGroupVariants } from "./ToggleGroup.styles";
-import type { ToggleGroupProps } from "./ToggleGroup.types";
+import type { ToggleGroupProps, ToggleGroupValue } from "./ToggleGroup.types";
 import { useToggleGroupKeyboard } from "./useToggleGroupKeyboard";
 
 /**
@@ -24,7 +24,9 @@ import { useToggleGroupKeyboard } from "./useToggleGroupKeyboard";
  * </ToggleGroup>
  * ```
  */
-export function ToggleGroup(props: ToggleGroupProps): JSX.Element {
+export function ToggleGroup<TValue extends ToggleGroupValue = ToggleGroupValue>(
+  props: ToggleGroupProps<TValue>,
+): JSX.Element {
   const merged = mergeProps(
     {
       multiple: false,
@@ -55,7 +57,7 @@ export function ToggleGroup(props: ToggleGroupProps): JSX.Element {
     "children",
   ]);
 
-  const ctx = createToggleGroupState(local);
+  const ctx = createToggleGroupState<TValue>(local);
   const { handleKeyDown } = useToggleGroupKeyboard(ctx);
   const isVertical = () => local.orientation === "vertical";
 

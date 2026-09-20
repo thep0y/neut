@@ -5,6 +5,7 @@ export {
 } from "./ToggleGroup.context";
 export type {
   ToggleGroupProps,
+  ToggleGroupValue,
   ToggleGroupContextValue,
   ToggleGroupItemEntry,
   ToggleGroupOrientation,

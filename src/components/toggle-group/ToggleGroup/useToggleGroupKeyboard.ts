@@ -1,4 +1,7 @@
-import type { ToggleGroupContextValue } from "./ToggleGroup.types";
+import type {
+  ToggleGroupContextValue,
+  ToggleGroupValue,
+} from "./ToggleGroup.types";
 
 /** 键盘导航按键:方向键 + Home/End(对齐 base-ui CompositeRoot 的 enableHomeAndEndKeys) */
 const NAV_KEYS = new Set([
@@ -23,7 +26,9 @@ const NAV_KEYS = new Set([
  * 只有焦点已经在某个 item 上时才接管按键,避免影响外部其它元素;
  * 移动焦点后由 item 的 onFocus 更新高亮。
  */
-export function useToggleGroupKeyboard(ctx: ToggleGroupContextValue) {
+export function useToggleGroupKeyboard<
+  TValue extends ToggleGroupValue = ToggleGroupValue,
+>(ctx: ToggleGroupContextValue<TValue>) {
   const handleKeyDown = (e: KeyboardEvent) => {
     if (ctx.disabled()) return;
     if (!NAV_KEYS.has(e.key)) return;

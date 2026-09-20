@@ -3,6 +3,7 @@ import { clsx } from "~/utils";
 import { toggleVariants } from "~/components/toggle/Toggle/Toggle.styles";
 import { callEventHandler } from "../call-event-handler";
 import { useToggleGroupContext } from "../ToggleGroup/ToggleGroup.context";
+import type { ToggleGroupValue } from "../ToggleGroup/ToggleGroup.types";
 import { toggleGroupItemVariants } from "./ToggleGroupItem.styles";
 import type { ToggleGroupItemProps } from "./ToggleGroupItem.types";
 
@@ -13,7 +14,11 @@ import type { ToggleGroupItemProps } from "./ToggleGroupItem.types";
  * - disabled 继承整组状态,可在 item 上单独禁用
  * - roving tabindex:整组只有一个 tab 停靠点,方向键在同组内移动焦点
  */
-export function ToggleGroupItem(props: ToggleGroupItemProps): JSX.Element {
+export function ToggleGroupItem<
+  TValue extends ToggleGroupValue = ToggleGroupValue,
+>(props: ToggleGroupItemProps<TValue>): JSX.Element {
+  // context 用宽值类型读取:item 无法从父级推导 group 的值类型,
+  // 自己的 TValue 始终可以传给宽类型参数
   const ctx = useToggleGroupContext("ToggleGroupItem");
   const merged = mergeProps({ type: "button" as const }, props);
 

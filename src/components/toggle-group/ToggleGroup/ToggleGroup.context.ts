@@ -6,17 +6,20 @@ import type {
   ToggleGroupItemEntry,
   ToggleGroupOrientation,
   ToggleGroupSize,
+  ToggleGroupValue,
   ToggleGroupVariant,
 } from "./ToggleGroup.types";
 
 const ToggleGroupContext = createContext<ToggleGroupContextValue>();
 
 /** createToggleGroupState 的输入:与 ToggleGroupProps 的运行时字段一致 */
-export interface ToggleGroupStateProps {
-  value?: readonly string[];
-  defaultValue?: readonly string[];
+export interface ToggleGroupStateProps<
+  TValue extends ToggleGroupValue = ToggleGroupValue,
+> {
+  value?: readonly TValue[];
+  defaultValue?: readonly TValue[];
   onValueChange?: (
-    value: string[],
+    value: TValue[],
     eventDetails: ToggleGroupChangeEventDetails,
   ) => void;
   multiple: boolean;
@@ -35,27 +38,32 @@ export interface ToggleGroupStateProps {
  * 返回的 context 值里所有字段都是 accessor,因此传入的 `props` 可以是
  * splitProps/mergeProps 得到的响应式代理,读取始终是最新值。
  * 组件根只负责输出 DOM 与 data-* 样式钩子,状态与交互算法收敛在这里。
+ *
+ * 值类型由泛型参数决定;内部只用 `===` / `includes` 做同一性比较,
+ * 因此 string 与 number 都能正常工作。
  */
-export function createToggleGroupState(
-  props: ToggleGroupStateProps,
-): ToggleGroupContextValue {
-  const [internalValue, setInternalValue] = createSignal<string[]>([
+export function createToggleGroupState<
+  TValue extends ToggleGroupValue = ToggleGroupValue,
+>(props: ToggleGroupStateProps<TValue>): ToggleGroupContextValue<TValue> {
+  const [internalValue, setInternalValue] = createSignal<TValue[]>([
     ...(props.defaultValue ?? []),
   ]);
   const [highlightedValue, setHighlightedValue] = createSignal<
-    string | undefined
+    TValue | undefined
   >();
-  const [itemOrder, setItemOrder] = createSignal<ToggleGroupItemEntry[]>([]);
+  const [itemOrder, setItemOrder] = createSignal<
+    ToggleGroupItemEntry<TValue>[]
+  >([]);
 
   const isControlled = () => props.value !== undefined;
   // 受控优先:props.value 存在时读外部值,否则读内部状态
-  const value = (): readonly string[] =>
-    isControlled() ? (props.value as readonly string[]) : internalValue();
+  const value = (): readonly TValue[] =>
+    isControlled() ? (props.value as readonly TValue[]) : internalValue();
 
-  const isPressed = (v: string) => value().includes(v);
+  const isPressed = (v: TValue) => value().includes(v);
 
   const toggleItem = (
-    itemValue: string,
+    itemValue: TValue,
     event: Event,
     trigger?: Element,
   ): void => {
@@ -63,7 +71,7 @@ export function createToggleGroupState(
     const pressed = current.includes(itemValue);
 
     // 对齐 base-ui:单选时再次点击已按下项会取消选中(next = [])
-    let next: string[];
+    let next: TValue[];
     if (props.multiple) {
       next = pressed
         ? current.filter((v) => v !== itemValue)
@@ -81,15 +89,15 @@ export function createToggleGroupState(
     if (!isControlled()) setInternalValue(next);
   };
 
-  const registerItem = (entry: ToggleGroupItemEntry) => {
+  const registerItem = (entry: ToggleGroupItemEntry<TValue>) => {
     setItemOrder((prev) => [...prev, entry]);
     return () => setItemOrder((prev) => prev.filter((item) => item !== entry));
   };
 
-  const isFirstEnabled = (v: string) =>
+  const isFirstEnabled = (v: TValue) =>
     itemOrder().find((item) => !item.disabled())?.value === v;
 
-  const isUsable = (v: string) =>
+  const isUsable = (v: TValue) =>
     itemOrder().some((item) => item.value === v && !item.disabled());
 
   return {
@@ -113,14 +121,21 @@ export function createToggleGroupState(
   };
 }
 
-export function useToggleGroupContext(
-  component: string,
-): ToggleGroupContextValue {
+/**
+ * 读取 ToggleGroup 的 context。
+ *
+ * 泛型参数是**调用方标注**:组件本身无法从子节点推导所属 group 的值类型,
+ * 自定义 item 时请显式传入与 ToggleGroup 一致的类型,例如
+ * `useToggleGroupContext<"bold" | "italic">("MyToggle")`。
+ */
+export function useToggleGroupContext<
+  TValue extends ToggleGroupValue = ToggleGroupValue,
+>(component: string): ToggleGroupContextValue<TValue> {
   const ctx = useContext(ToggleGroupContext);
   if (!ctx) {
     throw new Error(`<${component}> 必须渲染在 <ToggleGroup> 内部`);
   }
-  return ctx;
+  return ctx as ToggleGroupContextValue<TValue>;
 }
 
 export { ToggleGroupContext };
