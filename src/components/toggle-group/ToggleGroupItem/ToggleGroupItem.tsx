@@ -2,6 +2,7 @@ import { createMemo, splitProps, type JSX } from "solid-js";
 import { clsx } from "~/utils";
 import { toggleVariants } from "~/components/toggle/Toggle/Toggle.styles";
 import { useToggleGroupContext } from "../ToggleGroup/ToggleGroup.context";
+import { toggleGroupItemVariants } from "./ToggleGroupItem.styles";
 import type { ToggleGroupItemProps } from "./ToggleGroupItem.types";
 
 export function ToggleGroupItem(props: ToggleGroupItemProps): JSX.Element {
@@ -72,8 +73,8 @@ export function ToggleGroupItem(props: ToggleGroupItemProps): JSX.Element {
       aria-pressed={pressed()}
       data-state={pressed() ? "on" : "off"}
       class={clsx(
-        "shrink-0 focus:z-10 focus-visible:z-10",
         toggleVariants({ variant: variant(), size: size() }),
+        toggleGroupItemVariants(),
         local.class,
       )}
       onClick={(e) => {

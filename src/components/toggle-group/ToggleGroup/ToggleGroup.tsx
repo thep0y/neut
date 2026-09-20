@@ -1,6 +1,7 @@
 import { createMemo, createSignal, splitProps, type JSX } from "solid-js";
 import { clsx } from "~/utils";
 import { ToggleGroupContext } from "./ToggleGroup.context";
+import { toggleGroupVariants } from "./ToggleGroup.styles";
 import type {
   ToggleGroupContextValue,
   ToggleGroupProps,
@@ -59,12 +60,12 @@ export function ToggleGroup(props: ToggleGroupProps): JSX.Element {
       data-size={size()}
       data-spacing={spacing()}
       data-orientation={orientation()}
+      // 拼接态样式依赖 data-vertical / data-horizontal(与 tabs 根保持一致)
+      data-vertical={orientation() === "vertical" ? "" : null}
+      data-horizontal={orientation() === "vertical" ? null : ""}
       style={{ "--gap": spacing() } as JSX.CSSProperties}
       dir={local.dir}
-      class={clsx(
-        "group/toggle-group flex w-fit flex-row items-center gap-[--spacing(var(--gap))] rounded-lg data-[size=sm]:rounded-[min(var(--radius-md),10px)] data-[orientation=vertical]:flex-col data-[orientation=vertical]:items-stretch",
-        local.class,
-      )}
+      class={clsx(toggleGroupVariants(), local.class)}
       {...rest}
     >
       <ToggleGroupContext.Provider value={ctx}>
