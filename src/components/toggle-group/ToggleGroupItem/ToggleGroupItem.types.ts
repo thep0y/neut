@@ -4,10 +4,14 @@ import type { toggleVariants } from "~/components/toggle/Toggle/Toggle.styles";
 import type { HTMLAttributes, PolymorphicProps } from "~/types";
 import type { ToggleGroupValue } from "../ToggleGroup/ToggleGroup.types";
 
+/**
+ * 必须先从 button 属性里摘掉原生的 `value`(Solid 声明为 `string | undefined`),
+ * 否则会与下面的 `value: TValue` 求交叉:`number & string` 会塌缩成 `never`。
+ */
 type BaseToggleGroupItemProps<TValue extends ToggleGroupValue> = VariantProps<
   typeof toggleVariants
 > &
-  HTMLAttributes<"button"> & {
+  Omit<HTMLAttributes<"button">, "value"> & {
     /** 当前 item 的唯一值,类型由泛型参数决定(与所属 ToggleGroup 保持一致) */
     value: TValue;
     /** 组件内部会先处理选中,再调用用户回调(与 tabs 的 trigger 一致) */
