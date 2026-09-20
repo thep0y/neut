@@ -1,4 +1,4 @@
-import { mergeProps, splitProps, type JSX } from "solid-js";
+import { splitProps, type JSX } from "solid-js";
 import { clsx } from "~/utils";
 import { callEventHandler } from "../call-event-handler";
 import {
@@ -15,30 +15,25 @@ import { useToggleGroupKeyboard } from "./useToggleGroupKeyboard";
  * / `data-disabled` / `data-spacing` / `data-variant` / `data-size`),
  * 并挂载 roving focus 键盘导航。
  *
+ * 单选模式(默认)的 value 是标量,多选模式(`multiple`)才是数组:
+ *
  * @example
  * ```tsx
- * <ToggleGroup variant="outline" defaultValue={["bold"]}>
- *   <ToggleGroupItem value="bold" aria-label="Toggle bold">
- *     <Bold />
- *   </ToggleGroupItem>
+ * // 单选
+ * <ToggleGroup defaultValue="bold" onValueChange={(v) => ...}>
+ *   <ToggleGroupItem value="bold">Bold</ToggleGroupItem>
+ * </ToggleGroup>
+ *
+ * // 多选
+ * <ToggleGroup multiple value={["bold"]} onValueChange={(v) => ...}>
+ *   <ToggleGroupItem value="bold">Bold</ToggleGroupItem>
  * </ToggleGroup>
  * ```
  */
 export function ToggleGroup<TValue extends ToggleGroupValue = ToggleGroupValue>(
   props: ToggleGroupProps<TValue>,
 ): JSX.Element {
-  const merged = mergeProps(
-    {
-      multiple: false,
-      disabled: false,
-      orientation: "horizontal" as const,
-      loopFocus: true,
-      spacing: 2,
-    },
-    props,
-  );
-
-  const [local, rest] = splitProps(merged, [
+  const [local, rest] = splitProps(props, [
     "value",
     "defaultValue",
     "onValueChange",
@@ -57,27 +52,28 @@ export function ToggleGroup<TValue extends ToggleGroupValue = ToggleGroupValue>(
     "children",
   ]);
 
+  // 默认值与单选/多选的差异统一由状态层处理,渲染用 ctx 里的已解析值
   const ctx = createToggleGroupState<TValue>(local);
   const { handleKeyDown } = useToggleGroupKeyboard(ctx);
-  const isVertical = () => local.orientation === "vertical";
+  const isVertical = () => ctx.orientation() === "vertical";
 
   return (
     <div
       role="group"
       data-slot="toggle-group"
-      data-variant={local.variant}
-      data-size={local.size}
-      data-spacing={local.spacing}
-      data-orientation={local.orientation}
-      // 现有样式依赖 data-vertical / data-horizontal(与 tabs 根保持一致)
+      data-variant={ctx.variant()}
+      data-size={ctx.size()}
+      data-spacing={ctx.spacing()}
+      data-orientation={ctx.orientation()}
+      // 拼接态样式依赖 data-vertical / data-horizontal(与 tabs 根保持一致)
       data-vertical={isVertical() ? "" : null}
       data-horizontal={isVertical() ? null : ""}
-      data-multiple={local.multiple ? "" : null}
-      data-disabled={local.disabled ? "" : null}
-      aria-disabled={local.disabled ? "true" : undefined}
+      data-multiple={ctx.multiple() ? "" : null}
+      data-disabled={ctx.disabled() ? "" : null}
+      aria-disabled={ctx.disabled() ? "true" : undefined}
       dir={local.dir}
       // --gap 作为 spacing 的样式入口,用户 style 可覆盖
-      style={{ "--gap": local.spacing, ...local.style } as JSX.CSSProperties}
+      style={{ "--gap": ctx.spacing(), ...local.style } as JSX.CSSProperties}
       class={clsx(toggleGroupVariants(), local.class)}
       classList={local.classList}
       onKeyDown={(e) => {

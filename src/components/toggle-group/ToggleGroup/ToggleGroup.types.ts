@@ -38,19 +38,8 @@ export interface ToggleGroupChangeEventDetails {
   trigger: Element | undefined;
 }
 
-interface BaseToggleGroupProps<TValue extends ToggleGroupValue>
-  extends BaseProps {
-  /** 受控选中值(数组);不传则内部自管理 */
-  value?: readonly TValue[];
-  /** 非受控模式下的初始选中值 */
-  defaultValue?: readonly TValue[];
-  /** 选中值变化回调(受控与非受控都会触发) */
-  onValueChange?: (
-    value: TValue[],
-    eventDetails: ToggleGroupChangeEventDetails,
-  ) => void;
-  /** 是否允许同时选中多个,默认 false;单选时再次点击会取消选中(对齐 base-ui) */
-  multiple?: boolean;
+/** 单选与多选共用的 props */
+interface ToggleGroupCommonProps extends BaseProps {
   /** 整组禁用,item 会继承该状态 */
   disabled?: boolean;
   /** 布局方向,默认 "horizontal";同时决定方向键映射与排列方向 */
@@ -69,15 +58,68 @@ interface BaseToggleGroupProps<TValue extends ToggleGroupValue>
 }
 
 /**
+ * 单选模式(默认):`value` / `defaultValue` / `onValueChange` 都是**标量**。
+ *
+ * 这是本项目对 base-ui 的一处有意偏离 —— base-ui 单选时也要求传数组,用起来别扭。
+ * 取消选中时回调收到 `undefined`。
+ *
+ * 注意:`value === undefined` 视为非受控,所以受控的单选组请让信号有确定值
+ * (信号类型建议 `TValue | undefined`,并在传参前用 `??` 兜底,或改用多选数组模式)。
+ */
+export interface ToggleGroupSingleProps<
+  TValue extends ToggleGroupValue = ToggleGroupValue,
+> extends ToggleGroupCommonProps {
+  /** 单选模式标记(默认),不需要显式传 */
+  multiple?: false;
+  /** 受控选中值;不传则内部自管理 */
+  value?: TValue;
+  /** 非受控模式下的初始选中值 */
+  defaultValue?: TValue;
+  /** 选中值变化回调(受控与非受控都会触发) */
+  onValueChange?: (
+    value: TValue | undefined,
+    eventDetails: ToggleGroupChangeEventDetails,
+  ) => void;
+}
+
+/** 多选模式(`multiple`):值是数组,未选中时为空数组 */
+export interface ToggleGroupMultipleProps<
+  TValue extends ToggleGroupValue = ToggleGroupValue,
+> extends ToggleGroupCommonProps {
+  /** 多选模式标记 */
+  multiple: true;
+  /** 受控选中值;不传则内部自管理 */
+  value?: readonly TValue[];
+  /** 非受控模式下的初始选中值 */
+  defaultValue?: readonly TValue[];
+  /** 选中值变化回调(受控与非受控都会触发) */
+  onValueChange?: (
+    value: TValue[],
+    eventDetails: ToggleGroupChangeEventDetails,
+  ) => void;
+}
+
+/**
  * 值类型由泛型参数决定:
  * - 不传时是宽类型 `ToggleGroupValue`(string | number)
  * - `defaultValue` / `value` / `onValueChange` 中任意一处给出具体类型即可推导,
- *   例如 `defaultValue={[1]}` 会推导出 `number[]`
+ *   例如 `defaultValue={1}` 会推导出 `number`
  * - 也可显式指定:`<ToggleGroup<"bold" | "italic"> />`
+ *
+ * `multiple` 决定值的形状:单选是标量,多选是数组(传错会被类型拦住)。
  */
 export type ToggleGroupProps<
   TValue extends ToggleGroupValue = ToggleGroupValue,
-> = PolymorphicProps<"div", BaseToggleGroupProps<TValue>, false>;
+> = PolymorphicProps<
+  "div",
+  ToggleGroupSingleProps<TValue> | ToggleGroupMultipleProps<TValue>,
+  false
+>;
+
+/** 两种模式下 onValueChange 的联合类型(供内部状态实现使用) */
+export type ToggleGroupChangeHandler<TValue extends ToggleGroupValue> =
+  | NonNullable<ToggleGroupSingleProps<TValue>["onValueChange"]>
+  | NonNullable<ToggleGroupMultipleProps<TValue>["onValueChange"]>;
 
 /** 已注册的 item,供 roving focus 与键盘导航使用 */
 export interface ToggleGroupItemEntry<
@@ -92,7 +134,10 @@ export interface ToggleGroupItemEntry<
 export interface ToggleGroupContextValue<
   TValue extends ToggleGroupValue = ToggleGroupValue,
 > {
-  /** 当前选中值(受控优先,否则内部状态) */
+  /**
+   * 当前选中值,**已规范化成数组**:单选模式是 0 或 1 个元素。
+   * 判断某个 item 是否选中请用 `isPressed`。
+   */
   value: Accessor<readonly TValue[]>;
   multiple: Accessor<boolean>;
   disabled: Accessor<boolean>;
@@ -112,7 +157,7 @@ export interface ToggleGroupContextValue<
    */
   /** 该 value 当前是否处于按下状态 */
   isPressed(value: TValue): boolean;
-  /** 切换某个 item 的按下状态,并派发 onValueChange(value, details) */
+  /** 切换某个 item 的按下状态,并按模式派发 onValueChange */
   toggleItem(value: TValue, event: Event, trigger?: Element): void;
   setHighlightedValue(value: TValue): void;
   /** 按挂载顺序注册 item,返回注销函数 */
