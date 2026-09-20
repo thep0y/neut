@@ -96,6 +96,54 @@ function ToggleGroupSpacing() {
   );
 }
 
+function ToggleGroupConnected() {
+  return (
+    <div class="flex flex-col items-start gap-4">
+      <ToggleGroup spacing={0} defaultValue={["top"]}>
+        <ToggleGroupItem value="top" aria-label="Toggle top">
+          Top
+        </ToggleGroupItem>
+        <ToggleGroupItem value="bottom" aria-label="Toggle bottom">
+          Bottom
+        </ToggleGroupItem>
+        <ToggleGroupItem value="left" aria-label="Toggle left">
+          Left
+        </ToggleGroupItem>
+        <ToggleGroupItem value="right" aria-label="Toggle right">
+          Right
+        </ToggleGroupItem>
+      </ToggleGroup>
+      <ToggleGroup variant="outline" spacing={0} defaultValue={["top"]}>
+        <ToggleGroupItem value="top" aria-label="Toggle top">
+          Top
+        </ToggleGroupItem>
+        <ToggleGroupItem value="bottom" aria-label="Toggle bottom">
+          Bottom
+        </ToggleGroupItem>
+        <ToggleGroupItem value="left" aria-label="Toggle left">
+          Left
+        </ToggleGroupItem>
+      </ToggleGroup>
+      <ToggleGroup
+        variant="outline"
+        spacing={0}
+        orientation="vertical"
+        defaultValue={["top"]}
+      >
+        <ToggleGroupItem value="top" aria-label="Toggle top">
+          Top
+        </ToggleGroupItem>
+        <ToggleGroupItem value="bottom" aria-label="Toggle bottom">
+          Bottom
+        </ToggleGroupItem>
+        <ToggleGroupItem value="left" aria-label="Toggle left">
+          Left
+        </ToggleGroupItem>
+      </ToggleGroup>
+    </div>
+  );
+}
+
 function ToggleGroupVertical() {
   return (
     <ToggleGroup
@@ -244,6 +292,13 @@ export const toggleGroupSections: Section[] = [
     title: "Spacing",
     description: "Use spacing to add spacing between toggle group items.",
     component: ToggleGroupSpacing,
+  },
+  {
+    id: "toggle-group-connected",
+    title: "Connected",
+    description:
+      "Use spacing={0} to connect the items: only the outer edges keep rounding and border.",
+    component: ToggleGroupConnected,
   },
   {
     id: "toggle-group-vertical",
