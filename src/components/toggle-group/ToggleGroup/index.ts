@@ -6,4 +6,10 @@ export {
 export type {
   ToggleGroupProps,
   ToggleGroupContextValue,
+  ToggleGroupItemEntry,
+  ToggleGroupOrientation,
+  ToggleGroupVariant,
+  ToggleGroupSize,
+  ToggleGroupChangeEventDetails,
+  ToggleGroupChangeEventReason,
 } from "./ToggleGroup.types";

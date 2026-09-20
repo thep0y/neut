@@ -1,71 +1,87 @@
-import { createMemo, createSignal, splitProps, type JSX } from "solid-js";
+import { mergeProps, splitProps, type JSX } from "solid-js";
 import { clsx } from "~/utils";
-import { ToggleGroupContext } from "./ToggleGroup.context";
+import { callEventHandler } from "../call-event-handler";
+import {
+  createToggleGroupState,
+  ToggleGroupContext,
+} from "./ToggleGroup.context";
 import { toggleGroupVariants } from "./ToggleGroup.styles";
-import type {
-  ToggleGroupContextValue,
-  ToggleGroupProps,
-} from "./ToggleGroup.types";
+import type { ToggleGroupProps } from "./ToggleGroup.types";
+import { useToggleGroupKeyboard } from "./useToggleGroupKeyboard";
 
+/**
+ * ToggleGroup 根组件:渲染 `<div role="group">`,输出样式与语义钩子
+ * (`data-orientation` / `data-vertical` / `data-horizontal` / `data-multiple`
+ * / `data-disabled` / `data-spacing` / `data-variant` / `data-size`),
+ * 并挂载 roving focus 键盘导航。
+ *
+ * @example
+ * ```tsx
+ * <ToggleGroup variant="outline" defaultValue={["bold"]}>
+ *   <ToggleGroupItem value="bold" aria-label="Toggle bold">
+ *     <Bold />
+ *   </ToggleGroupItem>
+ * </ToggleGroup>
+ * ```
+ */
 export function ToggleGroup(props: ToggleGroupProps): JSX.Element {
-  const [local, rest] = splitProps(props, [
+  const merged = mergeProps(
+    {
+      multiple: false,
+      disabled: false,
+      orientation: "horizontal" as const,
+      loopFocus: true,
+      spacing: 2,
+    },
+    props,
+  );
+
+  const [local, rest] = splitProps(merged, [
     "value",
     "defaultValue",
     "onValueChange",
     "multiple",
     "disabled",
     "orientation",
+    "loopFocus",
     "spacing",
     "variant",
     "size",
     "class",
-    "children",
+    "classList",
+    "style",
     "dir",
+    "onKeyDown",
+    "children",
   ]);
 
-  const [internalValue, setInternalValue] = createSignal<string[]>(
-    local.defaultValue ?? [],
-  );
-  const value = createMemo(() =>
-    local.value !== undefined ? local.value : internalValue(),
-  );
-  const multiple = createMemo(() => !!local.multiple);
-  const disabled = createMemo(() => !!local.disabled);
-  const orientation = createMemo(() => local.orientation ?? "horizontal");
-  const spacing = createMemo(() => local.spacing ?? 2);
-  const variant = createMemo(() => local.variant ?? "default");
-  const size = createMemo(() => local.size ?? "default");
-
-  const setValue = (next: string[]) => {
-    if (local.value === undefined) setInternalValue(next);
-    local.onValueChange?.(next);
-  };
-
-  const ctx: ToggleGroupContextValue = {
-    value,
-    setValue,
-    multiple,
-    disabled,
-    orientation,
-    spacing,
-    variant,
-    size,
-  };
+  const ctx = createToggleGroupState(local);
+  const { handleKeyDown } = useToggleGroupKeyboard(ctx);
+  const isVertical = () => local.orientation === "vertical";
 
   return (
     <div
       role="group"
       data-slot="toggle-group"
-      data-variant={variant()}
-      data-size={size()}
-      data-spacing={spacing()}
-      data-orientation={orientation()}
-      // 拼接态样式依赖 data-vertical / data-horizontal(与 tabs 根保持一致)
-      data-vertical={orientation() === "vertical" ? "" : null}
-      data-horizontal={orientation() === "vertical" ? null : ""}
-      style={{ "--gap": spacing() } as JSX.CSSProperties}
+      data-variant={local.variant}
+      data-size={local.size}
+      data-spacing={local.spacing}
+      data-orientation={local.orientation}
+      // 现有样式依赖 data-vertical / data-horizontal(与 tabs 根保持一致)
+      data-vertical={isVertical() ? "" : null}
+      data-horizontal={isVertical() ? null : ""}
+      data-multiple={local.multiple ? "" : null}
+      data-disabled={local.disabled ? "" : null}
+      aria-disabled={local.disabled ? "true" : undefined}
       dir={local.dir}
+      // --gap 作为 spacing 的样式入口,用户 style 可覆盖
+      style={{ "--gap": local.spacing, ...local.style } as JSX.CSSProperties}
       class={clsx(toggleGroupVariants(), local.class)}
+      classList={local.classList}
+      onKeyDown={(e) => {
+        callEventHandler(local.onKeyDown, e);
+        if (!e.defaultPrevented) handleKeyDown(e);
+      }}
       {...rest}
     >
       <ToggleGroupContext.Provider value={ctx}>
