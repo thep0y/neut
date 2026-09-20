@@ -31,7 +31,7 @@ function ToggleGroupUsage() {
 
 function ToggleGroupOutline() {
   return (
-    <ToggleGroup variant="outline" defaultValue={["all"]}>
+    <ToggleGroup variant="outline" defaultValue="all">
       <ToggleGroupItem value="all" aria-label="Toggle all">
         All
       </ToggleGroupItem>
@@ -45,7 +45,7 @@ function ToggleGroupOutline() {
 function ToggleGroupSizes() {
   return (
     <div class="flex flex-col gap-4">
-      <ToggleGroup size="sm" defaultValue={["top"]} variant="outline">
+      <ToggleGroup size="sm" defaultValue="top" variant="outline">
         <ToggleGroupItem value="top" aria-label="Toggle top">
           Top
         </ToggleGroupItem>
@@ -59,7 +59,7 @@ function ToggleGroupSizes() {
           Right
         </ToggleGroupItem>
       </ToggleGroup>
-      <ToggleGroup defaultValue={["top"]} variant="outline">
+      <ToggleGroup defaultValue="top" variant="outline">
         <ToggleGroupItem value="top" aria-label="Toggle top">
           Top
         </ToggleGroupItem>
@@ -79,7 +79,7 @@ function ToggleGroupSizes() {
 
 function ToggleGroupSpacing() {
   return (
-    <ToggleGroup size="sm" defaultValue={["top"]} variant="outline" spacing={2}>
+    <ToggleGroup size="sm" defaultValue="top" variant="outline" spacing={2}>
       <ToggleGroupItem value="top" aria-label="Toggle top">
         Top
       </ToggleGroupItem>
@@ -99,7 +99,7 @@ function ToggleGroupSpacing() {
 function ToggleGroupConnected() {
   return (
     <div class="flex flex-col items-start gap-4">
-      <ToggleGroup spacing={0} defaultValue={["top"]}>
+      <ToggleGroup spacing={0} defaultValue="top">
         <ToggleGroupItem value="top" aria-label="Toggle top">
           Top
         </ToggleGroupItem>
@@ -113,7 +113,7 @@ function ToggleGroupConnected() {
           Right
         </ToggleGroupItem>
       </ToggleGroup>
-      <ToggleGroup variant="outline" spacing={0} defaultValue={["top"]}>
+      <ToggleGroup variant="outline" spacing={0} defaultValue="top">
         <ToggleGroupItem value="top" aria-label="Toggle top">
           Top
         </ToggleGroupItem>
@@ -128,7 +128,7 @@ function ToggleGroupConnected() {
         variant="outline"
         spacing={0}
         orientation="vertical"
-        defaultValue={["top"]}
+        defaultValue="top"
       >
         <ToggleGroupItem value="top" aria-label="Toggle top">
           Top
@@ -188,8 +188,8 @@ function ToggleGroupCustom() {
     <Field>
       <FieldLabel>Font Weight</FieldLabel>
       <ToggleGroup
-        value={[fontWeight()]}
-        onValueChange={(value) => setFontWeight(value[0] ?? "normal")}
+        value={fontWeight()}
+        onValueChange={(value) => setFontWeight(value ?? "normal")}
         variant="outline"
         spacing={2}
         size="lg"
@@ -253,7 +253,7 @@ function ToggleGroupRtl() {
   return (
     <div class="flex flex-col items-center gap-4">
       <LanguageSwitch language={language} onChange={setLanguage} />
-      <ToggleGroup variant="outline" defaultValue={["list"]} dir={t().dir}>
+      <ToggleGroup variant="outline" defaultValue="list" dir={t().dir}>
         <ToggleGroupItem value="list" aria-label={t().values.list}>
           {t().values.list}
         </ToggleGroupItem>

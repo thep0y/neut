@@ -1,10 +1,12 @@
 import { createContext, createSignal, useContext } from "solid-js";
 import { createChangeEventDetails } from "./create-change-event-details";
 import type {
-  ToggleGroupChangeEventDetails,
+  ToggleGroupChangeHandler,
   ToggleGroupContextValue,
   ToggleGroupItemEntry,
+  ToggleGroupMultipleProps,
   ToggleGroupOrientation,
+  ToggleGroupSingleProps,
   ToggleGroupSize,
   ToggleGroupValue,
   ToggleGroupVariant,
@@ -12,22 +14,32 @@ import type {
 
 const ToggleGroupContext = createContext<ToggleGroupContextValue>();
 
-/** createToggleGroupState 的输入:与 ToggleGroupProps 的运行时字段一致 */
+/** 单选/多选的 onValueChange 签名(从 props 类型派生,保持单一事实来源) */
+type SingleChangeHandler<TValue extends ToggleGroupValue> = NonNullable<
+  ToggleGroupSingleProps<TValue>["onValueChange"]
+>;
+type MultipleChangeHandler<TValue extends ToggleGroupValue> = NonNullable<
+  ToggleGroupMultipleProps<TValue>["onValueChange"]
+>;
+
+/**
+ * createToggleGroupState 的输入:ToggleGroupProps 的运行时形态。
+ *
+ * 受控值时单选给标量、多选给数组,内部统一规范化成数组;
+ * `multiple` 同时决定 onValueChange 用哪种签名回调。
+ */
 export interface ToggleGroupStateProps<
   TValue extends ToggleGroupValue = ToggleGroupValue,
 > {
-  value?: readonly TValue[];
-  defaultValue?: readonly TValue[];
-  onValueChange?: (
-    value: TValue[],
-    eventDetails: ToggleGroupChangeEventDetails,
-  ) => void;
-  multiple: boolean;
-  disabled: boolean;
-  orientation: ToggleGroupOrientation;
-  loopFocus: boolean;
+  value?: TValue | readonly TValue[];
+  defaultValue?: TValue | readonly TValue[];
+  onValueChange?: ToggleGroupChangeHandler<TValue>;
+  multiple?: boolean;
+  disabled?: boolean;
+  orientation?: ToggleGroupOrientation;
+  loopFocus?: boolean;
   dir?: "ltr" | "rtl" | "auto";
-  spacing: number;
+  spacing?: number;
   variant?: ToggleGroupVariant;
   size?: ToggleGroupSize;
 }
@@ -36,7 +48,7 @@ export interface ToggleGroupStateProps<
  * ToggleGroup 的唯一状态源:选中值(受控/非受控)、焦点高亮、item 注册表。
  *
  * 返回的 context 值里所有字段都是 accessor,因此传入的 `props` 可以是
- * splitProps/mergeProps 得到的响应式代理,读取始终是最新值。
+ * splitProps 得到的响应式代理,读取始终是最新值。
  * 组件根只负责输出 DOM 与 data-* 样式钩子,状态与交互算法收敛在这里。
  *
  * 值类型由泛型参数决定;内部只用 `===` / `includes` 做同一性比较,
@@ -45,9 +57,17 @@ export interface ToggleGroupStateProps<
 export function createToggleGroupState<
   TValue extends ToggleGroupValue = ToggleGroupValue,
 >(props: ToggleGroupStateProps<TValue>): ToggleGroupContextValue<TValue> {
-  const [internalValue, setInternalValue] = createSignal<TValue[]>([
-    ...(props.defaultValue ?? []),
-  ]);
+  const multiple = () => props.multiple === true;
+
+  /** 单选传标量、多选传数组,内部统一成数组 */
+  const toArray = (v: TValue | readonly TValue[] | undefined): TValue[] => {
+    if (v === undefined) return [];
+    return Array.isArray(v) ? [...(v as readonly TValue[])] : [v as TValue];
+  };
+
+  const [internalValue, setInternalValue] = createSignal<TValue[]>(
+    toArray(props.defaultValue),
+  );
   const [highlightedValue, setHighlightedValue] = createSignal<
     TValue | undefined
   >();
@@ -58,7 +78,7 @@ export function createToggleGroupState<
   const isControlled = () => props.value !== undefined;
   // 受控优先:props.value 存在时读外部值,否则读内部状态
   const value = (): readonly TValue[] =>
-    isControlled() ? (props.value as readonly TValue[]) : internalValue();
+    isControlled() ? toArray(props.value) : internalValue();
 
   const isPressed = (v: TValue) => value().includes(v);
 
@@ -70,9 +90,9 @@ export function createToggleGroupState<
     const current = value();
     const pressed = current.includes(itemValue);
 
-    // 对齐 base-ui:单选时再次点击已按下项会取消选中(next = [])
+    // 单选时再次点击已按下项会取消选中(next = [])
     let next: TValue[];
-    if (props.multiple) {
+    if (multiple()) {
       next = pressed
         ? current.filter((v) => v !== itemValue)
         : [...current, itemValue];
@@ -81,8 +101,19 @@ export function createToggleGroupState<
     }
 
     // 先通知外部:onValueChange 中 cancel() 可阻止组件提交本次变更
+    // 单选回调标量(取消时是 undefined),多选回调数组
     const details = createChangeEventDetails(event, trigger);
-    props.onValueChange?.(next, details);
+    if (multiple()) {
+      (props.onValueChange as MultipleChangeHandler<TValue> | undefined)?.(
+        next,
+        details,
+      );
+    } else {
+      (props.onValueChange as SingleChangeHandler<TValue> | undefined)?.(
+        next[0],
+        details,
+      );
+    }
     if (details.isCanceled) return;
 
     // 受控模式只通知外部,不改内部状态
@@ -102,12 +133,12 @@ export function createToggleGroupState<
 
   return {
     value,
-    multiple: () => props.multiple,
-    disabled: () => props.disabled,
-    orientation: () => props.orientation,
-    loopFocus: () => props.loopFocus,
+    multiple,
+    disabled: () => props.disabled === true,
+    orientation: () => props.orientation ?? "horizontal",
+    loopFocus: () => props.loopFocus ?? true,
     dir: () => props.dir,
-    spacing: () => props.spacing,
+    spacing: () => props.spacing ?? 2,
     variant: () => props.variant,
     size: () => props.size,
     highlightedValue,
