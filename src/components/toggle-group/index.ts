@@ -1,5 +1,15 @@
 export { ToggleGroup } from "./ToggleGroup";
-export type { ToggleGroupProps, ToggleGroupContextValue } from "./ToggleGroup";
+export type {
+  ToggleGroupProps,
+  ToggleGroupValue,
+  ToggleGroupContextValue,
+  ToggleGroupItemEntry,
+  ToggleGroupOrientation,
+  ToggleGroupVariant,
+  ToggleGroupSize,
+  ToggleGroupChangeEventDetails,
+  ToggleGroupChangeEventReason,
+} from "./ToggleGroup";
 
 export { ToggleGroupItem } from "./ToggleGroupItem";
 export type { ToggleGroupItemProps } from "./ToggleGroupItem";
