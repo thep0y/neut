@@ -174,21 +174,39 @@ export function Calendar(props: CalendarProps): JSX.Element {
 
   const localeCode = createMemo(() => resolveLocaleCode(merged.locale));
 
-  const monthOptions = createMemo(() =>
-    Array.from({ length: 12 }, (_, i) => {
-      const monthDate = new Date(2024, i, 1);
-      return {
-        value: String(i),
-        label: new Intl.DateTimeFormat(localeCode(), {
-          month: "long",
-        }).format(monthDate),
-      };
-    }),
-  );
+  const monthOptions = (year: number) =>
+    Array.from({ length: 12 }, (_, i) => i)
+      .filter((i) => {
+        const beforeMin =
+          !!merged.min &&
+          (year < merged.min.getFullYear() ||
+            (year === merged.min.getFullYear() && i < merged.min.getMonth()));
+        const afterMax =
+          !!merged.max &&
+          (year > merged.max.getFullYear() ||
+            (year === merged.max.getFullYear() && i > merged.max.getMonth()));
+        return !beforeMin && !afterMax;
+      })
+      .map((i) => {
+        const monthDate = new Date(2024, i, 1);
+        return {
+          value: String(i),
+          label: new Intl.DateTimeFormat(localeCode(), {
+            month: "long",
+          }).format(monthDate),
+        };
+      });
 
   const yearOptions = createMemo(() => {
     const currentYear = new Date().getFullYear();
-    return Array.from({ length: 201 }, (_, i) => currentYear - 100 + i);
+    const startYear = merged.min
+      ? merged.min.getFullYear()
+      : currentYear - 100;
+    const endYear = merged.max ? merged.max.getFullYear() : currentYear + 100;
+    return Array.from(
+      { length: Math.max(0, endYear - startYear + 1) },
+      (_, i) => startYear + i,
+    );
   });
 
   const slotClass = (key: keyof CalendarClassNames) =>
@@ -399,7 +417,7 @@ export function Calendar(props: CalendarProps): JSX.Element {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent class="max-h-56">
-                  <For each={monthOptions()}>
+                  <For each={monthOptions(monthDate.getFullYear())}>
                     {(option) => (
                       <SelectItem value={option.value}>
                         {option.label}

@@ -153,6 +153,52 @@ function DatePickerDob() {
   );
 }
 
+function DatePickerDropdownRange() {
+  const [open, setOpen] = createSignal(false);
+  const [date, setDate] = createSignal<Date | undefined>(
+    new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+  );
+
+  const min = new Date(2010, 3, 1);
+  const max = new Date();
+
+  return (
+    <Field class="mx-auto w-48">
+      <FieldLabel for="date-picker-dropdown-range">Reference Date</FieldLabel>
+      <Popover open={open()} onOpenChange={setOpen}>
+        <PopoverTrigger
+          variant="outline"
+          id="date-picker-dropdown-range"
+          data-empty={date() ? "false" : "true"}
+          class="justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
+        >
+          <Show when={date()} fallback={<span>Pick a date</span>}>
+            {formatPPP(date()!)}
+          </Show>
+          <ChevronDown data-icon="inline-end" />
+        </PopoverTrigger>
+        <PopoverContent class="w-auto overflow-hidden p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={date()}
+            defaultMonth={date()}
+            captionLayout="dropdown"
+            min={min}
+            max={max}
+            onSelect={(value) => {
+              setDate(value as Date | undefined);
+              setOpen(false);
+            }}
+          />
+        </PopoverContent>
+      </Popover>
+      <div class="px-1 text-sm text-muted-foreground">
+        Limited to {formatShortDate(min)} - {formatShortDate(max)}.
+      </div>
+    </Field>
+  );
+}
+
 function DatePickerInput() {
   const [open, setOpen] = createSignal(false);
   const [date, setDate] = createSignal<Date | undefined>(
@@ -397,6 +443,13 @@ export const datePickerSections: Section[] = [
     description:
       "A date picker component for selecting a date of birth with dropdown caption layout.",
     component: DatePickerDob,
+  },
+  {
+    id: "dropdown-range",
+    title: "Dropdown with Min/Max",
+    description:
+      "A date picker with dropdown caption layout constrained by minimum and maximum dates.",
+    component: DatePickerDropdownRange,
   },
   {
     id: "input",
