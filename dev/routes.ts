@@ -12,6 +12,7 @@ const DatePickerPage = lazy(() => import("./pages/date-picker-page"));
 const DialogPage = lazy(() => import("./pages/dialog-page"));
 const CalendarPage = lazy(() => import("./pages/calendar-page"));
 const ComboboxPage = lazy(() => import("./pages/combobox-page"));
+const ContextMenuPage = lazy(() => import("./pages/context-menu-page"));
 const PopoverPage = lazy(() => import("./pages/popover-page"));
 const RadioGroupPage = lazy(() => import("./pages/radio-group-page"));
 const TogglePage = lazy(() => import("./pages/toggle-page"));
@@ -31,6 +32,7 @@ export const routes: DevRoute[] = [
   { path: "/date-picker", title: "Date Picker", component: DatePickerPage },
   { path: "/calendar", title: "Calendar", component: CalendarPage },
   { path: "/combobox", title: "Combobox", component: ComboboxPage },
+  { path: "/context-menu", title: "Context Menu", component: ContextMenuPage },
   { path: "/popover", title: "Popover", component: PopoverPage },
   { path: "/radio-group", title: "Radio Group", component: RadioGroupPage },
   { path: "/tooltip", title: "Tooltip", component: TooltipPage },
