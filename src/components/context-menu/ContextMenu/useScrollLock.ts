@@ -47,12 +47,15 @@ function lockViewport(): () => void {
 
   // 抵消滚动条消失带来的横向抖动:能用 scrollbar-gutter 就用它,
   // 否则退化成给 body 补一个滚动条宽度的右内边距。
+  // 只有页面自身真的存在占位滚动条时才需要补偿:滚动条长在某个嵌套容器上时,
+  // 锁 html/body 并不会移除那条滚动条,再给 html 加 gutter 只会额外多出一条空白
+  // (滚动条 + gutter 双倍宽度),反而破坏布局。
+  const scrollbarWidth = Math.max(0, window.innerWidth - html.clientWidth);
   const gutterSupported = supportsStableScrollbarGutter();
-  if (gutterSupported) {
-    html.style.scrollbarGutter = "stable";
-  } else {
-    const scrollbarWidth = Math.max(0, window.innerWidth - html.clientWidth);
-    if (scrollbarWidth > 0) {
+  if (scrollbarWidth > 0) {
+    if (gutterSupported) {
+      html.style.scrollbarGutter = "stable";
+    } else {
       const padding =
         Number.parseFloat(getComputedStyle(body).paddingRight) || 0;
       body.style.paddingRight = `${padding + scrollbarWidth}px`;
