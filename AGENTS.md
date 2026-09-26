@@ -15,7 +15,8 @@
 
 ## 环境与命令
 
-包管理器是 **bun**（见 `bun.lock`）。
+包管理器是 **bun**（见 `bun.lock`）。**所有命令一律用 `bun` / `bunx`，禁止 `npx` / `npm` /
+`yarn` / `pnpm`**。
 
 | 命令 | 用途 |
 | --- | --- |
@@ -27,6 +28,9 @@
 
 注意事项：
 
+- **不要用 `npx`**：`npx biome` 会解析到 npm 上同名的无关包 `biome`（不是 Biome 本体），
+  `check --write` 会静默跳过、漏掉 lint/a11y 报错。仓库 Biome 直接用 PATH 里的 `biome`，
+  或 `bunx @biomejs/biome`。
 - Biome 不在 `devDependencies` 中，CI 通过 `biomejs/setup-biome` 提供。本地需要时用
   `bunx @biomejs/biome check --write src`。
 - 只做快速类型检查：`bunx tsc --noEmit`。
