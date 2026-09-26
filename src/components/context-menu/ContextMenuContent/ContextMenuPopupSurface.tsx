@@ -9,6 +9,7 @@ import {
 import { Portal } from "solid-js/web";
 import { getAlignment } from "~/lib";
 import { clsx } from "~/utils";
+import { ScrollArrows } from "~/components/scroll-arrows";
 import type { ContextMenuSide } from "../context-menu.types";
 import { ContextMenuPopupContext } from "../context-menu.context";
 import {
@@ -23,6 +24,7 @@ import type { ContextMenuPopupRuntime } from "./useContextMenuContent";
  */
 const CONTENT_CLASS = clsx(
   "z-50 max-h-(--available-height) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 outline-none",
+  "no-scrollbar [&::-webkit-scrollbar]:hidden",
   "data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
   "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
   "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
@@ -144,6 +146,11 @@ export function ContextMenuPopupSurface(props: ContextMenuPopupSurfaceProps) {
               {props.children}
             </ContextMenuPopupContext.Provider>
           </div>
+          <ScrollArrows
+            target={runtime.popupEl}
+            upClass="rounded-t-lg"
+            downClass="rounded-b-lg"
+          />
         </div>
       </Portal>
     </Show>
