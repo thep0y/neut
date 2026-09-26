@@ -39,7 +39,7 @@ export function TimePickerColumn(props: TimePickerColumnProps): JSX.Element {
         role="listbox"
         aria-label={props.label ?? ctx.getUnitLabel(props.unit)}
         aria-activedescendant={activeOptionId()}
-        tabindex={0}
+        tabIndex={0}
         class={clsx(
           "h-52 w-12 overflow-y-auto overscroll-contain rounded-md p-1",
           "[scrollbar-width:thin]",

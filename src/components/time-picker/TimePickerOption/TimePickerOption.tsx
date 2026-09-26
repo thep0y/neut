@@ -24,6 +24,7 @@ export function TimePickerOption(props: TimePickerOptionProps): JSX.Element {
       {...rest}
       id={local.id}
       role="option"
+      tabIndex={-1}
       aria-selected={local.selected}
       aria-disabled={local.disabled}
       data-value={String(local.value)}
