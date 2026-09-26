@@ -10,6 +10,11 @@ interface BaseDialogProps {
   defaultOpen?: boolean;
   /** 打开状态变化时回调 */
   onOpenChange?: (open: boolean) => void;
+  /**
+   * 打开时是否锁定页面滚动，默认 true：锁住文档滚动并拦截浮层之外的
+   * 滚轮/触摸滚动，内容区自身仍可滚动。
+   */
+  lockScroll?: boolean;
 }
 
 export type DialogProps = PolymorphicProps<
