@@ -46,9 +46,7 @@ export function useContextMenuRadioGroup(
 ): ContextMenuRadioGroupContextValue {
   const ctx = useContext(ContextMenuRadioGroupContext);
   if (!ctx) {
-    throw new Error(
-      `<${component}> 必须渲染在 <ContextMenuRadioGroup> 内部`,
-    );
+    throw new Error(`<${component}> 必须渲染在 <ContextMenuRadioGroup> 内部`);
   }
   return ctx;
 }
