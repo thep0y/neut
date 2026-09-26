@@ -17,6 +17,7 @@ const PopoverPage = lazy(() => import("./pages/popover-page"));
 const RadioGroupPage = lazy(() => import("./pages/radio-group-page"));
 const TogglePage = lazy(() => import("./pages/toggle-page"));
 const ToggleGroupPage = lazy(() => import("./pages/toggle-group-page"));
+const TimePickerPage = lazy(() => import("./pages/time-picker-page"));
 const EmptyPage = lazy(() => import("./pages/empty-page"));
 const TooltipPage = lazy(() => import("./pages/tooltip-page"));
 const ToastPage = lazy(() => import("./pages/toast-page"));
@@ -40,6 +41,7 @@ export const routes: DevRoute[] = [
   { path: "/toggle-group", title: "Toggle Group", component: ToggleGroupPage },
   { path: "/empty", title: "Empty", component: EmptyPage },
   { path: "/toast", title: "Toast", component: ToastPage },
+  { path: "/time-picker", title: "Time Picker", component: TimePickerPage },
 ];
 
 export const sidebarRoutes = routes
