@@ -49,7 +49,8 @@ export default defineConfig({
     dts({ entryRoot: "src" }),
   ],
   server: {
-    port: 5173,
+    port: 7789,
+    strictPort: true,
   },
   build: {
     sourcemap: true,
