@@ -124,7 +124,7 @@ interface TimePickerProps extends ParentProps {
 5. **RTL**:`dir="rtl"` 时左右方向键语义反转(仅列切换方向)。
 6. **列渲染不用 `ScrollArea`**:`ScrollArea` 的 viewport 固定 `role="region"`,会让 listbox
    的 required-owned-elements 中间夹一层;为保证 ARIA 正确,列用原生滚动容器
-   (`overflow-y-auto` + `[scrollbar-width:thin]`),它自身就是 listbox。
+   (`overflow-y-auto` + `scrollbar-thin`),它自身就是 listbox。
 7. **`DatePicker` 关系**:两者值类型一致,但独立实现;需要「日期+时间」时由使用者组合。
 8. **打开时锁定页面滚动**:由 `Popover` 在 `open() && lockScroll()`(`lockScroll` 默认
    `true`)时调用全局 `useScrollLock`(见 `src/hooks/useScrollLock.ts`),锁住文档滚动并拦截
