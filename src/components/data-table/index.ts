@@ -1,0 +1,23 @@
+export { createTable } from "./createTable";
+export type {
+  Cell,
+  CellContext,
+  Column,
+  ColumnDef,
+  ColumnFilter,
+  ColumnFiltersState,
+  ColumnVisibilityState,
+  CreateTableOptions,
+  FilterFn,
+  Header,
+  HeaderContext,
+  HeaderGroup,
+  PaginationState,
+  Row,
+  RowSelectionState,
+  SortingEntry,
+  SortingFn,
+  SortingState,
+  DataTable,
+  TableState,
+} from "./data-table.types";
