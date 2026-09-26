@@ -7,6 +7,11 @@ export interface ComboboxProps<T = any> extends ParentProps {
   onValueChange?: (value: T | T[] | null) => void;
   multiple?: boolean;
   disabled?: boolean;
+  /**
+   * 打开时是否锁定页面滚动，默认 true：锁住文档滚动并拦截浮层之外的
+   * 滚轮/触摸滚动，面板自身仍可滚动。
+   */
+  lockScroll?: boolean;
   autoHighlight?: boolean;
   itemToStringValue?: (item: T) => string;
   open?: boolean;
