@@ -1,4 +1,5 @@
 import { createMemo, createSignal, createUniqueId, type JSX } from "solid-js";
+import { useScrollLock } from "~/hooks";
 import { ComboboxContext } from "./Combobox.context";
 import type { ComboboxContextValue, ComboboxProps } from "./Combobox.types";
 
@@ -37,6 +38,14 @@ export function Combobox<T = any>(props: ComboboxProps<T>): JSX.Element {
     props.open !== undefined ? props.open : internalOpen(),
   );
   const disabled = createMemo(() => !!props.disabled);
+  const lockScroll = createMemo(() => props.lockScroll ?? true);
+
+  // 打开期间默认锁定页面滚动：锁住文档滚动并拦截浮层之外的滚轮/触摸，
+  // 面板自身仍可滚动。传 lockScroll={false} 可关闭该行为。
+  useScrollLock(() => open() && lockScroll(), {
+    allowedSelector: '[data-slot="combobox-content"]',
+  });
+
   const multiple = createMemo(() => !!props.multiple);
   const setOpen = (next: boolean) => {
     if (props.open === undefined) setInternalOpen(next);
