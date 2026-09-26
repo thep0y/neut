@@ -1,25 +1,16 @@
 import { Show, onCleanup } from "solid-js";
 import { ChevronDown, ChevronUp } from "lucide-solid";
 import { clsx } from "~/utils";
-
-export interface SelectScrollButtonProps {
-  /** "up" 表示向上滚动(按钮固定在顶部)，"down" 反之 */
-  direction: "up" | "down";
-  /** 当前方向是否还有可滚动的内容 */
-  visible: boolean;
-  /** 滚动容器(SelectContent 的 listbox) */
-  scrollElement: () => HTMLElement | undefined;
-}
+import type { ScrollArrowButtonProps } from "./ScrollArrows.types";
 
 /**
- * Radix 风格的滚动提示箭头：不显示原生滚动条，用上下箭头提示还有内容，
- * 悬停/按住时用 requestAnimationFrame 持续滚动，滚到边界后调用方会把
- * visible 置为 false，组件卸载并自动停止。
+ * 单个滚动提示箭头：覆盖在列表上/下沿，悬停或按住时用 requestAnimationFrame
+ * 持续滚动目标容器，到边界后 scrollTop 不再变化即自动停止。
  *
- * 箭头是覆盖在列表上方的装饰元素(`aria-hidden`、不可聚焦)，无障碍仍由
- * listbox 的 aria-activedescendant 承担。
+ * 箭头是装饰元素(`aria-hidden`、不可聚焦)，无障碍仍由列表自身的
+ * listbox/aria-activedescendant 承担。
  */
-export function SelectScrollButton(props: SelectScrollButtonProps) {
+export function ScrollArrowButton(props: ScrollArrowButtonProps) {
   let frame: number | undefined;
 
   const stop = () => {
@@ -30,7 +21,7 @@ export function SelectScrollButton(props: SelectScrollButtonProps) {
   };
 
   const loop = () => {
-    const el = props.scrollElement();
+    const el = props.target();
     if (!el) {
       stop();
       return;
@@ -72,14 +63,12 @@ export function SelectScrollButton(props: SelectScrollButtonProps) {
       <div
         ref={attach}
         aria-hidden="true"
-        data-slot="select-scroll-button"
+        data-slot="scroll-arrow"
         data-direction={props.direction}
         class={clsx(
-          "absolute inset-x-0 z-10 flex h-6 cursor-default items-center justify-center bg-popover text-muted-foreground select-none",
-          "[&_svg]:size-4",
-          props.direction === "down"
-            ? "bottom-0 rounded-b-lg"
-            : "top-0 rounded-t-lg",
+          "absolute inset-x-0 z-10 flex h-6 cursor-default items-center justify-center bg-popover text-muted-foreground select-none [&_svg]:size-4",
+          props.direction === "down" ? "bottom-0" : "top-0",
+          props.class,
         )}
       >
         {props.direction === "down" ? <ChevronDown /> : <ChevronUp />}
