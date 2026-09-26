@@ -302,6 +302,7 @@ export function createContextMenuPopupRuntime(
   const popupCtx: ContextMenuPopupContextValue = {
     root,
     parent: options.parent,
+    submenu: options.submenu,
     menuId,
     isSubmenu: options.isSubmenu,
     popup: popupEl,

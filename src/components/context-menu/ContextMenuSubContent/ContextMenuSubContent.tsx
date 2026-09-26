@@ -3,6 +3,7 @@ import { clsx } from "~/utils";
 import { ContextMenuPopupSurface } from "../ContextMenuContent/ContextMenuPopupSurface";
 import { createContextMenuPopupRuntime } from "../ContextMenuContent/useContextMenuContent";
 import { useContextMenuSubmenu } from "../context-menu.context";
+import { cancelSubmenuCloseChain } from "../context-menu.utils";
 import type { ContextMenuSubContentProps } from "./ContextMenuSubContent.types";
 
 /**
@@ -78,7 +79,7 @@ export function ContextMenuSubContent(props: ContextMenuSubContentProps) {
       style={local.style}
       onKeyDown={local.onKeyDown}
       onPointerEnter={() => {
-        submenu.cancelClose();
+        cancelSubmenuCloseChain(submenu);
         local.onPointerEnter?.();
       }}
       onPointerLeave={() => {

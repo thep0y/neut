@@ -10,8 +10,10 @@ export interface DevRoute {
 
 const DatePickerPage = lazy(() => import("./pages/date-picker-page"));
 const DialogPage = lazy(() => import("./pages/dialog-page"));
+const DropdownMenuPage = lazy(() => import("./pages/dropdown-menu-page"));
 const AlertDialogPage = lazy(() => import("./pages/alert-dialog-page"));
 const CalendarPage = lazy(() => import("./pages/calendar-page"));
+const AttachmentPage = lazy(() => import("./pages/attachment-page"));
 const ComboboxPage = lazy(() => import("./pages/combobox-page"));
 const SelectPage = lazy(() => import("./pages/select-page"));
 const ContextMenuPage = lazy(() => import("./pages/context-menu-page"));
@@ -33,9 +35,15 @@ export const routes: DevRoute[] = [
     hideInSidebar: true,
   },
   { path: "/dialog", title: "Dialog", component: DialogPage },
+  {
+    path: "/dropdown-menu",
+    title: "Dropdown Menu",
+    component: DropdownMenuPage,
+  },
   { path: "/alert-dialog", title: "Alert Dialog", component: AlertDialogPage },
   { path: "/date-picker", title: "Date Picker", component: DatePickerPage },
   { path: "/calendar", title: "Calendar", component: CalendarPage },
+  { path: "/attachment", title: "Attachment", component: AttachmentPage },
   { path: "/combobox", title: "Combobox", component: ComboboxPage },
   { path: "/select", title: "Select", component: SelectPage },
   { path: "/context-menu", title: "Context Menu", component: ContextMenuPage },

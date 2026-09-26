@@ -109,6 +109,8 @@ export interface ContextMenuPopupContextValue {
   root: ContextMenuContextValue;
   /** 父级浮层;根菜单为 undefined */
   parent: ContextMenuPopupContextValue | undefined;
+  /** 该浮层所属的子菜单上下文;根菜单为 undefined */
+  submenu?: ContextMenuSubmenuContextValue;
   menuId: string;
   isSubmenu: boolean;
   /** 真正承载焦点的 popup 元素 */
