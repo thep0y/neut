@@ -1,4 +1,5 @@
 import { createEffect, createMemo, createSignal, splitProps } from "solid-js";
+import { useScrollLock } from "~/hooks";
 import type { DialogProps } from "./Dialog.types";
 import { DialogContext } from "./Dialog.context";
 
@@ -7,6 +8,7 @@ export const Dialog = (props: DialogProps) => {
     "open",
     "defaultOpen",
     "onOpenChange",
+    "lockScroll",
     "children",
   ]);
 
@@ -22,6 +24,13 @@ export const Dialog = (props: DialogProps) => {
   const open = createMemo(() =>
     local.open === undefined ? internalOpen() : local.open,
   );
+  const lockScroll = createMemo(() => props.lockScroll ?? true);
+
+  // 打开期间默认锁定页面滚动：锁住文档滚动并拦截浮层之外的滚轮/触摸，
+  // 内容区自身仍可滚动。传 lockScroll={false} 可关闭该行为。
+  useScrollLock(() => open() && lockScroll(), {
+    allowedSelector: '[data-slot="dialog-content"]',
+  });
 
   const setOpen = (next: boolean) => {
     if (local.open === undefined) {
