@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @import "./animate.css";
+@import "./effects.css";
 @import "./i18n-font.css";
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
