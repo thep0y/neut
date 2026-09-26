@@ -9,10 +9,7 @@ import type {
 type Dir = "ltr" | "rtl" | "auto" | undefined;
 
 /** 逻辑方向 -> 物理方向(LTR 下 inline-start=left,inline-end=right;RTL 相反) */
-function resolveLogicalSide(
-  side: ContextMenuSide,
-  dir: Dir,
-): Side {
+function resolveLogicalSide(side: ContextMenuSide, dir: Dir): Side {
   const rtl = dir === "rtl";
   if (side === "inline-start") return rtl ? "right" : "left";
   if (side === "inline-end") return rtl ? "left" : "right";
@@ -29,9 +26,7 @@ export function toContextMenuPlacement(
   dir: Dir,
 ): Placement {
   const physical = resolveLogicalSide(side, dir);
-  return align === "center"
-    ? physical
-    : (`${physical}-${align}` as Placement);
+  return align === "center" ? physical : (`${physical}-${align}` as Placement);
 }
 
 /**

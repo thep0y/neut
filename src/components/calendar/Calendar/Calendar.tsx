@@ -199,9 +199,7 @@ export function Calendar(props: CalendarProps): JSX.Element {
 
   const yearOptions = createMemo(() => {
     const currentYear = new Date().getFullYear();
-    const startYear = merged.min
-      ? merged.min.getFullYear()
-      : currentYear - 100;
+    const startYear = merged.min ? merged.min.getFullYear() : currentYear - 100;
     const endYear = merged.max ? merged.max.getFullYear() : currentYear + 100;
     return Array.from(
       { length: Math.max(0, endYear - startYear + 1) },

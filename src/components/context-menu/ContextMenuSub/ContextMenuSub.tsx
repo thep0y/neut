@@ -1,9 +1,4 @@
-import {
-  createMemo,
-  createSignal,
-  onCleanup,
-  type JSX,
-} from "solid-js";
+import { createMemo, createSignal, onCleanup, type JSX } from "solid-js";
 import { useContextMenuContext } from "../ContextMenu/ContextMenu.context";
 import {
   ContextMenuSubmenuContext,
@@ -36,9 +31,7 @@ export function ContextMenuSub(props: ContextMenuSubProps): JSX.Element {
   const disabled = createMemo(() => !!props.disabled);
   const closeParentOnEsc = createMemo(() => !!props.closeParentOnEsc);
   const loopFocus = createMemo(() => props.loopFocus ?? root.loopFocus());
-  const orientation = createMemo(
-    () => props.orientation ?? root.orientation(),
-  );
+  const orientation = createMemo(() => props.orientation ?? root.orientation());
   const highlightItemOnHover = createMemo(
     () => props.highlightItemOnHover ?? root.highlightItemOnHover(),
   );
@@ -89,10 +82,7 @@ export function ContextMenuSub(props: ContextMenuSubProps): JSX.Element {
     }
   };
 
-  const openSubmenu = (
-    reason: ContextMenuChangeEventReason,
-    event?: Event,
-  ) => {
+  const openSubmenu = (reason: ContextMenuChangeEventReason, event?: Event) => {
     if (disabled()) return;
     const id = itemId();
     if (!id) return;
@@ -105,10 +95,13 @@ export function ContextMenuSub(props: ContextMenuSubProps): JSX.Element {
 
   const scheduleClose = (delay = HOVER_CLOSE_GRACE) => {
     cancelClose();
-    closeTimer = window.setTimeout(() => {
-      closeTimer = undefined;
-      closeSubmenu("trigger-hover");
-    }, Math.max(delay, HOVER_CLOSE_GRACE));
+    closeTimer = window.setTimeout(
+      () => {
+        closeTimer = undefined;
+        closeSubmenu("trigger-hover");
+      },
+      Math.max(delay, HOVER_CLOSE_GRACE),
+    );
   };
 
   const ctx: ContextMenuSubmenuContextValue = {

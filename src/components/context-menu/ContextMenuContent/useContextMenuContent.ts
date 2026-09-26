@@ -292,12 +292,7 @@ export function createContextMenuPopupRuntime(
         break;
       }
       default: {
-        if (
-          e.key.length === 1 &&
-          !e.ctrlKey &&
-          !e.metaKey &&
-          !e.altKey
-        ) {
+        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
           runTypeahead(e.key);
         }
       }
@@ -321,8 +316,7 @@ export function createContextMenuPopupRuntime(
     focusLast,
     highlight: (id) => setActiveId(id),
     openPopupState,
-    openPopup: (id, reason, event) =>
-      setOpenPopupState({ id, reason, event }),
+    openPopup: (id, reason, event) => setOpenPopupState({ id, reason, event }),
     closeOpenPopup,
     closeAll: (reason, event) => root.closeAll(reason, event),
     highlightItemOnHover,

@@ -48,8 +48,7 @@ export function useContextMenuEntry(
       id,
       element,
       disabled: options.disabled,
-      label: () =>
-        options.label() ?? element.textContent?.trim() ?? "",
+      label: () => options.label() ?? element.textContent?.trim() ?? "",
       hasPopup: options.hasPopup ?? (() => false),
       activate: options.activate ?? (() => element.click()),
       openPopup: options.openPopup,
