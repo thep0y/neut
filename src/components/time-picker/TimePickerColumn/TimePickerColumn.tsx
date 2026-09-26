@@ -42,7 +42,7 @@ export function TimePickerColumn(props: TimePickerColumnProps): JSX.Element {
         tabIndex={0}
         class={clsx(
           "h-52 w-12 overflow-y-auto overscroll-contain rounded-md p-1",
-          "[scrollbar-width:thin]",
+          "scrollbar-thin",
           "outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
         )}
       >

@@ -35,7 +35,7 @@ export function TimePickerOption(props: TimePickerOptionProps): JSX.Element {
         "flex h-8 w-full cursor-pointer items-center justify-center rounded-md text-sm tabular-nums select-none",
         "hover:bg-muted",
         "data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground data-[selected=true]:hover:bg-primary",
-        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "data-disabled:pointer-events-none data-disabled:opacity-50",
         local.class,
       )}
       onClick={(event) => local.onSelect?.(event)}
