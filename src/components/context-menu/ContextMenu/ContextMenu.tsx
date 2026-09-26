@@ -7,14 +7,18 @@ import {
   type JSX,
 } from "solid-js";
 import { createVirtualElement, type VirtualElement } from "~/lib";
+import { useScrollLock } from "~/hooks";
 import { ContextMenuContext } from "./ContextMenu.context";
 import type { ContextMenuProps } from "./ContextMenu.types";
-import { useScrollLock } from "./useScrollLock";
 import type {
   ContextMenuChangeEventReason,
   ContextMenuContextValue,
 } from "../context-menu.types";
 import { createChangeEventDetails } from "../context-menu.utils";
+
+/** 菜单自身(根菜单/子菜单)的 popup 容器,允许在锁滚动期间继续在菜单内部滚动 */
+const MENU_POPUP_SELECTOR =
+  '[data-slot="context-menu-content"],[data-slot="context-menu-sub-content"]';
 
 /**
  * ContextMenu 根组件:不渲染任何 DOM,只负责状态管理 + 提供 context。
@@ -52,7 +56,10 @@ export function ContextMenu(props: ContextMenuProps): JSX.Element {
   const modal = createMemo(() => props.modal ?? true);
 
   // 打开期间锁定页面滚动(Base UI menu 的 modal 默认行为),关闭时恢复。
-  useScrollLock(() => open() && modal());
+  // 菜单自身(含子菜单)允许继续滚动。
+  useScrollLock(() => open() && modal(), {
+    allowedSelector: MENU_POPUP_SELECTOR,
+  });
 
   const [finalFocus, setFinalFocus] = createSignal(true);
   const [trigger, setTrigger] = createSignal<HTMLElement>();
@@ -96,10 +103,7 @@ export function ContextMenu(props: ContextMenuProps): JSX.Element {
     if (!open()) commit(true, reason, event);
   };
 
-  const closeAll = (
-    reason: ContextMenuChangeEventReason,
-    event?: Event,
-  ) => {
+  const closeAll = (reason: ContextMenuChangeEventReason, event?: Event) => {
     if (!open()) return;
     commit(false, reason, event);
     // 点击菜单外部时焦点应该留在用户刚点的目标上,不能把焦点抢回触发器。
