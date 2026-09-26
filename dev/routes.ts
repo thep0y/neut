@@ -9,6 +9,7 @@ export interface DevRoute {
 }
 
 const DatePickerPage = lazy(() => import("./pages/date-picker-page"));
+const DataTablePage = lazy(() => import("./pages/data-table-page"));
 const DialogPage = lazy(() => import("./pages/dialog-page"));
 const DropdownMenuPage = lazy(() => import("./pages/dropdown-menu-page"));
 const AlertDialogPage = lazy(() => import("./pages/alert-dialog-page"));
@@ -26,6 +27,7 @@ const TimePickerPage = lazy(() => import("./pages/time-picker-page"));
 const EmptyPage = lazy(() => import("./pages/empty-page"));
 const TooltipPage = lazy(() => import("./pages/tooltip-page"));
 const ToastPage = lazy(() => import("./pages/toast-page"));
+const TablePage = lazy(() => import("./pages/table-page"));
 
 export const routes: DevRoute[] = [
   {
@@ -42,6 +44,7 @@ export const routes: DevRoute[] = [
   },
   { path: "/alert-dialog", title: "Alert Dialog", component: AlertDialogPage },
   { path: "/date-picker", title: "Date Picker", component: DatePickerPage },
+  { path: "/data-table", title: "Data Table", component: DataTablePage },
   { path: "/calendar", title: "Calendar", component: CalendarPage },
   { path: "/attachment", title: "Attachment", component: AttachmentPage },
   { path: "/combobox", title: "Combobox", component: ComboboxPage },
@@ -55,6 +58,7 @@ export const routes: DevRoute[] = [
   { path: "/toggle-group", title: "Toggle Group", component: ToggleGroupPage },
   { path: "/empty", title: "Empty", component: EmptyPage },
   { path: "/toast", title: "Toast", component: ToastPage },
+  { path: "/table", title: "Table", component: TablePage },
   { path: "/time-picker", title: "Time Picker", component: TimePickerPage },
 ];
 
