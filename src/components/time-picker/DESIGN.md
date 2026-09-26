@@ -130,6 +130,13 @@ interface TimePickerProps extends ParentProps {
    `true`)时调用全局 `useScrollLock`(见 `src/hooks/useScrollLock.ts`),锁住文档滚动并拦截
    浮层之外的滚轮/触摸;`[data-slot="popover-content"]` 内仍可滚动,所以时间列照常可用。
    该 hook 已从 context-menu 内部提升为共享 hook,引用计数支持多浮层同时持锁。
+9. **列不用 `Select`**:面板要的是「一个复合控件里始终可见的时/分/秒列,连续滚动或方向键调整」。
+   `Select` 的模型是「折叠触发器 + 独立浮层」,每个单位一个 `Select` 会退化成一排下拉框,并带来
+   多层浮层的开关与焦点归还协调;它的「选中项对齐 / matchWidth / content 常驻以维持 label 注册表」
+   等设计也面向单个折叠下拉,并不适合作常显列。因此列自绘为 `role="listbox"`(`aria-activedescendant`
+   表达高亮、↑↓ 移动即提交、←→ 跨列聚焦),但与 `Select` 保持同一套 ARIA 口径(`role=option` /
+   `data-*` 状态属性)。若确需「一排下拉框」形态,后续可加 `columns="select"` 变体复用 `Select`
+   (参考 `Calendar` 的 dropdown caption layout)。
 
 ## 8. 分期与待办
 
