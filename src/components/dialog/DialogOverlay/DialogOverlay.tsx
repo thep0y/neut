@@ -1,13 +1,20 @@
-import { splitProps } from "solid-js";
+import { mergeProps, splitProps } from "solid-js";
 import type { DialogOverlayProps } from "./DialogOverlay.types";
 import { clsx } from "~/utils";
 import { classes } from "./DialogOverlay.styles";
 import { useDialogContext } from "../Dialog";
 
 export const DialogOverlay = (props: DialogOverlayProps) => {
-  const { open, setShow, setOpen } = useDialogContext();
+  const merged = mergeProps({ dismissOnOverlayClick: true } as const, props);
 
-  const [local, others] = splitProps(props, ["class", "classList"]);
+  const [local, others] = splitProps(merged, [
+    "class",
+    "classList",
+    "dismissOnOverlayClick",
+    "onClick",
+  ]);
+
+  const { open, setShow, setOpen } = useDialogContext();
 
   return (
     <div
@@ -16,7 +23,18 @@ export const DialogOverlay = (props: DialogOverlayProps) => {
       aria-hidden="true"
       data-open={open()}
       class={clsx(classes, local.class)}
-      onClick={() => setOpen(false)}
+      onClick={(
+        event: MouseEvent & {
+          currentTarget: HTMLDivElement;
+          target: Element;
+        },
+      ) => {
+        const userOnClick = local.onClick as
+          | ((e: typeof event) => void)
+          | undefined;
+        userOnClick?.(event);
+        if (local.dismissOnOverlayClick) setOpen(false);
+      }}
       onAnimationEnd={() => {
         if (open()) return;
         setShow(false);

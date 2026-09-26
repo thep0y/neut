@@ -1,6 +1,7 @@
 export * from "./Dialog";
 export * from "./DialogClose";
 export * from "./DialogContent";
+export * from "./DialogSurface";
 export * from "./DialogDescription";
 export * from "./DialogFooter";
 export * from "./DialogHeader";

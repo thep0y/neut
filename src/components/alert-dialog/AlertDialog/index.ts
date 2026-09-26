@@ -1,2 +1,2 @@
 export { AlertDialog } from "./AlertDialog";
-export { useAlertDialogContext } from "./AlertDialog.context";
+export type { AlertDialogProps } from "./AlertDialog.types";

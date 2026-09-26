@@ -1,10 +1,6 @@
 import type { AlertDialogPortalProps } from "./AlertDialogPortal.types";
-import { Portal } from "solid-js/web";
+import { DialogPortal } from "~/components/dialog";
 
-export const AlertDialogPortal = (props: AlertDialogPortalProps) => {
-  return (
-    <Portal>
-      <div data-slot="alert-dialog-portal" {...props} />
-    </Portal>
-  );
-};
+export const AlertDialogPortal = (props: AlertDialogPortalProps) => (
+  <DialogPortal {...props} data-slot="alert-dialog-portal" />
+);
