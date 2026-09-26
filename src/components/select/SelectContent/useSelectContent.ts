@@ -27,10 +27,6 @@ export interface UseSelectContentResult {
   animationState: () => "open" | "closed";
   contentElement: () => HTMLElement | undefined;
   setContentElement: (el: HTMLElement) => void;
-  /** 上方是否还有未显示的内容(决定顶部滚动箭头显隐) */
-  canScrollUp: () => boolean;
-  /** 下方是否还有未显示的内容(决定底部滚动箭头显隐) */
-  canScrollDown: () => boolean;
 }
 
 export function useSelectContent(
@@ -39,42 +35,6 @@ export function useSelectContent(
   const ctx = useSelectContext("SelectContent");
   const [contentElement, setContentElement] = createSignal<HTMLElement>();
   const [fallbackMaxHeight, setFallbackMaxHeight] = createSignal<number>();
-
-  const [canScrollUp, setCanScrollUp] = createSignal(false);
-  const [canScrollDown, setCanScrollDown] = createSignal(false);
-
-  const updateScrollState = () => {
-    const el = contentElement();
-    if (!el) {
-      setCanScrollUp(false);
-      setCanScrollDown(false);
-      return;
-    }
-    setCanScrollUp(el.scrollTop > 1);
-    setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 1);
-  };
-
-  createEffect(() => {
-    const el = contentElement();
-    if (!el) return;
-
-    updateScrollState();
-
-    const resizeObserver = new ResizeObserver(updateScrollState);
-    resizeObserver.observe(el);
-    if (el.firstElementChild) resizeObserver.observe(el.firstElementChild);
-
-    // 选项增删会改变 scrollHeight，需要重新判断箭头显隐
-    const mutationObserver = new MutationObserver(updateScrollState);
-    mutationObserver.observe(el, { childList: true, subtree: true });
-
-    el.addEventListener("scroll", updateScrollState, { passive: true });
-    onCleanup(() => {
-      resizeObserver.disconnect();
-      mutationObserver.disconnect();
-      el.removeEventListener("scroll", updateScrollState);
-    });
-  });
 
   const hasValue = createMemo(() => ctx.value() != null);
 
@@ -115,7 +75,6 @@ export function useSelectContent(
   createEffect(() => {
     if (ctx.open()) {
       pos.update();
-      updateScrollState();
     }
   });
 
@@ -152,7 +111,5 @@ export function useSelectContent(
     animationState,
     contentElement,
     setContentElement,
-    canScrollUp,
-    canScrollDown,
   };
 }

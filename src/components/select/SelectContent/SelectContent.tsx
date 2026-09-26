@@ -1,7 +1,7 @@
 import { onCleanup, splitProps, createMemo, createEffect } from "solid-js";
 import { Portal } from "solid-js/web";
 import { useSelectContent } from "./useSelectContent";
-import { SelectScrollButton } from "./SelectScrollButton";
+import { ScrollArrows } from "~/components/scroll-arrows";
 import type { SelectContentProps } from "./SelectContent.types";
 import { clsx } from "~/utils";
 
@@ -14,8 +14,6 @@ export function SelectContent(props: SelectContentProps) {
     animationState,
     contentElement,
     setContentElement,
-    canScrollUp,
-    canScrollDown,
   } = useSelectContent(() => props);
 
   const [local, rest] = splitProps(props, [
@@ -169,15 +167,10 @@ export function SelectContent(props: SelectContentProps) {
         >
           {local.children}
         </div>
-        <SelectScrollButton
-          direction="up"
-          visible={canScrollUp()}
-          scrollElement={contentElement}
-        />
-        <SelectScrollButton
-          direction="down"
-          visible={canScrollDown()}
-          scrollElement={contentElement}
+        <ScrollArrows
+          target={contentElement}
+          upClass="rounded-t-lg"
+          downClass="rounded-b-lg"
         />
       </div>
     </Portal>
