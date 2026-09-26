@@ -16,6 +16,7 @@ const ComboboxPage = lazy(() => import("./pages/combobox-page"));
 const SelectPage = lazy(() => import("./pages/select-page"));
 const ContextMenuPage = lazy(() => import("./pages/context-menu-page"));
 const PopoverPage = lazy(() => import("./pages/popover-page"));
+const NumberInputPage = lazy(() => import("./pages/number-input-page"));
 const RadioGroupPage = lazy(() => import("./pages/radio-group-page"));
 const TogglePage = lazy(() => import("./pages/toggle-page"));
 const ToggleGroupPage = lazy(() => import("./pages/toggle-group-page"));
@@ -39,6 +40,7 @@ export const routes: DevRoute[] = [
   { path: "/select", title: "Select", component: SelectPage },
   { path: "/context-menu", title: "Context Menu", component: ContextMenuPage },
   { path: "/popover", title: "Popover", component: PopoverPage },
+  { path: "/number-input", title: "Number Input", component: NumberInputPage },
   { path: "/radio-group", title: "Radio Group", component: RadioGroupPage },
   { path: "/tooltip", title: "Tooltip", component: TooltipPage },
   { path: "/toggle", title: "Toggle", component: TogglePage },
