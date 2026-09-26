@@ -29,7 +29,7 @@ export const Dialog = (props: DialogProps) => {
   // 打开期间默认锁定页面滚动：锁住文档滚动并拦截浮层之外的滚轮/触摸，
   // 内容区自身仍可滚动。传 lockScroll={false} 可关闭该行为。
   useScrollLock(() => open() && lockScroll(), {
-    allowedSelector: '[data-slot="dialog-content"]',
+    allowedSelector: "[data-dialog-surface]",
   });
 
   const setOpen = (next: boolean) => {
