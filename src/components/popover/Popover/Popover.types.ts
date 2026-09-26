@@ -9,6 +9,11 @@ export interface PopoverProps extends ParentProps {
   disabled?: boolean;
   /** 是否启用 modal 模式（当前仅透传，不实现焦点陷阱） */
   modal?: boolean;
+  /**
+   * 打开时是否锁定页面滚动，默认 true：锁住文档滚动并拦截浮层之外的
+   * 滚轮/触摸滚动，避免浮层锚点随页面滚动而"飘移"；浮层内容自身仍可滚动。
+   */
+  lockScroll?: boolean;
 }
 
 export interface PopoverContextValue {
