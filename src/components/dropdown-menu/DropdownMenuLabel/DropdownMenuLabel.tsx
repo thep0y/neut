@@ -6,19 +6,15 @@ import {
   useContext,
 } from "solid-js";
 import { clsx } from "~/utils";
-import { ContextMenuGroupContext } from "../context-menu.context";
-import { contextMenuLabelClass } from "../context-menu.styles";
-import type { ContextMenuLabelProps } from "./ContextMenuLabel.types";
+import { ContextMenuGroupContext } from "~/components/context-menu/context-menu.context";
+import { dropdownMenuLabelClass } from "../dropdown-menu.styles";
+import type { DropdownMenuLabelProps } from "./DropdownMenuLabel.types";
 
-/**
- * 分组标题。挂载时把自身 id 注册给父级 `<ContextMenuGroup>`,
- * 由后者写到 `aria-labelledby` 上。
- */
-export function ContextMenuLabel(props: ContextMenuLabelProps) {
+export function DropdownMenuLabel(props: DropdownMenuLabelProps) {
   // Label 允许不套 Group；只有存在 Group 时才登记 label id
   const group = useContext(ContextMenuGroupContext);
   const [local, rest] = splitProps(props, ["class", "children", "inset"]);
-  const id = `context-menu-label-${createUniqueId()}`;
+  const id = `dropdown-menu-label-${createUniqueId()}`;
 
   onMount(() => {
     group?.setLabelId(id);
@@ -28,9 +24,9 @@ export function ContextMenuLabel(props: ContextMenuLabelProps) {
   return (
     <div
       id={id}
-      data-slot="context-menu-label"
+      data-slot="dropdown-menu-label"
       data-inset={local.inset ? "" : undefined}
-      class={clsx(contextMenuLabelClass, local.class)}
+      class={clsx(dropdownMenuLabelClass, local.class)}
       {...rest}
     >
       {local.children}

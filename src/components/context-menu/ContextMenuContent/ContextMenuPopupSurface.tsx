@@ -34,6 +34,8 @@ export interface ContextMenuPopupSurfaceProps {
   runtime: ContextMenuPopupRuntime;
   /** popup 上的 data-slot 值(根菜单 / 子菜单不同) */
   dataSlot: string;
+  /** positioner 上的 data-slot 值,默认 context-menu-positioner */
+  positionerSlot?: string;
   contentId: string;
   open: Accessor<boolean>;
   side: Accessor<ContextMenuSide>;
@@ -97,7 +99,7 @@ export function ContextMenuPopupSurface(props: ContextMenuPopupSurfaceProps) {
               runtime.setPositionerEl(undefined);
             });
           }}
-          data-slot="context-menu-positioner"
+          data-slot={props.positionerSlot ?? "context-menu-positioner"}
           data-side={dataSide()}
           data-align={dataAlign()}
           class="isolate z-50 outline-none"

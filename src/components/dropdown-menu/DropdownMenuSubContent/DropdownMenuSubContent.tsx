@@ -1,17 +1,13 @@
 import { createEffect, on, splitProps } from "solid-js";
 import { clsx } from "~/utils";
-import { ContextMenuPopupSurface } from "../ContextMenuContent/ContextMenuPopupSurface";
-import { createContextMenuPopupRuntime } from "../ContextMenuContent/useContextMenuContent";
-import { useContextMenuSubmenu } from "../context-menu.context";
-import { cancelSubmenuCloseChain } from "../context-menu.utils";
-import type { ContextMenuSubContentProps } from "./ContextMenuSubContent.types";
+import { ContextMenuPopupSurface } from "~/components/context-menu/ContextMenuContent/ContextMenuPopupSurface";
+import { createContextMenuPopupRuntime } from "~/components/context-menu/ContextMenuContent/useContextMenuContent";
+import { useContextMenuSubmenu } from "~/components/context-menu/context-menu.context";
+import { cancelSubmenuCloseChain } from "~/components/context-menu/context-menu.utils";
+import type { DropdownMenuSubContentProps } from "./DropdownMenuSubContent.types";
 
-/**
- * 子菜单的浮层内容。定位锚点是子菜单触发器,而不是鼠标坐标;
- * 其余(键盘导航、高亮、关闭行为)与根菜单共用同一套运行时。
- */
-export function ContextMenuSubContent(props: ContextMenuSubContentProps) {
-  const submenu = useContextMenuSubmenu("ContextMenuSubContent");
+export function DropdownMenuSubContent(props: DropdownMenuSubContentProps) {
+  const submenu = useContextMenuSubmenu("DropdownMenuSubContent");
   const [local, rest] = splitProps(props, [
     "class",
     "style",
@@ -21,8 +17,6 @@ export function ContextMenuSubContent(props: ContextMenuSubContentProps) {
     "sideOffset",
     "alignOffset",
     "collisionPadding",
-    "dir",
-    "finalFocus",
     "onKeyDown",
     "onPointerEnter",
     "onPointerLeave",
@@ -44,13 +38,12 @@ export function ContextMenuSubContent(props: ContextMenuSubContentProps) {
     side,
     align,
     sideOffset: () => local.sideOffset ?? 0,
-    alignOffset: () => local.alignOffset ?? 4,
+    alignOffset: () => local.alignOffset ?? -3,
     collisionPadding: () => local.collisionPadding ?? 5,
-    dir: () => local.dir,
+    dir: () => undefined,
   });
 
-  // 子菜单关闭后把焦点还给父浮层,并重新高亮触发器。
-  // (通过鼠标移出/高亮切换关闭时不会走 closeSubmenu 的 focusTrigger 分支)
+  // 子菜单关闭后把焦点还给父浮层，并重新高亮触发器。
   createEffect(
     on(
       submenu.open,
@@ -69,13 +62,14 @@ export function ContextMenuSubContent(props: ContextMenuSubContentProps) {
   return (
     <ContextMenuPopupSurface
       runtime={runtime}
-      dataSlot="context-menu-sub-content"
+      positionerSlot="dropdown-menu-sub-positioner"
+      dataSlot="dropdown-menu-sub-content"
       contentId={runtime.popupCtx.menuId}
       open={submenu.open}
       side={side}
-      dir={() => local.dir}
+      dir={() => undefined}
       registerMenuElement={submenu.root.registerMenuElement}
-      class={clsx("shadow-lg", local.class)}
+      class={clsx("w-auto min-w-[96px] shadow-lg", local.class)}
       style={local.style}
       onKeyDown={local.onKeyDown}
       onPointerEnter={() => {
@@ -86,7 +80,7 @@ export function ContextMenuSubContent(props: ContextMenuSubContentProps) {
         submenu.scheduleClose();
         local.onPointerLeave?.();
       }}
-      rest={rest}
+      rest={rest as Record<string, any>}
     >
       {local.children}
     </ContextMenuPopupSurface>

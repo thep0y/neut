@@ -4,6 +4,7 @@ import type {
   ContextMenuChangeEventDetails,
   ContextMenuChangeEventReason,
   ContextMenuSide,
+  ContextMenuSubmenuContextValue,
 } from "./context-menu.types";
 
 type Dir = "ltr" | "rtl" | "auto" | undefined;
@@ -96,4 +97,20 @@ export function createChangeEventDetails<
       return propagationAllowed;
     },
   };
+}
+
+/**
+ * 沿父链取消所有祖先子菜单已排期的关闭。
+ * 多级菜单里,鼠标从父级内容移到子级内容时,父级内容的 pointerleave 会给父级
+ * 排一个延迟关闭;子级内容的 pointerenter 必须把祖先的定时器一并取消,
+ * 否则父级会在 grace 后关闭,连带整棵菜单树消失。
+ */
+export function cancelSubmenuCloseChain(
+  submenu: ContextMenuSubmenuContextValue | undefined,
+): void {
+  let current = submenu;
+  while (current) {
+    current.cancelClose();
+    current = current.parentPopup.submenu;
+  }
 }

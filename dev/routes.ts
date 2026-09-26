@@ -10,6 +10,7 @@ export interface DevRoute {
 
 const DatePickerPage = lazy(() => import("./pages/date-picker-page"));
 const DialogPage = lazy(() => import("./pages/dialog-page"));
+const DropdownMenuPage = lazy(() => import("./pages/dropdown-menu-page"));
 const AlertDialogPage = lazy(() => import("./pages/alert-dialog-page"));
 const CalendarPage = lazy(() => import("./pages/calendar-page"));
 const AttachmentPage = lazy(() => import("./pages/attachment-page"));
@@ -34,6 +35,11 @@ export const routes: DevRoute[] = [
     hideInSidebar: true,
   },
   { path: "/dialog", title: "Dialog", component: DialogPage },
+  {
+    path: "/dropdown-menu",
+    title: "Dropdown Menu",
+    component: DropdownMenuPage,
+  },
   { path: "/alert-dialog", title: "Alert Dialog", component: AlertDialogPage },
   { path: "/date-picker", title: "Date Picker", component: DatePickerPage },
   { path: "/calendar", title: "Calendar", component: CalendarPage },
