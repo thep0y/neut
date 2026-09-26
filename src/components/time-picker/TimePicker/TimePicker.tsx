@@ -57,7 +57,6 @@ export function TimePicker(props: TimePickerProps): JSX.Element {
         defaultOpen={props.defaultOpen}
         onOpenChange={props.onOpenChange}
         disabled={props.disabled}
-        modal={props.modal ?? true}
       >
         <TimePickerSlots>{props.children}</TimePickerSlots>
       </Popover>

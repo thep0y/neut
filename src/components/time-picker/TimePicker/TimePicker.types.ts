@@ -82,11 +82,6 @@ export interface TimePickerProps extends ParentProps {
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
-  /**
-   * 是否为 modal:打开期间锁定页面滚动、拦截浮层之外的滚轮/触摸滚动。
-   * 默认 true(时间选择通常不应带着页面一起滚)。对齐 Base UI Popover 的 modal 语义。
-   */
-  modal?: boolean;
 }
 
 export interface TimePickerContextValue {

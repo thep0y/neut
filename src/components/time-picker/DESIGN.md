@@ -75,7 +75,6 @@ interface TimePickerProps extends ParentProps {
     open?: boolean;
     defaultOpen?: boolean;
     onOpenChange?: (open: boolean) => void;
-    modal?: boolean; // 默认 true:打开时锁定页面滚动
 }
 ```
 
@@ -127,6 +126,10 @@ interface TimePickerProps extends ParentProps {
    的 required-owned-elements 中间夹一层;为保证 ARIA 正确,列用原生滚动容器
    (`overflow-y-auto` + `[scrollbar-width:thin]`),它自身就是 listbox。
 7. **`DatePicker` 关系**:两者值类型一致,但独立实现;需要「日期+时间」时由使用者组合。
+8. **打开时锁定页面滚动**:由 `Popover` 在 `open() && lockScroll()`(`lockScroll` 默认
+   `true`)时调用全局 `useScrollLock`(见 `src/hooks/useScrollLock.ts`),锁住文档滚动并拦截
+   浮层之外的滚轮/触摸;`[data-slot="popover-content"]` 内仍可滚动,所以时间列照常可用。
+   该 hook 已从 context-menu 内部提升为共享 hook,引用计数支持多浮层同时持锁。
 
 ## 8. 分期与待办
 

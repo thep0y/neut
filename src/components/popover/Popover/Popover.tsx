@@ -27,10 +27,11 @@ export function Popover(props: PopoverProps): JSX.Element {
   );
   const disabled = createMemo(() => !!props.disabled);
   const modal = createMemo(() => !!props.modal);
+  const lockScroll = createMemo(() => props.lockScroll ?? true);
 
-  // modal 浮层打开时锁定页面滚动(对齐 Base UI):文档滚动被锁、浮层之外的
-  // 滚轮/触摸被拦截,但浮层自身仍可滚动。非 modal(默认)不改变页面滚动行为。
-  useScrollLock(() => open() && modal(), {
+  // 打开期间默认锁定页面滚动:文档滚动被锁、浮层之外的滚轮/触摸被拦截,
+  // 但浮层自身仍可滚动。传 lockScroll={false} 可关闭该行为。
+  useScrollLock(() => open() && lockScroll(), {
     allowedSelector: '[data-slot="popover-content"]',
   });
 
