@@ -71,8 +71,8 @@ Opening Position、Loading Earlier Messages、Animating New Messages、Jumping t
 Tracking the Reader's Position、Reading Scroll State、Scroll State、Virtualization。
 
 - `message-scroller.tsx` 只做组合与 UI,复用仓库组件(Card/Empty/ToggleGroup/Slider/
-  Tabs/Select/Tooltip/DropdownMenu 等);受限于本仓库没有 HoverCard / motion,
-  Tracking 的悬浮大纲改为常驻竖排指示点,动画改用 CSS 关键帧。
+  Tabs/Select/Tooltip/DropdownMenu/HoverCard 等);Tracking 的悬浮大纲已改用
+  HoverCard;受限于本仓库没有 motion,动画改用 CSS 关键帧。
 - `message-scroller-support.tsx`:本地 `createChat()` + `useScriptedChat` 模拟
   `@shadcn/helpers/ai-sdk` 的「提交 → 流式输出」;`MessageAnimated` 对齐上游结构
   (用户行入场动画、段落切分、muted/ghost 变体),预设与 `@/lib/message-animations` 同名。
@@ -94,6 +94,7 @@ dev 示例已按上游 `apps/v4/examples/base/message-scroller-*.tsx` 逐条移�
 | `@ai-sdk/react` + `@shadcn/helpers/ai-sdk`(`createChat`/`useChat`/`transport`) | Chat、Following the Live Edge、Keeping Context Visible、Animating | 本地 `createChat()` + `useScriptedChat`(定时器模拟提交→流式输出) | 无真实 transport/abort/regenerate;无 UIMessage `parts`(reasoning/tool/attachment);`status` 语义为近似 | 提供 `@neut/ui` 的 chat/streaming 适配(hook + transport 接口),或保留脚本驱动并把接口抽象出来 |
 | `@tanstack/react-virtual` | Virtualization | 自研固定行高窗口化 | 行高固定、无动态测量/overscan 自适应/scrollMargin 集成 | 保持「虚拟化在 primitive 之外」的定位,补一个 headless 窗口化 hook 示例,并在 `MessageScrollerViewport` 上确认 `ref` 可透传(已支持) |
 | `sonner`(toast) | Loading Earlier Messages 的「History loaded」提示 | 未接(dev 未挂载 Toaster) | 少了加载历史后的 toast 反馈 | 在 dev 布局挂载本仓库 `Toaster`,加载完成后调用 toast |
+| ~~`HoverCard`~~ | Tracking 的悬浮大纲 | 已实现 `hover-card` 并接入 | 已消除 | — |
 | `lucide-react` | 全部示例图标 | `lucide-solid` | 图标名/导出形式不同(`ArrowUpIcon`→`ArrowUp`、`IconPlaceholder`→直接组件) | 无需处理,属框架差异 |
 
 ### 5.2 组件库 API 约定差异(刻意为之,不是缺陷)
@@ -135,8 +136,8 @@ dev 示例已按上游 `apps/v4/examples/base/message-scroller-*.tsx` 逐条移�
 ## 7. 未来实现清单(建议优先级)
 
 1. **motion 适配层 / 更强 CSS 动画**:补 exit 与 spring,消掉 `Animating` 与上游的最大差异。
-2. **HoverCard 组件**:移植 `hover-card` 后,把 `Tracking the Reader's Position` 的常驻
-   指示点换回上游的悬浮大纲(`HoverCardTrigger` + `HoverCardContent` + 列表)。
+2. ~~**HoverCard 组件**~~:已实现 `hover-card`,`Tracking the Reader's Position` 已改用
+   上游的悬浮大纲(`HoverCardTrigger` + `HoverCardContent` + 列表)。
 3. **toast(sonner 对应物)**:dev 挂载 `Toaster`,补 `Loading Earlier Messages` 的提示。
 4. **chat/streaming 适配接口**:把 `useScriptedChat` 的接口抽成 transport,未来可接真实后端。
 5. **主题 token 层**:若要支持多 theme,把组件内联样式迁到语义 token。
