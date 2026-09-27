@@ -1,8 +1,7 @@
 import { Show, onCleanup, splitProps } from "solid-js";
 import { Portal } from "solid-js/web";
-import { getAlignment, getSide } from "~/lib";
+import { getAlignment, getSide, getTransformOrigin } from "~/lib";
 import { clsx } from "~/utils";
-import { getTransformOrigin } from "../hover-card.utils";
 import { useHoverCardContent } from "./useHoverCardContent";
 import type { HoverCardContentProps } from "../hover-card.types";
 

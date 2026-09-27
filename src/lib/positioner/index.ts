@@ -13,6 +13,8 @@ export {
 export { autoUpdate } from "./auto-update";
 export type { AutoUpdateOptions } from "./auto-update";
 
+export * from "./utils/floating";
+
 export { createVirtualElement } from "./virtual-element";
 export type { PointOptions } from "./virtual-element";
 

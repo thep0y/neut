@@ -7,8 +7,8 @@ import {
   offset,
   shift,
 } from "~/lib";
+import { toPlacement } from "~/lib";
 import { useHoverCardContext } from "../hover-card.context";
-import { toPlacement } from "../hover-card.utils";
 import type { HoverCardContentProps } from "../hover-card.types";
 
 /** 未触发 animationend 时的兜底卸载延迟 */
