@@ -15,6 +15,7 @@ const DrawerPage = lazy(() => import("./pages/drawer-page"));
 const DropdownMenuPage = lazy(() => import("./pages/dropdown-menu-page"));
 const AlertDialogPage = lazy(() => import("./pages/alert-dialog-page"));
 const CalendarPage = lazy(() => import("./pages/calendar-page"));
+const BubblePage = lazy(() => import("./pages/bubble-page"));
 const AttachmentPage = lazy(() => import("./pages/attachment-page"));
 const ComboboxPage = lazy(() => import("./pages/combobox-page"));
 const SelectPage = lazy(() => import("./pages/select-page"));
@@ -48,6 +49,7 @@ export const routes: DevRoute[] = [
   { path: "/date-picker", title: "Date Picker", component: DatePickerPage },
   { path: "/data-table", title: "Data Table", component: DataTablePage },
   { path: "/calendar", title: "Calendar", component: CalendarPage },
+  { path: "/bubble", title: "Bubble", component: BubblePage },
   { path: "/attachment", title: "Attachment", component: AttachmentPage },
   { path: "/combobox", title: "Combobox", component: ComboboxPage },
   { path: "/select", title: "Select", component: SelectPage },
