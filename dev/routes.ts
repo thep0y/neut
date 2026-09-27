@@ -26,6 +26,7 @@ const ContextMenuPage = lazy(() => import("./pages/context-menu-page"));
 const PopoverPage = lazy(() => import("./pages/popover-page"));
 const NumberInputPage = lazy(() => import("./pages/number-input-page"));
 const RadioGroupPage = lazy(() => import("./pages/radio-group-page"));
+const ResizablePage = lazy(() => import("./pages/resizable-page"));
 const TogglePage = lazy(() => import("./pages/toggle-page"));
 const ToggleGroupPage = lazy(() => import("./pages/toggle-group-page"));
 const TimePickerPage = lazy(() => import("./pages/time-picker-page"));
@@ -67,6 +68,7 @@ export const routes: DevRoute[] = [
   { path: "/popover", title: "Popover", component: PopoverPage },
   { path: "/number-input", title: "Number Input", component: NumberInputPage },
   { path: "/radio-group", title: "Radio Group", component: RadioGroupPage },
+  { path: "/resizable", title: "Resizable", component: ResizablePage },
   { path: "/tooltip", title: "Tooltip", component: TooltipPage },
   { path: "/toggle", title: "Toggle", component: TogglePage },
   { path: "/toggle-group", title: "Toggle Group", component: ToggleGroupPage },
