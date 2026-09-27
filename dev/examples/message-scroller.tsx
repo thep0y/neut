@@ -35,7 +35,7 @@ import {
   useMessageScrollerScrollable,
   useMessageScrollerVisibility,
 } from "~/index";
-import type { MessageScrollerDefaultPosition } from "~/index";
+import type { MessageScrollerDefaultScrollPosition } from "~/index";
 import type { Section } from "./shared";
 
 type Role = "user" | "assistant";
@@ -136,7 +136,7 @@ function Frame(props: {
     >
       <MessageScroller>
         <MessageScrollerViewport>
-          <MessageScrollerContent class={clsx("p-4", props.contentClass)}>
+          <MessageScrollerContent class={clsx("gap-6 p-4", props.contentClass)}>
             <For each={props.rows}>
               {(row) => (
                 <MessageScrollerItem
@@ -166,12 +166,14 @@ function Frame(props: {
               )}
             </For>
             <Show when={props.emptyState && props.rows.length === 0}>
-              <div class="flex flex-1 flex-col items-center justify-center gap-1 py-16 text-center">
-                <p class="text-sm font-medium">{props.emptyState?.title}</p>
-                <p class="text-xs text-muted-foreground">
-                  {props.emptyState?.description}
-                </p>
-              </div>
+              <MessageScrollerItem scrollAnchor={false}>
+                <div class="flex flex-col items-center justify-center gap-1 py-16 text-center">
+                  <p class="text-sm font-medium">{props.emptyState?.title}</p>
+                  <p class="text-xs text-muted-foreground">
+                    {props.emptyState?.description}
+                  </p>
+                </div>
+              </MessageScrollerItem>
             </Show>
           </MessageScrollerContent>
         </MessageScrollerViewport>
@@ -664,7 +666,7 @@ const openingRows: Row[] = [
   },
 ];
 
-const positions: MessageScrollerDefaultPosition[] = [
+const positions: MessageScrollerDefaultScrollPosition[] = [
   "start",
   "end",
   "last-anchor",
@@ -672,7 +674,7 @@ const positions: MessageScrollerDefaultPosition[] = [
 
 function MessageScrollerOpeningPosition() {
   const [position, setPosition] =
-    createSignal<MessageScrollerDefaultPosition>("last-anchor");
+    createSignal<MessageScrollerDefaultScrollPosition>("last-anchor");
 
   return (
     <div class="flex w-full max-w-md flex-col items-center gap-4">
@@ -695,7 +697,7 @@ function MessageScrollerOpeningPosition() {
       <ToggleGroup
         value={position()}
         onValueChange={(value) => {
-          if (value) setPosition(value as MessageScrollerDefaultPosition);
+          if (value) setPosition(value as MessageScrollerDefaultScrollPosition);
         }}
         spacing={0}
         class="w-full"
@@ -1179,6 +1181,103 @@ function MessageScrollerScrollState() {
   );
 }
 
+/* -------------------------------- Virtualization ------------------------------ */
+
+const VIRTUAL_ITEM_HEIGHT = 96;
+const VIRTUAL_OVERSCAN = 4;
+
+const virtualRows: Extract<Row, { kind: "message" }>[] = Array.from(
+  { length: 300 },
+  (_, index) => ({
+    kind: "message" as const,
+    id: `v${index}`,
+    role: (index % 2 === 0 ? "user" : "assistant") as Role,
+    text:
+      index % 2 === 0
+        ? `Virtual message ${index + 1}: how does windowing interact with the scroller?`
+        : `Virtual message ${index + 1}: virtualization stays outside the primitive. MessageScrollerViewport is just the scroll element, and the virtualizer owns the rows.`,
+  }),
+);
+
+/**
+ * 自研的极简虚拟化（仓库不引入 TanStack）：用 MessageScrollerViewport 作为滚动元素，
+ * 由窗口化决定渲染哪些行。行仍是 MessageScrollerItem，只是外层包了绝对定位。
+ */
+function VirtualizedTranscript() {
+  const [scrollTop, setScrollTop] = createSignal(0);
+  const [viewportHeight, setViewportHeight] = createSignal(0);
+  let element: HTMLElement | undefined;
+
+  const measure = () => {
+    if (!element) return;
+    setScrollTop(element.scrollTop);
+    setViewportHeight(element.clientHeight);
+  };
+
+  const attachRef = (node: Element) => {
+    element = node as HTMLElement;
+    measure();
+    const onScroll = () => element && setScrollTop(element.scrollTop);
+    element.addEventListener("scroll", onScroll, { passive: true });
+    const resize = new ResizeObserver(measure);
+    resize.observe(element);
+    onCleanup(() => {
+      element?.removeEventListener("scroll", onScroll);
+      resize.disconnect();
+    });
+  };
+
+  const total = virtualRows.length;
+  const startIndex = () =>
+    Math.max(0, Math.floor(scrollTop() / VIRTUAL_ITEM_HEIGHT) - VIRTUAL_OVERSCAN);
+  const endIndex = () =>
+    Math.min(
+      total,
+      Math.ceil((scrollTop() + viewportHeight()) / VIRTUAL_ITEM_HEIGHT) +
+        VIRTUAL_OVERSCAN,
+    );
+  const windowRows = () => {
+    const from = startIndex();
+    return virtualRows
+      .slice(from, endIndex())
+      .map((row, offset) => ({ row, index: from + offset }));
+  };
+
+  return (
+    <div class="flex h-96 w-full flex-col overflow-hidden rounded-3xl border">
+      <MessageScrollerProvider defaultScrollPosition="start">
+        <MessageScroller>
+          <MessageScrollerViewport ref={attachRef}>
+            <MessageScrollerContent class="block min-h-full">
+              <div
+                class="relative w-full"
+                style={{ height: `${total * VIRTUAL_ITEM_HEIGHT}px` }}
+              >
+                <For each={windowRows()}>
+                  {(entry) => (
+                    <div
+                      class="absolute left-0 top-0 w-full p-2"
+                      style={{
+                        transform: `translateY(${entry.index * VIRTUAL_ITEM_HEIGHT}px)`,
+                        height: `${VIRTUAL_ITEM_HEIGHT}px`,
+                      }}
+                    >
+                      <MessageScrollerItem messageId={entry.row.id}>
+                        <MessageRowView row={entry.row} />
+                      </MessageScrollerItem>
+                    </div>
+                  )}
+                </For>
+              </div>
+            </MessageScrollerContent>
+          </MessageScrollerViewport>
+          <MessageScrollerButton />
+        </MessageScroller>
+      </MessageScrollerProvider>
+    </div>
+  );
+}
+
 export const messageScrollerSections: Section[] = [
   {
     id: "message-scroller-chat",
@@ -1249,5 +1348,12 @@ export const messageScrollerSections: Section[] = [
     description:
       "Where the reader can go scroll to based on current scroll position.",
     component: MessageScrollerScrollState,
+  },
+  {
+    id: "message-scroller-virtualization",
+    title: "Virtualization",
+    description:
+      "Let a virtualizer own the rows while MessageScrollerViewport is the scroll element.",
+    component: VirtualizedTranscript,
   },
 ];

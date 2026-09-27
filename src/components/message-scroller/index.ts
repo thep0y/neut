@@ -16,8 +16,12 @@ export { useMessageScrollerVisibility } from "./useMessageScrollerVisibility";
 
 export type {
   MessageScrollerProviderProps,
-  MessageScrollerDefaultPosition,
-  MessageScrollerCommandOptions,
+  MessageScrollerDefaultScrollPosition,
+  MessageScrollerButtonDirection,
+  MessageScrollerScrollAlign,
+  MessageScrollerScrollOptions,
+  MessageScrollerScrollable,
+  MessageScrollerVisibilityState,
   MessageScrollerItemEntry,
   MessageScrollerContextValue,
   MessageScrollerVisibilityValue,

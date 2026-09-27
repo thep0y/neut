@@ -23,7 +23,6 @@ export function MessageScrollerItem(props: MessageScrollerItemProps) {
         const unregister = ctx.registerItem({
           id: local.messageId,
           element: el,
-          anchor: () => local.scrollAnchor === true,
         });
         onCleanup(unregister);
       }}

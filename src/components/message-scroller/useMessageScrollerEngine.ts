@@ -1,32 +1,80 @@
 import { createEffect, createSignal, onCleanup } from "solid-js";
 import type {
-  MessageScrollerCommandOptions,
   MessageScrollerContextValue,
   MessageScrollerItemEntry,
   MessageScrollerProviderProps,
+  MessageScrollerScrollOptions,
 } from "./message-scroller.types";
 
-const AT_EDGE_TOLERANCE = 1;
-const SETTLE_FALLBACK_MS = 600;
+/** 滚动位置比较容差（0.5px），对应上游的 `J` */
+const AT_EDGE_TOLERANCE = 0.5;
+/** 「滚动到最新」后 data-autoscrolling 的持续时间 */
+const AUTO_SCROLLING_TIMEOUT_MS = 180;
+/** 会让界面「让位」的键盘滚动键 */
+const NAV_KEYS = new Set([
+  "ArrowDown",
+  "ArrowUp",
+  "End",
+  "Home",
+  "PageDown",
+  "PageUp",
+  " ",
+]);
+
+type Mode =
+  | "following-bottom"
+  | "free-scrolling"
+  | "anchored-to-message"
+  | "settling-jump";
+
+interface ScrollState {
+  start: boolean;
+  end: boolean;
+}
+
+interface PaddingBox {
+  start: number;
+  end: number;
+}
+
+function parsePx(value: string): number {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function paddingBox(element: HTMLElement): PaddingBox {
+  const style = window.getComputedStyle(element);
+  return {
+    start: parsePx(style.paddingBlockStart || style.paddingTop),
+    end: parsePx(style.paddingBlockEnd || style.paddingBottom),
+  };
+}
+
+function rowGap(element: HTMLElement | null): number {
+  if (!element) return 0;
+  const style = window.getComputedStyle(element);
+  return parsePx(style.rowGap === "normal" ? style.gap : style.rowGap);
+}
 
 /**
- * MessageScroller 的滚动引擎（headless）。把「滚动位置」保持在信号/属性里、
- * 而非每条消息的渲染上：
- * - 可滚动状态（能否向上/向下）由 scroll + ResizeObserver 维护；
- * - `autoScroll`：仅在读者位于实时边缘时跟随内容增长，用户滚动离开即让位；
- * - **新回合锚定**：带 `scrollAnchor` 的新行追加且读者在实时边缘时，把它放到靠近顶部
- *   并保留 `scrollPreviousItemPeek` 的上下文；此后回复在下方生长，直到内容填满视口，
- *   读者重新回到实时边缘、`autoScroll` 接管；
- * - `defaultScrollPosition`：首次挂载后定位到 start / end / last-anchor，应用前用
- *   `data-pending-scroll` 隐藏视口以避免跳动；空会话不设置该属性；
- * - `preserveScrollOnPrepend`：上方插入历史时按高度差补偿 scrollTop；
- * - **可见性**：仅在有人订阅 `useMessageScrollerVisibility` 时计算。
+ * MessageScroller 的滚动引擎（headless，行为对齐 `@shadcn/react`）：
+ * - 滚动状态（能否向上/下）由 content 的**非 spacer** 内容底部计算，spacer 不计入；
+ * - `autoScroll` 只在模式为 `following-bottom` 时跟随；滚轮/触摸/键盘滚动与显式跳转
+ *   都会立刻让位（`free-scrolling`）；
+ * - 新回合锚定：新增 scrollAnchor 行时用 `scrollToElement(keepPreviousPeek)` 将其放到
+ *   顶部并保留上一项；同时把该行记为 `streamingTurn`，回复生长时原地重锚定；
+ * - `scrollToElement` 会按需设置尾部 spacer，让目标行即使靠近会话末尾也能滚到顶部；
+ * - `defaultScrollPosition`：首次非空渲染定位一次；`last-anchor` 无锚点或放得下时回退 end；
+ * - `preserveScrollOnPrepend`：记录首个可见行及其视口位置，上方插入历史后按差值补偿；
+ * - 可见性：IntersectionObserver 按需订阅（rootMargin 用 scrollMargin + peek），无 IO 时退化为
+ *   逐帧测量；`currentAnchorId` 是阅读行之上最后一个锚点。
  */
 export function useMessageScrollerEngine(
   options: () => Required<Omit<MessageScrollerProviderProps, "children">>,
 ): MessageScrollerContextValue {
   const [viewport, setViewport] = createSignal<HTMLElement>();
   const [content, setContent] = createSignal<HTMLElement>();
+  const [spacer, setSpacer] = createSignal<HTMLElement>();
   const [preserveScrollOnPrepend, setPreserveScrollOnPrepend] =
     createSignal(true);
   const [scrollableStart, setScrollableStart] = createSignal(false);
@@ -39,323 +87,745 @@ export function useMessageScrollerEngine(
     null,
   );
   const [visibleMessageIds, setVisibleMessageIds] = createSignal<string[]>([]);
-  const [itemsVersion, setItemsVersion] = createSignal(0);
 
-  const items = new Map<symbol, MessageScrollerItemEntry>();
-  let following = false;
-  let didInitial = false;
-  let lastScrollHeight = 0;
-  let scrollingProgrammatically = false;
+  const messageElements = new Map<string, HTMLElement>();
+  const visibleIds = new Set<string>();
+  const handledScrollAnchors = new WeakSet<HTMLElement>();
+
+  let mode: Mode = options().autoScroll ? "following-bottom" : "free-scrolling";
+  let lastScrollTop = 0;
+  let itemCount = 0;
+  let firstItem: HTMLElement | null = null;
+  let defaultApplied = false;
+  let streamingTurn: HTMLElement | null = null;
+  let pendingMessage: {
+    id: string;
+    options?: MessageScrollerScrollOptions;
+  } | null = null;
+  let prependAnchor: { element: HTMLElement; viewportTop: number } | null =
+    null;
+  let spacerHeight = 0;
+  let spacerGap = 0;
+  let autoscrollingTimer: number | null = null;
+  let stateFrame: number | null = null;
+  let visibilityFrame: number | null = null;
+  let pendingFrame: number | null = null;
+  let observer: IntersectionObserver | null = null;
   let visibilitySubscribers = 0;
-  let pendingMessageId: string | undefined;
 
-  const orderedItems = () => [...items.values()];
-
-  /**
-   * 行相对滚动容器内容顶部的偏移。用测量而非 `offsetTop`：Viewport 不一定是
-   * `position: relative`，`offsetTop` 可能相对更上层的定位祖先而算错。
-   */
-  const itemOffsetTop = (element: HTMLElement) => {
-    const el = viewport();
-    if (!el) return element.offsetTop;
-    return (
-      element.getBoundingClientRect().top -
-      el.getBoundingClientRect().top +
-      el.scrollTop
+  /** content 的直接子元素，排除内部 spacer */
+  const items = (): HTMLElement[] => {
+    const root = content();
+    const sp = spacer();
+    if (!root) return [];
+    return Array.from(root.children).filter(
+      (child): child is HTMLElement =>
+        child instanceof HTMLElement && child !== sp,
     );
   };
 
-  const computeVisibility = () => {
-    if (visibilitySubscribers === 0) return;
+  /** 行相对滚动容器内容顶部的偏移（用测量，避免 offsetParent 不确定） */
+  const itemOffsetTop = (element: HTMLElement) => {
+    const vp = viewport();
+    if (!vp) return 0;
+    return (
+      element.getBoundingClientRect().top -
+      vp.getBoundingClientRect().top +
+      vp.scrollTop
+    );
+  };
+
+  const itemTopInViewport = (element: HTMLElement) => {
+    const vp = viewport();
+    if (!vp) return 0;
+    return element.getBoundingClientRect().top - vp.getBoundingClientRect().top;
+  };
+
+  /** 内容底部（不含 spacer），即内容真实滚动高度 */
+  const contentBottom = () => {
+    const vp = viewport();
+    const root = content();
+    if (!vp || !root) return 0;
+    const pad = paddingBox(root);
+    const vpRect = vp.getBoundingClientRect();
+    let bottom = pad.start + pad.end;
+    for (const item of items()) {
+      const rect = item.getBoundingClientRect();
+      bottom = Math.max(
+        bottom,
+        rect.bottom - vpRect.top + vp.scrollTop + pad.end,
+      );
+    }
+    return bottom;
+  };
+
+  const maxScrollTop = () => {
+    const vp = viewport();
+    return vp ? Math.max(0, vp.scrollHeight - vp.clientHeight) : 0;
+  };
+
+  /** 设置尾部 spacer：让目标行有空间滚到指定位置；0 时隐藏 */
+  const setSpacerHeight = (height: number) => {
+    const sp = spacer();
+    if (!sp) return;
+    const next = Math.max(0, Math.ceil(height));
+    if (spacerHeight === next) return;
+    spacerHeight = next;
+    sp.hidden = next === 0;
+    sp.style.height = `${next}px`;
+    sp.style.marginTop = next > 0 ? `${-spacerGap}px` : "";
+  };
+
+  const computeScrollable = (): ScrollState => {
+    const vp = viewport();
+    const root = content();
+    if (!vp || !root) return { start: false, end: false };
+    const threshold = options().scrollEdgeThreshold;
+    const bottom = contentBottom();
+    return {
+      start: vp.scrollTop > threshold,
+      end: bottom - vp.scrollTop - vp.clientHeight > threshold,
+    };
+  };
+
+  const updateModeFromScroll = (state: ScrollState) => {
     const vp = viewport();
     if (!vp) return;
-    const vpRect = vp.getBoundingClientRect();
-    // 阅读行 = 视口顶部 + scrollMargin；落在其上或已滚过的最后一个锚点即当前回合
-    const readingLine = vpRect.top + options().scrollMargin + AT_EDGE_TOLERANCE;
-    const visible: string[] = [];
-    let anchorId: string | null = null;
-    for (const entry of orderedItems()) {
-      if (!entry.id) continue;
-      const rect = entry.element.getBoundingClientRect();
-      if (rect.bottom > vpRect.top && rect.top < vpRect.bottom) {
-        visible.push(entry.id);
-      }
-      if (entry.anchor() && rect.top <= readingLine) {
-        anchorId = entry.id;
-      }
+    const top = vp.scrollTop;
+    const movedUp = top < lastScrollTop - AT_EDGE_TOLERANCE;
+    lastScrollTop = top;
+    if (
+      options().autoScroll &&
+      !state.end &&
+      mode !== "settling-jump" &&
+      mode !== "anchored-to-message"
+    ) {
+      mode = "following-bottom";
+    } else if (
+      mode === "following-bottom" &&
+      state.end &&
+      movedUp &&
+      !autoscrolling()
+    ) {
+      mode = "free-scrolling";
     }
-    setVisibleMessageIds(visible);
-    setCurrentAnchorId(anchorId);
   };
 
-  const updateScrollable = () => {
-    const el = viewport();
-    if (!el) return;
-    const threshold = options().scrollEdgeThreshold;
-    const atStart = el.scrollTop <= threshold;
-    const atEnd = el.scrollTop + el.clientHeight >= el.scrollHeight - threshold;
-    setScrollableStart(!atStart);
-    setScrollableEnd(!atEnd);
-    following = atEnd;
-    computeVisibility();
+  const commitScrollState = () => {
+    const state = computeScrollable();
+    updateModeFromScroll(state);
+    // 跟随输出时对 UI 隐藏「还能向下滚」——按钮不出现，直到读者回到实时边缘
+    const exposed =
+      mode === "following-bottom" ? { ...state, end: false } : state;
+    setScrollableStart(exposed.start);
+    setScrollableEnd(exposed.end);
   };
 
-  /**
-   * 程序化滚动。平滑滚动期间不能让用户滚动事件误判为「读者离开了实时边缘」，
-   * 因此用 scrollend（带超时兜底）而不是下一帧来恢复状态跟踪。
-   */
+  const scheduleStateCommit = () => {
+    if (stateFrame !== null) return;
+    stateFrame = window.requestAnimationFrame(() => {
+      stateFrame = null;
+      commitScrollState();
+    });
+  };
+
+  const scheduleVisibilitySync = () => {
+    if (visibilityFrame !== null) return;
+    visibilityFrame = window.requestAnimationFrame(() => {
+      visibilityFrame = null;
+      if (visibilitySubscribers > 0) computeVisibility();
+    });
+  };
+
+  const applyAutoscrolling = (next: boolean) => {
+    if (autoscrollingTimer !== null) {
+      window.clearTimeout(autoscrollingTimer);
+      autoscrollingTimer = null;
+    }
+    if (autoscrolling() !== next) {
+      setAutoscrolling(next);
+      commitScrollState();
+    }
+    if (next) {
+      autoscrollingTimer = window.setTimeout(() => {
+        autoscrollingTimer = null;
+        setAutoscrolling(false);
+        commitScrollState();
+      }, AUTO_SCROLLING_TIMEOUT_MS);
+    }
+  };
+
   const setScrollTop = (
     top: number,
     {
-      behavior = "auto",
-      autoscroll = false,
-    }: {
-      behavior?: ScrollBehavior;
-      autoscroll?: boolean;
-    } = {},
+      behavior = "auto" as ScrollBehavior,
+      auto = false,
+    }: { behavior?: ScrollBehavior; auto?: boolean } = {},
   ) => {
-    const el = viewport();
-    if (!el) return;
-    scrollingProgrammatically = true;
-    if (autoscroll) setAutoscrolling(true);
-    let settled = false;
-    const settle = () => {
-      if (settled) return;
-      settled = true;
-      scrollingProgrammatically = false;
-      if (autoscroll) setAutoscrolling(false);
-      updateScrollable();
-    };
-    if (behavior === "smooth") {
-      el.scrollTo({ top, behavior: "smooth" });
-      el.addEventListener("scrollend", settle, { once: true });
-      window.setTimeout(settle, SETTLE_FALLBACK_MS);
-    } else {
-      el.scrollTop = top;
-      requestAnimationFrame(settle);
+    const vp = viewport();
+    if (!vp) return;
+    const next = Math.max(0, top);
+    if (Math.abs(vp.scrollTop - next) <= AT_EDGE_TOLERANCE) {
+      vp.scrollTop = next;
+      commitScrollState();
+      return;
     }
+    if (auto) applyAutoscrolling(true);
+    vp.scrollTo({ top: next, behavior });
+    scheduleStateCommit();
   };
 
-  const clamp = (top: number) => {
-    const el = viewport();
-    if (!el) return top;
-    return Math.max(0, Math.min(top, el.scrollHeight - el.clientHeight));
-  };
-
-  const scrollToEnd = (command?: MessageScrollerCommandOptions) => {
-    const el = viewport();
-    if (!el) return false;
-    following = true;
-    setScrollTop(el.scrollHeight, {
-      behavior: command?.behavior ?? "auto",
-      autoscroll: true,
-    });
-    return true;
-  };
-
-  const scrollToStart = (command?: MessageScrollerCommandOptions) => {
+  const scrollToStart = (command?: MessageScrollerScrollOptions) => {
     if (!viewport()) return false;
+    setSpacerHeight(0);
+    streamingTurn = null;
+    mode = "free-scrolling";
     setScrollTop(0, { behavior: command?.behavior ?? "auto" });
+    scheduleVisibilitySync();
     return true;
   };
 
-  const targetTop = (
-    entry: MessageScrollerItemEntry,
-    command?: MessageScrollerCommandOptions,
+  const scrollToEnd = (command?: MessageScrollerScrollOptions) => {
+    if (!viewport()) return false;
+    setSpacerHeight(0);
+    streamingTurn = null;
+    mode = options().autoScroll ? "following-bottom" : "free-scrolling";
+    setScrollTop(maxScrollTop(), {
+      behavior: command?.behavior ?? "auto",
+      auto: true,
+    });
+    scheduleVisibilitySync();
+    return true;
+  };
+
+  const targetTopFor = (
+    element: HTMLElement,
+    command: MessageScrollerScrollOptions | undefined,
+    margin: number,
   ) => {
-    const el = viewport();
-    if (!el) return 0;
-    const margin = command?.scrollMargin ?? options().scrollMargin;
-    const itemTop = itemOffsetTop(entry.element);
-    const itemHeight = entry.element.getBoundingClientRect().height;
+    const vp = viewport();
+    if (!vp) return 0;
+    const pad = content() ? paddingBox(content()!) : { start: 0, end: 0 };
+    const itemTop = itemOffsetTop(element);
+    const height = element.getBoundingClientRect().height;
     switch (command?.align ?? "start") {
-      case "center":
-        return clamp(itemTop - (el.clientHeight - itemHeight) / 2 - margin);
+      case "center": {
+        const visible = Math.max(0, vp.clientHeight - pad.start - pad.end);
+        return itemTop - pad.start - (visible - height) / 2 - margin;
+      }
       case "end":
-        return clamp(itemTop + itemHeight - el.clientHeight + margin);
+        return itemTop - vp.clientHeight + height + pad.end + margin;
       case "nearest": {
-        const current = el.scrollTop;
-        const fullyVisible =
-          itemTop - margin >= current &&
-          itemTop + itemHeight + margin <= current + el.clientHeight;
-        return fullyVisible ? current : clamp(itemTop - margin);
+        const bottom = itemTop + height;
+        const vTop = vp.scrollTop + pad.start;
+        const vBottom = vp.scrollTop + vp.clientHeight - pad.end;
+        if (itemTop >= vTop && bottom <= vBottom) return vp.scrollTop;
+        if (itemTop < vTop) return itemTop - pad.start - margin;
+        return bottom - vp.clientHeight + pad.end + margin;
       }
       default:
-        return clamp(itemTop - margin);
+        return itemTop - pad.start - margin;
     }
+  };
+
+  const scrollToElement = (
+    element: HTMLElement,
+    command?: MessageScrollerScrollOptions,
+    { keepPreviousPeek = false }: { keepPreviousPeek?: boolean } = {},
+  ) => {
+    const vp = viewport();
+    const root = content();
+    if (!vp || !root?.contains(element)) return false;
+    const margin =
+      (command?.scrollMargin ?? options().scrollMargin) +
+      (keepPreviousPeek ? options().scrollPreviousItemPeek : 0);
+    const target = targetTopFor(element, command, margin);
+    setSpacerHeight(Math.max(0, target + vp.clientHeight - contentBottom()));
+    prependAnchor = { element, viewportTop: itemTopInViewport(element) };
+    mode = keepPreviousPeek ? "anchored-to-message" : "settling-jump";
+    streamingTurn = keepPreviousPeek ? element : null;
+    setScrollTop(target, { behavior: command?.behavior ?? "auto" });
+    scheduleVisibilitySync();
+    return true;
+  };
+
+  const reanchorToAnchoredMessage = () => {
+    const el = streamingTurn;
+    if (!el?.isConnected || mode !== "anchored-to-message") return false;
+    return scrollToElement(el, { align: "start" }, { keepPreviousPeek: true });
+  };
+
+  const applyDefaultScrollPosition = () => {
+    const vp = viewport();
+    if (!vp || defaultApplied || itemCount === 0) return false;
+    const position = options().defaultScrollPosition;
+    let applied = false;
+    if (position === "last-anchor") {
+      const list = items();
+      const lastAnchor =
+        [...list].reverse().find((el) => el.dataset.scrollAnchor === "true") ??
+        null;
+      if (!lastAnchor) {
+        applied = scrollToEnd({ behavior: "auto" });
+      } else if (
+        contentBottom() - itemOffsetTop(lastAnchor) <=
+        vp.clientHeight
+      ) {
+        // 该回合完全放得下 → 直接到底
+        applied = scrollToEnd({ behavior: "auto" });
+      } else {
+        applied = scrollToElement(
+          lastAnchor,
+          { align: "start" },
+          { keepPreviousPeek: true },
+        );
+      }
+    } else if (position === "end") {
+      applied = scrollToEnd({ behavior: "auto" });
+    } else {
+      applied = scrollToStart({ behavior: "auto" });
+    }
+    if (applied) {
+      defaultApplied = true;
+      setPendingScroll(false);
+    }
+    return applied;
+  };
+
+  const flushPendingScrollToMessage = () => {
+    const pending = pendingMessage;
+    if (!pending) return false;
+    const element = messageElements.get(pending.id);
+    if (!element || !scrollToElement(element, pending.options)) return false;
+    pendingMessage = null;
+    defaultApplied = true;
+    setPendingScroll(false);
+    return true;
+  };
+
+  const schedulePendingFlush = () => {
+    if (pendingFrame !== null) return;
+    pendingFrame = window.requestAnimationFrame(() => {
+      pendingFrame = null;
+      if (flushPendingScrollToMessage()) capturePrependAnchor();
+    });
   };
 
   const scrollToMessage = (
     messageId: string,
-    command?: MessageScrollerCommandOptions,
+    command?: MessageScrollerScrollOptions,
   ) => {
-    if (!viewport()) return false;
-    for (const entry of orderedItems()) {
-      if (entry.id === messageId) {
-        setScrollTop(targetTop(entry, command), {
-          behavior: command?.behavior ?? "auto",
-        });
+    const element = messageElements.get(messageId);
+    if (element) {
+      if (scrollToElement(element, command)) {
+        pendingMessage = null;
         return true;
       }
+      pendingMessage = { id: messageId, options: command };
+      return true;
     }
-    // 会话尚未挂载任何行时排队，覆盖「客户端解析永久链接时内容还在挂载」的场景；
-    // 已挂载但 id 不存在则返回 false，避免无意义的重试循环。
-    if (items.size === 0) {
-      pendingMessageId = messageId;
+    // 会话尚未挂载任何行时可排队（客户端解析永久链接）；已挂载但缺失则返回 false
+    if (itemCount === 0) {
+      pendingMessage = { id: messageId, options: command };
+      setPendingScroll(false);
       return true;
     }
     return false;
   };
 
-  /** 新回合锚定：仅当追加的是最新的那行、且读者原本在实时边缘 */
-  const maybeAnchorNewTurn = (entry: MessageScrollerItemEntry) => {
-    if (!didInitial) return;
-    if (!entry.anchor() || !following) return;
-    const list = orderedItems();
-    if (list[list.length - 1]?.element !== entry.element) return;
-    following = false;
-    queueMicrotask(() => {
-      if (!entry.element.isConnected) return;
-      const peek = options().scrollPreviousItemPeek;
-      setScrollTop(clamp(itemOffsetTop(entry.element) - peek), {
-        autoscroll: true,
-      });
-    });
+  const capturePrependAnchor = () => {
+    const vp = viewport();
+    if (!vp) {
+      prependAnchor = null;
+      return;
+    }
+    const vpRect = vp.getBoundingClientRect();
+    const firstVisible =
+      items().find((el) => {
+        if (!el.dataset.messageId) return false;
+        const rect = el.getBoundingClientRect();
+        return rect.bottom > vpRect.top && rect.top < vpRect.bottom;
+      }) ?? null;
+    prependAnchor = firstVisible
+      ? { element: firstVisible, viewportTop: itemTopInViewport(firstVisible) }
+      : null;
   };
 
-  const registerItem = (entry: MessageScrollerItemEntry) => {
-    const key = Symbol();
-    items.set(key, entry);
-    setItemsVersion((v) => v + 1);
-    maybeAnchorNewTurn(entry);
-    // 排队的跳转目标挂载后补一次（等布局完成再量位置）
-    if (pendingMessageId && entry.id === pendingMessageId) {
-      const target = pendingMessageId;
-      pendingMessageId = undefined;
-      requestAnimationFrame(() => scrollToMessage(target));
+  const restorePrependAnchor = () => {
+    const anchor = prependAnchor;
+    const vp = viewport();
+    if (!anchor || !vp || !anchor.element.isConnected) return false;
+    const delta = itemTopInViewport(anchor.element) - anchor.viewportTop;
+    if (Math.abs(delta) <= AT_EDGE_TOLERANCE) return false;
+    vp.scrollTop += delta;
+    anchor.viewportTop = itemTopInViewport(anchor.element);
+    scheduleStateCommit();
+    scheduleVisibilitySync();
+    return true;
+  };
+
+  const firstAnchorFrom = (list: HTMLElement[], from: number) => {
+    for (let index = from; index < list.length; index += 1) {
+      const el = list[index];
+      if (el?.dataset.scrollAnchor === "true") return el;
     }
-    computeVisibility();
-    return () => {
-      items.delete(key);
-      setItemsVersion((v) => v + 1);
-      computeVisibility();
-    };
+    return null;
+  };
+
+  const firstUnhandledAnchor = (list: HTMLElement[]) =>
+    list.find(
+      (el) =>
+        el.dataset.scrollAnchor === "true" && !handledScrollAnchors.has(el),
+    ) ?? null;
+
+  const hasMultipleAnchorsFrom = (list: HTMLElement[], from: number) => {
+    let count = 0;
+    for (let index = from; index < list.length; index += 1) {
+      if (list[index]?.dataset.scrollAnchor === "true") {
+        count += 1;
+        if (count > 1) return true;
+      }
+    }
+    return false;
+  };
+
+  const handleContentChange = () => {
+    const root = content();
+    if (!root) return;
+    const list = items();
+    const previousCount = itemCount;
+    const previousFirst = firstItem;
+    itemCount = list.length;
+    firstItem = list[0] ?? null;
+
+    // 空会话不隐藏视口（data-pending-scroll 跳过）
+    if (list.length === 0) setPendingScroll(false);
+
+    if (flushPendingScrollToMessage()) {
+      capturePrependAnchor();
+      return;
+    }
+
+    if (previousCount === 0) {
+      // 初次定位时把已存在的锚点标记为已处理，避免后续 resize/属性变化误触发重锚定
+      for (const el of list) {
+        if (el.dataset.scrollAnchor === "true") handledScrollAnchors.add(el);
+      }
+      if (applyDefaultScrollPosition()) {
+        capturePrependAnchor();
+        return;
+      }
+      if (
+        list.length > 0 &&
+        options().autoScroll &&
+        scrollToEnd({ behavior: "auto" })
+      ) {
+        capturePrependAnchor();
+        return;
+      }
+      commitScrollState();
+      scheduleVisibilitySync();
+      capturePrependAnchor();
+      return;
+    }
+
+    const previousFirstIndex = previousFirst ? list.indexOf(previousFirst) : -1;
+    if (preserveScrollOnPrepend() && previousFirstIndex > 0) {
+      restorePrependAnchor();
+      capturePrependAnchor();
+      return;
+    }
+
+    if (list.length > previousCount) {
+      const firstNewAnchor = firstAnchorFrom(list, previousCount);
+      if (firstNewAnchor) {
+        // 同批新增多个锚点：跟随底部，避免在多个锚点间跳来跳去
+        if (
+          options().autoScroll &&
+          mode === "following-bottom" &&
+          hasMultipleAnchorsFrom(list, previousCount)
+        ) {
+          scrollToEnd({ behavior: "auto" });
+          capturePrependAnchor();
+          return;
+        }
+        scrollToElement(
+          firstNewAnchor,
+          { align: "start" },
+          { keepPreviousPeek: true },
+        );
+        handledScrollAnchors.add(firstNewAnchor);
+        capturePrependAnchor();
+        return;
+      }
+    }
+
+    // 行数没变但出现了未处理的新锚点（例如给已有行打开 scrollAnchor）
+    if (list.length === previousCount) {
+      const unhandled = firstUnhandledAnchor(list);
+      if (unhandled) {
+        scrollToElement(
+          unhandled,
+          { align: "start" },
+          { keepPreviousPeek: true },
+        );
+        handledScrollAnchors.add(unhandled);
+        capturePrependAnchor();
+        return;
+      }
+    }
+
+    if (mode === "following-bottom" && options().autoScroll) {
+      scrollToEnd({ behavior: "auto" });
+    } else {
+      commitScrollState();
+      scheduleVisibilitySync();
+    }
+    capturePrependAnchor();
+  };
+
+  const handleResize = () => {
+    if (mode === "following-bottom" && options().autoScroll) {
+      scrollToEnd({ behavior: "auto" });
+      return;
+    }
+    const before = spacerHeight;
+    if (reanchorToAnchoredMessage()) {
+      if (options().autoScroll && before > 0 && spacerHeight === 0) {
+        scrollToEnd({ behavior: "auto" });
+      }
+      return;
+    }
+    scheduleStateCommit();
+    scheduleVisibilitySync();
+  };
+
+  const syncAfterScroll = () => {
+    commitScrollState();
+    scheduleVisibilitySync();
+    capturePrependAnchor();
+  };
+
+  /** 滚轮/触摸/键盘滚动：立刻放弃跟随，把位置交还读者 */
+  const releaseFollow = () => {
+    if (
+      mode === "following-bottom" ||
+      mode === "anchored-to-message" ||
+      mode === "settling-jump"
+    ) {
+      applyAutoscrolling(false);
+      mode = "free-scrolling";
+    }
+  };
+
+  const computeVisibility = () => {
+    const vp = viewport();
+    const root = content();
+    if (!vp || !root) {
+      setVisibleMessageIds([]);
+      setCurrentAnchorId(null);
+      return;
+    }
+    const vpRect = vp.getBoundingClientRect();
+    const readingLine =
+      vpRect.top + options().scrollMargin + options().scrollPreviousItemPeek;
+    const hasObserver = typeof IntersectionObserver === "undefined";
+    const visible: string[] = [];
+    let anchorId: string | null = null;
+    for (const item of items()) {
+      const id = item.dataset.messageId;
+      if (!id) continue;
+      const isAnchor = item.dataset.scrollAnchor === "true";
+      const rect =
+        isAnchor || hasObserver ? item.getBoundingClientRect() : null;
+      const isVisible =
+        hasObserver && rect
+          ? rect.bottom > readingLine && rect.top < vpRect.bottom
+          : visibleIds.has(id);
+      if (isVisible) visible.push(id);
+      if (isAnchor && rect && rect.top <= readingLine + AT_EDGE_TOLERANCE) {
+        anchorId = id;
+      }
+    }
+    if (visible.length === 0 && anchorId === null) {
+      setVisibleMessageIds([]);
+      setCurrentAnchorId(null);
+      return;
+    }
+    setVisibleMessageIds(visible);
+    setCurrentAnchorId(anchorId);
+  };
+
+  const startVisibilityObserver = () => {
+    if (typeof IntersectionObserver === "undefined") {
+      scheduleVisibilitySync();
+      return;
+    }
+    const vp = viewport();
+    if (!observer && vp) {
+      observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            const id = (entry.target as HTMLElement).dataset.messageId;
+            if (!id) continue;
+            if (entry.isIntersecting) visibleIds.add(id);
+            else visibleIds.delete(id);
+          }
+          scheduleVisibilitySync();
+        },
+        {
+          root: vp,
+          rootMargin: `${-(options().scrollMargin + options().scrollPreviousItemPeek)}px 0px 0px 0px`,
+          threshold: [0, 0.01, 0.5, 1],
+        },
+      );
+    }
+    for (const element of messageElements.values()) observer?.observe(element);
+    scheduleVisibilitySync();
+  };
+
+  const stopVisibilityObserver = () => {
+    if (visibilityFrame !== null) {
+      window.cancelAnimationFrame(visibilityFrame);
+      visibilityFrame = null;
+    }
+    observer?.disconnect();
+    observer = null;
+    visibleIds.clear();
+    setVisibleMessageIds([]);
+    setCurrentAnchorId(null);
   };
 
   const subscribeVisibility = () => {
     visibilitySubscribers += 1;
-    if (visibilitySubscribers === 1) computeVisibility();
+    if (visibilitySubscribers === 1) startVisibilityObserver();
+    scheduleVisibilitySync();
     let released = false;
     return () => {
       if (released) return;
       released = true;
       visibilitySubscribers -= 1;
-      if (visibilitySubscribers === 0) {
-        setVisibleMessageIds([]);
-        setCurrentAnchorId(null);
-      }
+      if (visibilitySubscribers === 0) stopVisibilityObserver();
     };
   };
 
-  const applyInitialPosition = () => {
-    const el = viewport();
-    if (!el || didInitial || items.size === 0) return;
-    didInitial = true;
-    const pos = options().defaultScrollPosition;
-    if (pos === "start") {
-      el.scrollTop = 0;
-    } else if (pos === "end") {
-      el.scrollTop = el.scrollHeight;
-    } else {
-      // "last-anchor"：定位到最后一个 scrollAnchor；无锚点或该回合放得下时回退到 end
-      const anchors = orderedItems().filter((i) => i.anchor());
-      const last = anchors[anchors.length - 1];
-      const maxTop = el.scrollHeight - el.clientHeight;
-      const peek = options().scrollPreviousItemPeek;
-      const anchorTop = last
-        ? itemOffsetTop(last.element) - peek
-        : Number.POSITIVE_INFINITY;
-      el.scrollTop =
-        last && anchorTop > 0 && anchorTop <= maxTop
-          ? anchorTop
-          : el.scrollHeight;
-    }
-    lastScrollHeight = el.scrollHeight;
-    updateScrollable();
-    setPendingScroll(false);
-  };
-
-  // 视口挂载后：绑定 scroll/尺寸监听
-  createEffect(() => {
-    const el = viewport();
-    if (!el) return;
-
-    const onScroll = () => {
-      if (scrollingProgrammatically) return;
-      updateScrollable();
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-
-    const resize = new ResizeObserver(() => {
-      updateScrollable();
-      if (options().autoScroll && following && didInitial) scrollToEnd();
-    });
-    resize.observe(el);
-
-    onCleanup(() => {
-      el.removeEventListener("scroll", onScroll);
-      resize.disconnect();
-    });
-  });
-
-  // 内容变化：初次定位 / prepend 保位 / autoScroll 跟随 / 可见性
-  createEffect(() => {
-    const el = content();
-    if (!el) return;
-
-    const observer = new MutationObserver((records) => {
-      const viewportEl = viewport();
-      if (viewportEl) {
-        const prepended =
-          preserveScrollOnPrepend() &&
-          viewportEl.scrollTop > 0 &&
-          records.some(
-            (r) => r.addedNodes.length > 0 && r.previousSibling === null,
-          );
-        if (prepended) {
-          const delta = viewportEl.scrollHeight - lastScrollHeight;
-          if (delta > 0) viewportEl.scrollTop += delta;
-        }
-        lastScrollHeight = viewportEl.scrollHeight;
-      }
-      if (!didInitial) applyInitialPosition();
-      else if (options().autoScroll && following) scrollToEnd();
-      computeVisibility();
-    });
-    observer.observe(el, { childList: true, subtree: true });
-
-    const resize = new ResizeObserver(() => {
-      if (!didInitial) applyInitialPosition();
-      else if (options().autoScroll && following) scrollToEnd();
-      computeVisibility();
-    });
-    resize.observe(el);
-
-    onCleanup(() => {
-      observer.disconnect();
-      resize.disconnect();
-    });
-  });
-
-  // 内容里的条目变化：空会话不设置 data-pending-scroll，其余触发初次定位
-  createEffect(() => {
-    content();
-    itemsVersion();
-    if (items.size === 0) {
-      setPendingScroll(false);
+  const registerMessage = (
+    id: string,
+    element: HTMLElement | undefined,
+    previous?: HTMLElement,
+  ) => {
+    if (element) {
+      messageElements.set(id, element);
+      observer?.observe(element);
+      scheduleVisibilitySync();
+      if (pendingMessage?.id === id) schedulePendingFlush();
       return;
     }
-    applyInitialPosition();
+    if (previous && messageElements.get(id) === previous) {
+      messageElements.delete(id);
+      visibleIds.delete(id);
+      observer?.unobserve(previous);
+      scheduleVisibilitySync();
+    }
+  };
+
+  const registerItem = (entry: MessageScrollerItemEntry) => {
+    const id = entry.id;
+    if (id) registerMessage(id, entry.element);
+    return () => {
+      if (id) registerMessage(id, undefined, entry.element);
+    };
+  };
+
+  const setSpacerElement = (element: HTMLElement | undefined) => {
+    setSpacer(element);
+    spacerGap = rowGap(element?.parentElement ?? null);
+  };
+
+  // 内容观察：初次定位 / prepend 保位 / 新回合锚定 / 跟随 / 尺寸
+  createEffect(() => {
+    const root = content();
+    if (!root) return;
+    handleContentChange();
+
+    const mutation =
+      typeof MutationObserver !== "undefined"
+        ? new MutationObserver(() => handleContentChange())
+        : null;
+    mutation?.observe(root, { childList: true });
+
+    // 已有行切换 scrollAnchor（dataset 变化）也要重新锚定
+    const anchorMutation =
+      typeof MutationObserver !== "undefined"
+        ? new MutationObserver(() => handleContentChange())
+        : null;
+    anchorMutation?.observe(root, {
+      attributes: true,
+      attributeFilter: ["data-scroll-anchor"],
+      subtree: true,
+    });
+
+    let frame = 0;
+    const resize =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => {
+            window.cancelAnimationFrame(frame);
+            frame = window.requestAnimationFrame(handleResize);
+          })
+        : null;
+    resize?.observe(root);
+
+    onCleanup(() => {
+      mutation?.disconnect();
+      anchorMutation?.disconnect();
+      resize?.disconnect();
+      window.cancelAnimationFrame(frame);
+    });
+  });
+
+  // 视口：scroll / 用户滚动意图 / 尺寸
+  createEffect(() => {
+    const vp = viewport();
+    if (!vp) return;
+    if (visibilitySubscribers > 0 && !observer) startVisibilityObserver();
+
+    const onScroll = () => syncAfterScroll();
+    const onIntent = () => releaseFollow();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (NAV_KEYS.has(event.key)) releaseFollow();
+    };
+    vp.addEventListener("scroll", onScroll, { passive: true });
+    vp.addEventListener("wheel", onIntent, { passive: true });
+    vp.addEventListener("touchmove", onIntent, { passive: true });
+    vp.addEventListener("keydown", onKeyDown);
+
+    let frame = 0;
+    const resize =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => {
+            window.cancelAnimationFrame(frame);
+            frame = window.requestAnimationFrame(handleResize);
+          })
+        : null;
+    resize?.observe(vp);
+
+    onCleanup(() => {
+      vp.removeEventListener("scroll", onScroll);
+      vp.removeEventListener("wheel", onIntent);
+      vp.removeEventListener("touchmove", onIntent);
+      vp.removeEventListener("keydown", onKeyDown);
+      resize?.disconnect();
+      window.cancelAnimationFrame(frame);
+    });
+  });
+
+  onCleanup(() => {
+    if (autoscrollingTimer !== null) window.clearTimeout(autoscrollingTimer);
+    if (stateFrame !== null) window.cancelAnimationFrame(stateFrame);
+    if (pendingFrame !== null) window.cancelAnimationFrame(pendingFrame);
+    if (visibilityFrame !== null) window.cancelAnimationFrame(visibilityFrame);
+    observer?.disconnect();
+    observer = null;
   });
 
   return {
@@ -363,6 +833,7 @@ export function useMessageScrollerEngine(
     setViewport,
     content,
     setContent,
+    setSpacer: setSpacerElement,
     registerItem,
     preserveScrollOnPrepend,
     setPreserveScrollOnPrepend,
