@@ -17,6 +17,8 @@ const AlertDialogPage = lazy(() => import("./pages/alert-dialog-page"));
 const CalendarPage = lazy(() => import("./pages/calendar-page"));
 const BubblePage = lazy(() => import("./pages/bubble-page"));
 const MarkerPage = lazy(() => import("./pages/marker-page"));
+const MessagePage = lazy(() => import("./pages/message-page"));
+const MessageScrollerPage = lazy(() => import("./pages/message-scroller-page"));
 const AttachmentPage = lazy(() => import("./pages/attachment-page"));
 const ComboboxPage = lazy(() => import("./pages/combobox-page"));
 const SelectPage = lazy(() => import("./pages/select-page"));
@@ -52,6 +54,12 @@ export const routes: DevRoute[] = [
   { path: "/calendar", title: "Calendar", component: CalendarPage },
   { path: "/bubble", title: "Bubble", component: BubblePage },
   { path: "/marker", title: "Marker", component: MarkerPage },
+  { path: "/message", title: "Message", component: MessagePage },
+  {
+    path: "/message-scroller",
+    title: "Message Scroller",
+    component: MessageScrollerPage,
+  },
   { path: "/attachment", title: "Attachment", component: AttachmentPage },
   { path: "/combobox", title: "Combobox", component: ComboboxPage },
   { path: "/select", title: "Select", component: SelectPage },
