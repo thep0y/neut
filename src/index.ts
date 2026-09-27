@@ -33,6 +33,7 @@ export * from "~/components/kbd";
 export * from "~/components/label";
 export * from "~/components/marker";
 export * from "~/components/message";
+export * from "~/components/message-scroller";
 export * from "~/components/pagination";
 export * from "~/components/number-input";
 export * from "~/components/popover";
