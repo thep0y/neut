@@ -195,7 +195,7 @@ function DataTableViewOptions(props: { table: DataTableInstance<Payment> }) {
       >
         Columns
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" class="w-[150px]">
+      <DropdownMenuContent align="end" class="w-37.5">
         <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <For
@@ -232,7 +232,7 @@ function DataTablePagination(props: { table: DataTableInstance<Payment> }) {
             value={String(props.table.state.pagination.pageSize)}
             onValueChange={(value) => props.table.setPageSize(Number(value))}
           >
-            <SelectTrigger class="h-8 w-[70px]">
+            <SelectTrigger class="h-8 w-17.5">
               <SelectValue
                 placeholder={String(props.table.state.pagination.pageSize)}
               />
@@ -246,7 +246,7 @@ function DataTablePagination(props: { table: DataTableInstance<Payment> }) {
             </SelectContent>
           </Select>
         </div>
-        <div class="flex w-[100px] items-center justify-center text-sm font-medium">
+        <div class="flex w-25 items-center justify-center text-sm font-medium">
           Page {props.table.state.pagination.pageIndex + 1} of{" "}
           {props.table.getPageCount()}
         </div>
