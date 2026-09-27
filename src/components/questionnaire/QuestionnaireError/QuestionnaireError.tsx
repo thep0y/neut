@@ -34,7 +34,7 @@ export function QuestionnaireError<T extends ValidComponent = "p">(
       hidden={!item.invalid()}
       data-slot="questionnaire-error"
       data-invalid={item.invalid() ? "" : undefined}
-      class={clsx("text-sm text-destructive", local.class)}
+      class={clsx("mt-2 text-sm text-destructive", local.class)}
       classList={local.classList}
     >
       {local.children ??

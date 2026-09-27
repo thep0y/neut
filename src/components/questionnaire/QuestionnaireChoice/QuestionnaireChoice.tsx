@@ -6,11 +6,11 @@ import { useQuestionnaireChoice } from "./useQuestionnaireChoice";
 import type { QuestionnaireChoiceProps } from "../questionnaire.types";
 
 const labelClasses =
-  "group/questionnaire-choice relative flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border p-3 text-start transition-colors outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[checked]:border-primary/50 data-[checked]:bg-muted/40";
+  "group/questionnaire-choice relative flex min-h-14 cursor-pointer items-start gap-3 rounded-xl border p-4 text-start transition-colors outline-none select-none has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/50 data-[disabled]:pointer-events-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[checked]:border-ring data-[checked]:bg-accent/50";
 
 /**
  * 固定选项:label 包住一个视觉隐藏的原生 radio/checkbox(保留原生语义与键盘行为),
- * 再叠加自绘指示器、文字与快捷键。
+ * 再叠加自绘指示器、文字与快捷键徽标。
  */
 export function QuestionnaireChoice(props: QuestionnaireChoiceProps) {
   const item = useQuestionnaireItemContext("QuestionnaireChoice");
@@ -54,7 +54,7 @@ export function QuestionnaireChoice(props: QuestionnaireChoiceProps) {
         type={choice.type()}
         name={choice.name()}
         value={local.value}
-        checked={choice.checkedResolved()}
+        checked={checked()}
         disabled={choice.isDisabled()}
         required={choice.required()}
         aria-invalid={item.invalid() || undefined}
@@ -67,8 +67,8 @@ export function QuestionnaireChoice(props: QuestionnaireChoiceProps) {
         aria-hidden="true"
         data-slot="questionnaire-choice-indicator"
         class={clsx(
-          "pointer-events-none relative mt-0.5 flex size-4 shrink-0 items-center justify-center border",
-          choice.type() === "radio" ? "rounded-full" : "rounded-[4px]",
+          "pointer-events-none relative mt-0.5 flex size-5 shrink-0 items-center justify-center border border-input",
+          choice.type() === "radio" ? "rounded-full" : "rounded-[6px]",
           checked() && "border-primary",
         )}
       >
@@ -77,12 +77,12 @@ export function QuestionnaireChoice(props: QuestionnaireChoiceProps) {
             when={choice.type() === "checkbox"}
             fallback={
               <span
-                class="size-2 rounded-full bg-primary"
                 data-slot="questionnaire-choice-indicator-dot"
+                class="size-2.5 rounded-full bg-primary"
               />
             }
           >
-            <Check class="size-3 text-primary" />
+            <Check class="size-3.5 text-primary" />
           </Show>
         </Show>
       </span>
@@ -97,7 +97,7 @@ export function QuestionnaireChoice(props: QuestionnaireChoiceProps) {
           <span
             aria-hidden="true"
             data-slot="questionnaire-choice-shortcut"
-            class="pointer-events-none ms-auto shrink-0 text-xs text-muted-foreground"
+            class="pointer-events-none ms-auto inline-flex size-6 shrink-0 items-center justify-center rounded-md border text-xs font-medium text-muted-foreground"
           >
             {shortcut()}
           </span>

@@ -13,7 +13,7 @@ export function QuestionnaireTitle<T extends ValidComponent = "legend">(
       {...rest}
       component={(local.component as ValidComponent) ?? "legend"}
       data-slot="questionnaire-title"
-      class={clsx("text-base font-medium text-pretty", local.class)}
+      class={clsx("text-lg font-semibold text-pretty", local.class)}
       classList={local.classList}
     />
   );

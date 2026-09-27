@@ -28,7 +28,7 @@ function NavButton(props: NavButtonProps) {
   const root = useQuestionnaireRootContext("QuestionnaireNavigation");
   const merged = mergeProps(
     {
-      variant: "outline" as const,
+      variant: undefined,
       size: "md" as const,
       disabled: false,
     },
@@ -84,7 +84,12 @@ function NavButton(props: NavButtonProps) {
     <Button
       {...rest}
       type={local.type ?? (local.kind === "submit" ? "submit" : "button")}
-      variant={local.variant}
+      variant={
+        local.variant ??
+        (local.kind === "previous" || local.kind === "skip"
+          ? "outline"
+          : "primary")
+      }
       size={local.size}
       disabled={local.disabled}
       onClick={handleClick}

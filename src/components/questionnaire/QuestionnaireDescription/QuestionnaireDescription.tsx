@@ -30,7 +30,10 @@ export function QuestionnaireDescription<T extends ValidComponent = "p">(
       component={(local.component as ValidComponent) ?? "p"}
       id={id}
       data-slot="questionnaire-description"
-      class={clsx("text-sm text-muted-foreground text-pretty", local.class)}
+      class={clsx(
+        "mt-1 text-sm text-muted-foreground text-pretty",
+        local.class,
+      )}
       classList={local.classList}
     />
   );
