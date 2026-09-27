@@ -518,7 +518,7 @@ function QuestionnaireValidation() {
           })
         }
       >
-        <Card class="w-full gap-0">
+        <Card class="w-full">
           <QuestionnaireItem
             name="detail"
             required
@@ -1169,7 +1169,7 @@ function QuestionnaireCard() {
           )
         }
       >
-        <Card class="gap-0">
+        <Card>
           <QuestionnaireItem name="task" required>
             <CardHeader class="border-b">
               <QuestionnaireTitle component={CardTitle}>
