@@ -9,11 +9,18 @@ export interface ScrollEdges {
   refresh: () => void;
 }
 
+/** 进入/退出阈值分开(迟滞),避免在边界 1px 处反复翻转导致箭头闪动 */
+const ENTER_THRESHOLD = 4;
+const EXIT_THRESHOLD = 1;
+
 /**
  * 跟踪某个滚动容器上方/下方是否还有未显示的内容，用于驱动滚动提示箭头。
  *
  * 监听 scroll(passive) + ResizeObserver(容器与首个子元素尺寸) +
  * MutationObserver(childList/subtree)，因此面板高度变化、选项增删后显隐都能及时更新。
+ *
+ * 显隐用**迟滞阈值**：从"无内容"变为"有内容"要超过 4px，反向要回落到 1px 以内，
+ * 避免在滚动到边界时 canScroll* 每帧抖动(箭头反复出现/消失)。
  */
 export function useScrollEdges(
   target: Accessor<HTMLElement | undefined>,
@@ -28,8 +35,14 @@ export function useScrollEdges(
       setCanScrollDown(false);
       return;
     }
-    setCanScrollUp(el.scrollTop > 1);
-    setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 1);
+    const top = el.scrollTop;
+    const remaining = el.scrollHeight - el.clientHeight - top;
+    setCanScrollUp((prev) =>
+      prev ? top > EXIT_THRESHOLD : top > ENTER_THRESHOLD,
+    );
+    setCanScrollDown((prev) =>
+      prev ? remaining > EXIT_THRESHOLD : remaining > ENTER_THRESHOLD,
+    );
   };
 
   createEffect(() => {
