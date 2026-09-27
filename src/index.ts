@@ -39,6 +39,7 @@ export * from "~/components/number-input";
 export * from "~/components/popover";
 export * from "~/components/progress";
 export * from "~/components/radio-group";
+export * from "~/components/resizable";
 export * from "~/components/scroll-area";
 export * from "~/components/scroll-arrows";
 export * from "~/components/select";
