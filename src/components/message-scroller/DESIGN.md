@@ -80,9 +80,64 @@ Tracking the Reader's Position、Reading Scroll State、Scroll State、Virtualiz
 - Virtualization 为自研极简窗口化(仓库不引入 TanStack),用 `MessageScrollerViewport`
   作为滚动元素。
 
-## 5. 未纳入
+## 5. 与 shadcn 示例的差异及原因
+
+dev 示例已按上游 `apps/v4/examples/base/message-scroller-*.tsx` 逐条移植结构与数据,
+但**无法逐像素/逐行为复现**,原因分两类:本仓库刻意不引入的上游运行时依赖,以及两套组件
+库的 API 约定差异。下面把每一项写成「上游用什么 / 本仓库现状 / 差异 / 未来实现」,供后续补齐。
+
+### 5.1 缺少运行时依赖导致的行为差异
+
+| 上游依赖 | 用在哪 | 本仓库现状 | 差异 | 未来实现 |
+| --- | --- | --- | --- | --- |
+| `motion/react`(Motion) | `components/message-animated.tsx`、`Animating New Messages` | 自写 `MessageAnimated` + `dev/examples/message-scroller.css` 的 7 个 CSS keyframes | 只有入场动画,无 exit/AnimatePresence、无真 spring 物理、无 layout 动画;切换预设不会重放已挂载行(已在代码里固定挂载时预设) | 增加可选的 motion 适配层:用 CSS `linear()` 近似 spring,或允许使用方注入 motion;补齐 exit 与 `useReducedMotion` |
+| `@ai-sdk/react` + `@shadcn/helpers/ai-sdk`(`createChat`/`useChat`/`transport`) | Chat、Following the Live Edge、Keeping Context Visible、Animating | 本地 `createChat()` + `useScriptedChat`(定时器模拟提交→流式输出) | 无真实 transport/abort/regenerate;无 UIMessage `parts`(reasoning/tool/attachment);`status` 语义为近似 | 提供 `@neut/ui` 的 chat/streaming 适配(hook + transport 接口),或保留脚本驱动并把接口抽象出来 |
+| `@tanstack/react-virtual` | Virtualization | 自研固定行高窗口化 | 行高固定、无动态测量/overscan 自适应/scrollMargin 集成 | 保持「虚拟化在 primitive 之外」的定位,补一个 headless 窗口化 hook 示例,并在 `MessageScrollerViewport` 上确认 `ref` 可透传(已支持) |
+| `sonner`(toast) | Loading Earlier Messages 的「History loaded」提示 | 未接(dev 未挂载 Toaster) | 少了加载历史后的 toast 反馈 | 在 dev 布局挂载本仓库 `Toaster`,加载完成后调用 toast |
+| `lucide-react` | 全部示例图标 | `lucide-solid` | 图标名/导出形式不同(`ArrowUpIcon`→`ArrowUp`、`IconPlaceholder`→直接组件) | 无需处理,属框架差异 |
+
+### 5.2 组件库 API 约定差异(刻意为之,不是缺陷)
+
+上游 Base UI 版示例与本仓库的约定不同,移植时做了等价改写,**视觉与交互应一致**;后续不要
+把这些「改写」当成 bug 去改回:
+
+| 上游写法 | 本仓库写法 | 说明 |
+| --- | --- | --- |
+| `render={<Button/>}` / `UseRenderComponentProps` | `component={Button}`(多态 `PolymorphicProps`) | 本仓库统一用 `component` 表达 render 目标 |
+| `IconPlaceholder` | 直接 `lucide-solid` 图标 | 上游为多图标集预览服务 |
+| `SelectContent side=/align=` | `SelectContent placement="top-start"` | 本仓库 Select 采用「选中项对齐」定位模型,没有独立 side |
+| `<ToggleGroup value={[role]}>` | `<ToggleGroup value={role}>` | 本仓库单选模式用标量(`multiple` 才用数组),视觉一致 |
+| `<Slider value={[peek]}>` | `<Slider value={peek}>` | 同上,标量/数组二选一 |
+| `TooltipTrigger render={<Button/>}` | `<TooltipTrigger variant size icon aria-label/>` | 触发器等默认渲染 `Button` |
+| 主题类 `cn-message-scroller*`、`cn-button` 等 | 组件内联 Tailwind 类 | 上游 `shadcn/tailwind.css` 的主题 token 层未移植 |
+| Content 默认间距来自主题 | `MessageScrollerContent` 内置 `gap-6`(示例再按需覆盖) | 上游 `cn-message-scroller-content` 提供间距,本仓库用固定值近似 |
+
+### 5.3 主题 token 层
+
+上游 `shadcn` 包在全局 CSS 里提供 `@import "shadcn/tailwind.css"`,其中 `cn-*` 类把
+组件样式抽成语义 token,可按 theme(base-rhea / base-luma 等)切换;本仓库把样式直接写在
+组件里,因此**不同 theme 下的圆角/间距/颜色细节会有出入**。若要完全对齐,需要先引入
+一层主题 token(或在 `src/styles` 里维护多套变量),再让组件引用 token。
+
+### 5.4 过程限制
+
+当前环境没有可用的桌面浏览器(浏览器工具报未连接),所有示例只做了 `tsc` + 构建验证,
+**滚动/吸附/动画/手势的最终观感未经真机确认**。后续实现时请以 `bun run dev` 手动逐节核对,
+尤其是:新回合锚定、spacer 让最后一行顶到顶部、prepend 保位、autoScroll 让位、IO 可见性高亮。
+
+## 6. 未纳入(组件本身)
 
 - **SSR 防闪烁脚本**:`data-pending-scroll` 已实现;把它接到内联脚本属于使用方页面代码
   (`end` 时先滚到底再移除属性),组件不内置 `<script>`。
 - `scroll-fade` 依赖 CSS scroll-driven animation,不支持该特性的浏览器退化为静态渐隐
   (上游同款兜底)。
+
+## 7. 未来实现清单(建议优先级)
+
+1. **motion 适配层 / 更强 CSS 动画**:补 exit 与 spring,消掉 `Animating` 与上游的最大差异。
+2. **HoverCard 组件**:移植 `hover-card` 后,把 `Tracking the Reader's Position` 的常驻
+   指示点换回上游的悬浮大纲(`HoverCardTrigger` + `HoverCardContent` + 列表)。
+3. **toast(sonner 对应物)**:dev 挂载 `Toaster`,补 `Loading Earlier Messages` 的提示。
+4. **chat/streaming 适配接口**:把 `useScriptedChat` 的接口抽成 transport,未来可接真实后端。
+5. **主题 token 层**:若要支持多 theme,把组件内联样式迁到语义 token。
+6. **虚拟化参考实现**:可选,保持 primitive 中立。
