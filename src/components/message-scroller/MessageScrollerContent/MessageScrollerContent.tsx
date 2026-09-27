@@ -30,7 +30,7 @@ export function MessageScrollerContent(props: MessageScrollerContentProps) {
       role={local.role ?? "log"}
       aria-relevant={local["aria-relevant"] ?? "additions"}
       aria-busy={local["aria-busy"]}
-      class={clsx("flex h-max min-h-full flex-col", local.class)}
+      class={clsx("flex h-max min-h-full flex-col gap-6", local.class)}
       classList={local.classList}
     >
       {local.children}

@@ -63,12 +63,22 @@ MessageScrollerProvider          # headless 根:滚动状态机 + context(不渲
 - **性能**:Item 带 `content-visibility: auto` 与 `contain-intrinsic-size`;滚动热路径只更新
   少量信号与 data 属性,不重渲染行。
 
-## 4. 示例(dev/examples/message-scroller.tsx)
+## 4. 示例(dev/examples/)
 
+按上游 `apps/v4/examples/base/message-scroller-*.tsx` 逐一移植,结构/文案/数据对齐:
 Chat、Anchoring Turns、Group Chat、Keeping Context Visible、Following the Live Edge、
 Opening Position、Loading Earlier Messages、Animating New Messages、Jumping to Messages、
-Tracking the Reader's Position、Reading Scroll State、Virtualization(自研极简窗口化,
-仓库不引入 TanStack)。
+Tracking the Reader's Position、Reading Scroll State、Scroll State、Virtualization。
+
+- `message-scroller.tsx` 只做组合与 UI,复用仓库组件(Card/Empty/ToggleGroup/Slider/
+  Tabs/Select/Tooltip/DropdownMenu 等);受限于本仓库没有 HoverCard / motion,
+  Tracking 的悬浮大纲改为常驻竖排指示点,动画改用 CSS 关键帧。
+- `message-scroller-support.tsx`:本地 `createChat()` + `useScriptedChat` 模拟
+  `@shadcn/helpers/ai-sdk` 的「提交 → 流式输出」;`MessageAnimated` 对齐上游结构
+  (用户行入场动画、段落切分、muted/ghost 变体),预设与 `@/lib/message-animations` 同名。
+- `message-scroller.css`:七个动画预设的 CSS keyframes(含 prefers-reduced-motion 兜底)。
+- Virtualization 为自研极简窗口化(仓库不引入 TanStack),用 `MessageScrollerViewport`
+  作为滚动元素。
 
 ## 5. 未纳入
 
