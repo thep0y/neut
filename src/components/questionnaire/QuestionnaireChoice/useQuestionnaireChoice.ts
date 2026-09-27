@@ -94,6 +94,8 @@ export function useQuestionnaireChoice(options: Options) {
     required: () =>
       item.required() && !item.multiple() && !item.hasInputAnswer(),
     name: () => (item.status() === "skipped" ? undefined : item.name),
+    ariaKeyShortcuts: () =>
+      keyShortcutText(shortcut(), !isDisabled() && checkedResolved()),
     inputProps: () => ({
       "aria-keyshortcuts": keyShortcutText(
         shortcut(),

@@ -44,11 +44,17 @@ export function QuestionnaireItem(props: QuestionnaireItemProps) {
   return (
     <QuestionnaireItemContext.Provider value={engine.context}>
       <fieldset
-        {...engine.itemProps}
         {...rest}
         ref={(el) => {
           onCleanup(engine.registerElement(el));
         }}
+        disabled={engine.context.disabled()}
+        hidden={!engine.context.active()}
+        inert={!engine.context.active()}
+        tabIndex={-1}
+        aria-describedby={engine.describedBy()}
+        aria-invalid={engine.context.invalid() || undefined}
+        aria-keyshortcuts={engine.keyshortcuts()}
         data-slot="questionnaire-item"
         data-active={engine.context.active() ? "" : undefined}
         data-status={engine.context.status()}

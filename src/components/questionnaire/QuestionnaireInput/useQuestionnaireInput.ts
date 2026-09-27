@@ -83,6 +83,11 @@ export function useQuestionnaireInput(options: Options) {
     filled,
     isDisabled,
     invalid: item.invalid,
+    controlled,
+    name: () => (selected() ? item.name : undefined),
+    formValue: () => (selected() ? undefined : ""),
+    ariaKeyShortcuts: () =>
+      keyShortcutText(null, !isDisabled() && filled() && selected()),
     inputProps: () => ({
       "aria-invalid": item.invalid() || undefined,
       "aria-keyshortcuts": keyShortcutText(

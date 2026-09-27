@@ -22,17 +22,22 @@ interface Options {
   onStatusChange?: (status: QuestionnaireItemStatus) => void;
 }
 
+export interface QuestionnaireItemDomProps {
+  "aria-describedby": string | undefined;
+  "aria-invalid": boolean | undefined;
+  "aria-keyshortcuts": string | undefined;
+  disabled: boolean;
+  hidden: boolean;
+  inert: boolean;
+  tabIndex: number;
+}
+
 export interface UseQuestionnaireItemResult {
   context: QuestionnaireItemContextValue;
-  itemProps: {
-    "aria-describedby": string | undefined;
-    "aria-invalid": boolean | undefined;
-    "aria-keyshortcuts": string | undefined;
-    disabled: boolean;
-    hidden: boolean;
-    inert: boolean;
-    tabIndex: number;
-  };
+  /** 反应式:每次读取都根据当前 active/invalid 重新计算 */
+  itemProps: () => QuestionnaireItemDomProps;
+  describedBy: () => string | undefined;
+  keyshortcuts: () => string | undefined;
   /** 在 fieldset 的 ref 里调用:登记 DOM 元素并把句柄注册到 Root */
   registerElement: (element: HTMLElement) => () => void;
 }
@@ -350,7 +355,7 @@ export function useQuestionnaireItem(
 
   return {
     context,
-    itemProps: {
+    itemProps: () => ({
       "aria-describedby": describedBy(),
       "aria-invalid": invalid() || undefined,
       "aria-keyshortcuts": keyshortcuts(),
@@ -358,7 +363,9 @@ export function useQuestionnaireItem(
       hidden: !active(),
       inert: !active(),
       tabIndex: -1,
-    },
+    }),
     registerElement,
+    describedBy,
+    keyshortcuts,
   };
 }

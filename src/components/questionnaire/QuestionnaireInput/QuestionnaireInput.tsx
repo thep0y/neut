@@ -33,8 +33,22 @@ export function QuestionnaireInput(props: QuestionnaireInputProps) {
     >
       <input
         {...rest}
-        {...engine.inputProps()}
-        ref={engine.setInput}
+        ref={(el) => {
+          engine.setInput(el);
+          // 非受控时把 defaultValue 写入 DOM(Solid 的 input 没有 defaultValue 绑定)
+          if (!engine.controlled() && local.defaultValue !== undefined) {
+            el.defaultValue = local.defaultValue;
+          }
+        }}
+        id={engine.id}
+        type={local.type ?? "text"}
+        name={engine.name()}
+        form={engine.formValue()}
+        value={engine.controlled() ? local.value : undefined}
+        disabled={engine.isDisabled()}
+        aria-invalid={engine.invalid() || undefined}
+        aria-keyshortcuts={engine.ariaKeyShortcuts()}
+        onChange={(event) => engine.inputProps().onChange(event)}
         data-slot="questionnaire-input"
         data-filled={engine.filled() ? "" : undefined}
         data-empty={engine.filled() ? undefined : ""}

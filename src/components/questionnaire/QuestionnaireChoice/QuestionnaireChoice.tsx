@@ -49,8 +49,17 @@ export function QuestionnaireChoice(props: QuestionnaireChoiceProps) {
       classList={local.classList}
     >
       <input
-        {...choice.inputProps()}
         ref={choice.setInput}
+        id={choice.id}
+        type={choice.type()}
+        name={choice.name()}
+        value={local.value}
+        checked={choice.checkedResolved()}
+        disabled={choice.isDisabled()}
+        required={choice.required()}
+        aria-invalid={item.invalid() || undefined}
+        aria-keyshortcuts={choice.ariaKeyShortcuts()}
+        onChange={choice.handleChange}
         data-slot="questionnaire-choice-input"
         class="absolute inset-0 z-10 size-full cursor-pointer opacity-0"
       />
