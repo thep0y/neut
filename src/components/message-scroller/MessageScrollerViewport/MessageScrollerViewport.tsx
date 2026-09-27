@@ -43,7 +43,7 @@ export function MessageScrollerViewport(props: MessageScrollerViewportProps) {
       data-pending-scroll={ctx.pendingScroll() ? "" : undefined}
       data-autoscrolling={ctx.autoscrolling() ? "" : undefined}
       class={clsx(
-        "size-full min-h-0 min-w-0 scroll-fade-b scrollbar-thin [scrollbar-gutter:stable] overflow-y-auto overscroll-contain contain-content outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+        "size-full min-h-0 min-w-0 scroll-fade-b scrollbar-thin scrollbar-gutter-stable overflow-y-auto overscroll-contain contain-content outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
         "data-autoscrolling:scrollbar-thumb-transparent data-autoscrolling:scrollbar-track-transparent",
         "data-pending-scroll:invisible",
         local.class,
