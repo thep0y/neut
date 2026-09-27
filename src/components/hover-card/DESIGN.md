@@ -53,7 +53,31 @@ HoverCard              # 根:open/defaultOpen/onOpenChange + delay/closeDelay,�
 - **性能**:根只持有开关信号;content 只在打开时挂 Portal;定位用 positioner 的
   autoUpdate;`animationState` 用 rAF 延后一帧,避免同步布局抖动。
 
-## 4. 与上游的差异
+## 4. 为什么不直接复用 Popover 组件
+
+`Popover` 与 `HoverCard` 表面相似(Root 都有 `open`/`onOpenChange`/reference/floating,
+Content 都用同一个 positioner 管线),但**交互模型不同**,直接组合会互相打架:
+
+| 维度 | Popover | HoverCard |
+| --- | --- | --- |
+| 打开方式 | 点击/键盘 Enter/Space **toggle** | **悬停延迟**打开;focus 立即打开 |
+| 关闭方式 | 点击外部(pointerdown capture)、Escape | pointerleave 延迟、Escape;内容可移入保持 |
+| 滚动 | 默认 `useScrollLock` 锁定页面 | 不锁 |
+| 面板形态 | `modal` 语义,`role="dialog"` + `aria-expanded`/`aria-controls` | 预览卡片,trigger `aria-describedby` |
+| 卸载 | `open=false` 立即卸载(无退场等待) | 退场动画播完(`animationend`)再卸载 |
+| trigger 默认 | `Button` | 无样式 `<a>` |
+
+如果 HoverCard 套 Popover,就需要一路关掉 scroll lock/modal、绕开它 toggle 与
+outside-pointerdown 的逻辑、并放弃退场动画;这比按语义单独实现更脆弱。
+
+**但真正该复用、也确实复用了的是底层管道**:`side/align → placement`、
+`transform-origin`、`offset→flip→shift→[arrow]→hide→containingBlockOffset` 这组
+纯函数原先在 Tooltip / Popover 里各存一份,这次已抽到
+`src/lib/positioner/utils/floating.ts`(`toPlacement` / `getTransformOrigin` /
+`createFloatingMiddleware`),**Popover、Tooltip、HoverCard 现在共用同一份**,
+各自的 `.utils.ts` 只保留向后兼容的薄封装。后续 Select/Combobox 也可迁移过来。
+
+## 5. 与上游的差异
 
 - 上游用 Base UI 的 `data-starting-style` / `data-ending-style`,本仓库统一用既有
   `animate-in/out` 工具类 + `animationend` 卸载。
@@ -62,7 +86,7 @@ HoverCard              # 根:open/defaultOpen/onOpenChange + delay/closeDelay,�
 - 上游 `PreviewCard.Portal` / `Arrow` 未单独导出(上游 hover-card 也只导出
   Root/Trigger/Popup);本仓库同样只导出 `HoverCard`/`HoverCardTrigger`/`HoverCardContent`。
 
-## 5. 第三方依赖
+## 6. 第三方依赖
 
 上游 `hover-card` 的行为来自 **`@base-ui/react/preview-card`**。本仓库按约定不引入任何
 上游运行时,复用 `src/lib/positioner` 自研实现。以下 Base UI 能力**目前未实现**,需要
@@ -80,12 +104,12 @@ HoverCard              # 根:open/defaultOpen/onOpenChange + delay/closeDelay,�
 > 结论:悬停延迟、交互内容、键盘、定位与进出场动画均已在本仓库内实现,
 > **未新增任何运行时依赖**。
 
-## 6. 示例
+## 7. 示例
 
 `dev/examples/hover-card.tsx`:Basic(@nextjs 预览)、Sides(left/top/bottom/right)、
 Trigger Delays、Positioning(side/align)。
 
-## 7. 关联
+## 8. 关联
 
 `message-scroller` 的 `Tracking the Reader's Position`(悬浮大纲)现已改用本组件,
 此前 DESIGN.md 中「缺少 HoverCard」的差异项已消除。
