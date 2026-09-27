@@ -1,6 +1,7 @@
-import { onCleanup, splitProps } from "solid-js";
+import { createEffect, onCleanup, splitProps } from "solid-js";
 import { clsx } from "~/utils";
 import { useMessageScrollerContext } from "../message-scroller.context";
+import { scrollableData } from "../message-scroller.utils";
 import type { MessageScrollerViewportProps } from "../message-scroller.types";
 
 /**
@@ -9,7 +10,16 @@ import type { MessageScrollerViewportProps } from "../message-scroller.types";
  */
 export function MessageScrollerViewport(props: MessageScrollerViewportProps) {
   const ctx = useMessageScrollerContext("MessageScrollerViewport");
-  const [local, rest] = splitProps(props, ["class", "classList", "aria-label"]);
+  const [local, rest] = splitProps(props, [
+    "class",
+    "classList",
+    "aria-label",
+    "preserveScrollOnPrepend",
+  ]);
+
+  createEffect(() =>
+    ctx.setPreserveScrollOnPrepend(local.preserveScrollOnPrepend ?? true),
+  );
 
   return (
     <div
@@ -22,6 +32,7 @@ export function MessageScrollerViewport(props: MessageScrollerViewportProps) {
       role="region"
       aria-label={local["aria-label"] ?? "Messages"}
       tabindex={0}
+      data-scrollable={scrollableData(ctx.scrollableStart, ctx.scrollableEnd)}
       data-pending-scroll={ctx.pendingScroll() ? "" : undefined}
       data-autoscrolling={ctx.autoscrolling() ? "" : undefined}
       class={clsx(

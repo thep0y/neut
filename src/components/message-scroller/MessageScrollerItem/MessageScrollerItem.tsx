@@ -29,6 +29,7 @@ export function MessageScrollerItem(props: MessageScrollerItemProps) {
       }}
       data-slot="message-scroller-item"
       data-message-id={local.messageId}
+      data-scroll-anchor={local.scrollAnchor === true ? "true" : "false"}
       class={clsx(
         "min-w-0 shrink-0 [contain-intrinsic-size:auto_10rem] [content-visibility:auto]",
         local.class,

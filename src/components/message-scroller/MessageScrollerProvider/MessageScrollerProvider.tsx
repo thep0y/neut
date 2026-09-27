@@ -11,24 +11,27 @@ export function MessageScrollerProvider(
     {
       autoScroll: false,
       defaultScrollPosition: "end" as const,
-      scrollPreviousItemPeek: 0,
-      preserveScrollOnPrepend: true,
+      scrollEdgeThreshold: 8,
+      scrollMargin: 0,
+      scrollPreviousItemPeek: 64,
     },
     props,
   );
   const [local] = splitProps(merged, [
     "autoScroll",
     "defaultScrollPosition",
+    "scrollEdgeThreshold",
+    "scrollMargin",
     "scrollPreviousItemPeek",
-    "preserveScrollOnPrepend",
     "children",
   ]);
 
   const ctx = useMessageScrollerEngine(() => ({
     autoScroll: local.autoScroll,
     defaultScrollPosition: local.defaultScrollPosition,
+    scrollEdgeThreshold: local.scrollEdgeThreshold,
+    scrollMargin: local.scrollMargin,
     scrollPreviousItemPeek: local.scrollPreviousItemPeek,
-    preserveScrollOnPrepend: local.preserveScrollOnPrepend,
   }));
 
   return (

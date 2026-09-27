@@ -1,6 +1,7 @@
 import { splitProps } from "solid-js";
 import { clsx } from "~/utils";
 import { useMessageScrollerContext } from "../message-scroller.context";
+import { scrollableData } from "../message-scroller.utils";
 import type { MessageScrollerProps } from "../message-scroller.types";
 
 /** 有样式的框架：在 Provider 内布局 viewport / content / 控件 */
@@ -12,9 +13,9 @@ export function MessageScroller(props: MessageScrollerProps) {
     <div
       {...rest}
       data-slot="message-scroller"
-      data-scrollable={
-        ctx.scrollableStart() || ctx.scrollableEnd() ? "" : undefined
-      }
+      data-scrollable={scrollableData(ctx.scrollableStart, ctx.scrollableEnd)}
+      data-autoscrolling={ctx.autoscrolling() ? "" : undefined}
+      data-pending-scroll={ctx.pendingScroll() ? "" : undefined}
       class={clsx(
         "group/message-scroller relative flex size-full min-h-0 flex-col overflow-hidden",
         local.class,

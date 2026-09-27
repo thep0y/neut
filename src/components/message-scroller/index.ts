@@ -12,12 +12,15 @@ export { MessageScrollerButton } from "./MessageScrollerButton";
 
 export { useMessageScroller } from "./useMessageScroller";
 export { useMessageScrollerScrollable } from "./useMessageScrollerScrollable";
+export { useMessageScrollerVisibility } from "./useMessageScrollerVisibility";
 
 export type {
   MessageScrollerProviderProps,
   MessageScrollerDefaultPosition,
+  MessageScrollerCommandOptions,
   MessageScrollerItemEntry,
   MessageScrollerContextValue,
+  MessageScrollerVisibilityValue,
   MessageScrollerProps,
   MessageScrollerViewportProps,
   MessageScrollerContentProps,
