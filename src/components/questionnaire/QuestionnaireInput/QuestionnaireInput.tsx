@@ -4,7 +4,7 @@ import { useQuestionnaireInput } from "./useQuestionnaireInput";
 import type { QuestionnaireInputProps } from "../questionnaire.types";
 
 const inputClasses =
-  "min-h-14 w-full min-w-0 rounded-xl border bg-transparent px-4 py-3 text-sm outline-none transition-[color,box-shadow,background-color] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50";
+  "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base outline-none transition-[color,box-shadow,background-color] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 md:text-sm dark:bg-input/30";
 
 /** 自由作答输入(需有可见 label、aria-label 或 aria-labelledby 提供可访问名称) */
 export function QuestionnaireInput(props: QuestionnaireInputProps) {

@@ -34,7 +34,7 @@ export function QuestionnaireProgress(props: QuestionnaireProgressProps) {
       data-first={state().first ? "" : undefined}
       data-last={state().last ? "" : undefined}
       class={clsx(
-        "min-h-[1lh] w-fit min-w-[14ch] font-medium text-muted-foreground tabular-nums",
+        "min-h-[1lh] w-fit min-w-[14ch] font-medium text-xs text-muted-foreground tabular-nums",
         local.class,
       )}
       classList={local.classList}

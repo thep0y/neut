@@ -10,7 +10,7 @@ export function QuestionnaireActions(props: QuestionnaireChoicesProps) {
       {...rest}
       data-slot="questionnaire-actions"
       class={clsx(
-        "grid min-h-11 w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2",
+        "grid min-h-11 w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 sm:min-h-8",
         local.class,
       )}
       classList={local.classList}

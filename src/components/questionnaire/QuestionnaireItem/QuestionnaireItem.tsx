@@ -60,7 +60,10 @@ export function QuestionnaireItem(props: QuestionnaireItemProps) {
         data-status={engine.context.status()}
         data-invalid={engine.context.invalid() ? "" : undefined}
         data-disabled={engine.context.disabled() ? "" : undefined}
-        class={clsx("min-w-0 border-0 p-0 outline-none", local.class)}
+        class={clsx(
+          "flex min-w-0 flex-col gap-4 border-0 p-0 outline-none",
+          local.class,
+        )}
         classList={local.classList}
       >
         {local.children}

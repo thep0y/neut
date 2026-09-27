@@ -5,13 +5,14 @@ import { useQuestionnaireItemContext } from "../questionnaire.context";
 import { useQuestionnaireChoice } from "./useQuestionnaireChoice";
 import type { QuestionnaireChoiceProps } from "../questionnaire.types";
 
+// 类名来自 shadcn base/nova 的 cn-questionnaire-choice 等 token(见 style-nova.css)
 const labelClasses =
-  "group/questionnaire-choice relative flex min-h-14 cursor-pointer items-start gap-3 rounded-xl border p-4 text-start transition-colors outline-none select-none has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/50 data-[disabled]:pointer-events-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[checked]:border-ring data-[checked]:bg-accent/50";
+  "group/questionnaire-choice relative flex min-h-11 cursor-pointer items-start gap-2.5 rounded-lg border border-input bg-transparent px-3 py-2.5 text-sm text-start transition-colors outline-none select-none hover:bg-muted/50 data-[checked]:border-primary/40 data-[checked]:bg-muted data-[disabled]:pointer-events-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[invalid]:border-destructive has-[:focus-visible]:border-ring has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/50 dark:bg-input/20 dark:data-[checked]:bg-muted";
 
-/**
- * 固定选项:label 包住一个视觉隐藏的原生 radio/checkbox(保留原生语义与键盘行为),
- * 再叠加自绘指示器、文字与快捷键徽标。
- */
+const shortcutClasses =
+  "pointer-events-none ms-auto inline-flex size-5 shrink-0 translate-y-[calc(var(--spacing)*0.45)] items-center justify-center rounded-md border border-input bg-background font-mono text-[0.625rem] leading-none font-medium text-muted-foreground";
+
+/** 固定选项:原生 radio/checkbox(视觉隐藏) + 自绘指示器 + 文字 + 快捷键徽标 */
 export function QuestionnaireChoice(props: QuestionnaireChoiceProps) {
   const item = useQuestionnaireItemContext("QuestionnaireChoice");
   const [local, rest] = splitProps(props, [
@@ -67,9 +68,11 @@ export function QuestionnaireChoice(props: QuestionnaireChoiceProps) {
         aria-hidden="true"
         data-slot="questionnaire-choice-indicator"
         class={clsx(
-          "pointer-events-none relative mt-0.5 flex size-5 shrink-0 items-center justify-center border border-input",
-          choice.type() === "radio" ? "rounded-full" : "rounded-[6px]",
-          checked() && "border-primary",
+          "pointer-events-none relative flex size-4 shrink-0 translate-y-[calc(var(--spacing)*0.45)] items-center justify-center border group-has-data-[slot=questionnaire-choice-description]/questionnaire-choice:translate-y-0.5",
+          choice.type() === "radio" ? "rounded-full" : "rounded-[4px]",
+          checked()
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-input dark:bg-input/30",
         )}
       >
         <Show when={checked()}>
@@ -78,16 +81,16 @@ export function QuestionnaireChoice(props: QuestionnaireChoiceProps) {
             fallback={
               <span
                 data-slot="questionnaire-choice-indicator-dot"
-                class="size-2.5 rounded-full bg-primary"
+                class="size-2 rounded-full bg-primary-foreground"
               />
             }
           >
-            <Check class="size-3.5 text-primary" />
+            <Check class="size-3.5" />
           </Show>
         </Show>
       </span>
       <span
-        data-slot="questionnaire-choice-label"
+        data-slot="questionnaire-choice-content"
         class="flex min-w-0 flex-1 flex-col gap-0.5 leading-snug"
       >
         {local.children}
@@ -96,8 +99,8 @@ export function QuestionnaireChoice(props: QuestionnaireChoiceProps) {
         {(shortcut) => (
           <span
             aria-hidden="true"
-            data-slot="questionnaire-choice-shortcut"
-            class="pointer-events-none ms-auto inline-flex size-6 shrink-0 items-center justify-center rounded-md border text-xs font-medium text-muted-foreground"
+            data-slot="questionnaire-shortcut"
+            class={shortcutClasses}
           >
             {shortcut()}
           </span>

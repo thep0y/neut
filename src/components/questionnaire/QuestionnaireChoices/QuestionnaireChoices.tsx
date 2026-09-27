@@ -12,7 +12,7 @@ export function QuestionnaireChoices(props: QuestionnaireChoicesProps) {
       {...rest}
       data-slot="questionnaire-choices"
       data-shortcuts={item.shortcuts() ?? undefined}
-      class={clsx("mt-4 grid min-w-0 gap-3", local.class)}
+      class={clsx("grid min-w-0 gap-2", local.class)}
       classList={local.classList}
     />
   );

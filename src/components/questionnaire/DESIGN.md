@@ -79,7 +79,10 @@ Questionnaire (form)              # Root:激活项、进度、导航、校验、
 - 上游用 Base UI / `@shadcn/react` 的 render 机制(`render={<CardTitle/>}`、
   `UseRenderComponentProps`);本仓库统一用 `component` 多态(Title/Description/Error),
   Progress 的自定义用 children 函数。
-- 上游 `cn-questionnaire-*` 主题 token 未移植,类名在本仓库内联,不同 theme 下间距/圆角有出入。
+- 上游 `cn-questionnaire-*` 主题 token **未作为 token 层移植**,但已按 `apps/v4/registry/styles/style-nova.css`
+  里 base/nova 的实际取值逐条内联到组件类名(标题 text-base/leading-snug/font-medium、
+  选项 rounded-lg/px-3/py-2.5/gap-2.5、指示器 size-4、快捷键徽标 size-5/mono/0.625rem、
+  输入 h-8/rounded-lg、进度 text-xs 等),与截图一致;换 theme 仍需主题 token 层。
 - 上游 `Progress`/`Choice` 等把 state 全量映射成 `data-*`;本仓库只映射常用键
   (`data-active/status/invalid/checked/disabled/type/shortcut/filled/empty/visible/hidden`)。
 - 上游在 dev 下会校验 `items` 定义与渲染出的 Item/Choice 是否一致(重复名、缺失、顺序不同);
