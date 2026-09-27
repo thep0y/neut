@@ -28,6 +28,7 @@ const NumberInputPage = lazy(() => import("./pages/number-input-page"));
 const RadioGroupPage = lazy(() => import("./pages/radio-group-page"));
 const ResizablePage = lazy(() => import("./pages/resizable-page"));
 const SheetPage = lazy(() => import("./pages/sheet-page"));
+const HoverCardPage = lazy(() => import("./pages/hover-card-page"));
 const TogglePage = lazy(() => import("./pages/toggle-page"));
 const ToggleGroupPage = lazy(() => import("./pages/toggle-group-page"));
 const TimePickerPage = lazy(() => import("./pages/time-picker-page"));
@@ -71,6 +72,7 @@ export const routes: DevRoute[] = [
   { path: "/radio-group", title: "Radio Group", component: RadioGroupPage },
   { path: "/resizable", title: "Resizable", component: ResizablePage },
   { path: "/sheet", title: "Sheet", component: SheetPage },
+  { path: "/hover-card", title: "Hover Card", component: HoverCardPage },
   { path: "/tooltip", title: "Tooltip", component: TooltipPage },
   { path: "/toggle", title: "Toggle", component: TogglePage },
   { path: "/toggle-group", title: "Toggle Group", component: ToggleGroupPage },

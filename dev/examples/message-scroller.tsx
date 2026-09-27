@@ -32,6 +32,9 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
@@ -1323,27 +1326,49 @@ function TranscriptOutline() {
   const { scrollToMessage } = useMessageScroller();
   const { currentAnchorId } = useMessageScrollerVisibility();
   return (
-    <div class="flex flex-col items-center gap-1.5 rounded-md">
-      <For each={visibilityUserMessages}>
-        {(message) => (
-          <button
-            type="button"
-            aria-label={`Jump to ${trimmedText(message)}`}
-            aria-current={
-              currentAnchorId() === message.id ? "location" : undefined
-            }
-            data-current={currentAnchorId() === message.id}
-            class="h-0.5 w-4 rounded-full bg-muted-foreground/40 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/50 data-[current=true]:bg-foreground"
-            onClick={() =>
-              scrollToMessage(message.id, {
-                align: "start",
-                behavior: "smooth",
-              })
-            }
-          />
-        )}
-      </For>
-    </div>
+    <HoverCard>
+      <HoverCardTrigger
+        component="button"
+        type="button"
+        aria-label="Open transcript outline"
+        class="flex h-9 w-9 flex-col items-center justify-center gap-1 rounded-md transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
+        <For each={visibilityUserMessages}>
+          {(message) => (
+            <span
+              data-current={currentAnchorId() === message.id}
+              class="h-0.5 w-4 rounded-full bg-muted-foreground/40 data-[current=true]:bg-foreground"
+            />
+          )}
+        </For>
+      </HoverCardTrigger>
+      <HoverCardContent
+        side="left"
+        align="center"
+        sideOffset={-28}
+        class="flex w-64 flex-col gap-1 rounded-2xl p-1"
+      >
+        <For each={visibilityUserMessages}>
+          {(message) => (
+            <button
+              type="button"
+              aria-current={
+                currentAnchorId() === message.id ? "location" : undefined
+              }
+              class="flex min-h-7 items-center rounded-xl px-2 py-1.5 text-left text-sm transition-colors outline-none hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground aria-current:bg-accent aria-current:text-accent-foreground"
+              onClick={() =>
+                scrollToMessage(message.id, {
+                  align: "start",
+                  behavior: "smooth",
+                })
+              }
+            >
+              <span class="line-clamp-1 min-w-0">{trimmedText(message)}</span>
+            </button>
+          )}
+        </For>
+      </HoverCardContent>
+    </HoverCard>
   );
 }
 
@@ -1377,7 +1402,7 @@ function MessageScrollerVisibility() {
               </MessageScroller>
             </CardContent>
           </Card>
-          <div class="absolute top-1/2 -right-8 -translate-y-1/2">
+          <div class="absolute top-1/2 -right-12 -translate-y-1/2">
             <TranscriptOutline />
           </div>
         </div>
