@@ -5,7 +5,6 @@ import {
   onCleanup,
   splitProps,
 } from "solid-js";
-import { GripVertical } from "lucide-solid";
 import { clsx } from "~/utils";
 import { useResizablePanelGroupContext } from "../resizable.context";
 import { gripClasses, handleClasses } from "./ResizableHandle.styles";
@@ -70,9 +69,7 @@ export function ResizableHandle(props: ResizableHandleProps) {
       classList={local.classList}
     >
       <Show when={local.withHandle}>
-        <div class={gripClasses}>
-          <GripVertical class="size-2.5" />
-        </div>
+        <div class={gripClasses} />
       </Show>
       {local.children}
     </div>

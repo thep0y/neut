@@ -67,8 +67,9 @@ Solid 做了「按 id 的细粒度更新」:尺寸存在 `createStore` 的 `{ [i
 - 上游样式里 `aria-[orientation=vertical]:flex-col` 依赖 group 上的 `aria-orientation`;
   但 `role="group"` 并不支持该 ARIA 属性(Biome a11y 也会报),因此本实现改为
   `data-orientation` 驱动 class,handle 仍保留 `aria-orientation`。
-- 上游 `cn-resizable-*` 主题 token 未移植;handle / grip 的类名与图标在本仓库内联
-  (`GripVertical`),不同 theme 下的圆角/间距可能有出入。
+- 上游 `cn-resizable-*` 主题 token 未移植;handle / grip 的类名在本仓库内联,其中
+  `withHandle` 的抓手采用 shadcn base 版的胶囊样式 `h-6 w-1 rounded-lg bg-border`
+  (不加图标)。不同 theme 下的圆角/间距可能有出入。
 - `aria-valuenow/min/max` 用百分比近似(上游精确到像素),仅用于辅助技术读数。
 
 ## 5. 第三方依赖
