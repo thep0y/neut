@@ -13,6 +13,7 @@ import {
   isCollapsedSize,
   pairConstraintsOf,
 } from "./resizable.constraints";
+import { createPanelRegistry } from "./resizable.registry";
 import {
   persistLayout,
   readSavedLayout,
@@ -45,15 +46,11 @@ export function useResizablePanelGroup(
   const [dragging, setDragging] = createSignal(false);
   const [store, setStore] = createStore<Record<string, number>>({});
 
-  const metas = new Map<HTMLElement, ResizablePanelMeta>();
-  let order: HTMLElement[] = [];
+  const registry = createPanelRegistry();
   let initialized = false;
   const collapsedMemory = new Map<string, number>();
 
-  const orderedMetas = (): ResizablePanelMeta[] =>
-    order
-      .map((element) => metas.get(element))
-      .filter((meta): meta is ResizablePanelMeta => !!meta);
+  const orderedMetas = (): ResizablePanelMeta[] => registry.ordered();
 
   const persistContext = (): PersistContext => ({
     autoSaveId: options.autoSaveId(),
@@ -144,8 +141,7 @@ export function useResizablePanelGroup(
   };
 
   const registerPanel = (meta: ResizablePanelMeta) => {
-    metas.set(meta.element, meta);
-    order = [...order, meta.element];
+    registry.add(meta);
     if (!initialized) {
       scheduleInitialize();
     } else if (store[meta.id] === undefined) {
@@ -160,8 +156,7 @@ export function useResizablePanelGroup(
       commit();
     }
     return () => {
-      metas.delete(meta.element);
-      order = order.filter((element) => element !== meta.element);
+      registry.remove(meta);
       setStore(
         produce((draft) => {
           delete draft[meta.id];
@@ -170,22 +165,8 @@ export function useResizablePanelGroup(
     };
   };
 
-  const adjacentOf = (handleEl: HTMLElement) => {
-    let prevEl = handleEl.previousElementSibling as HTMLElement | null;
-    while (prevEl && !metas.has(prevEl)) {
-      prevEl = prevEl.previousElementSibling as HTMLElement | null;
-    }
-    let nextEl = handleEl.nextElementSibling as HTMLElement | null;
-    while (nextEl && !metas.has(nextEl)) {
-      nextEl = nextEl.nextElementSibling as HTMLElement | null;
-    }
-    if (!prevEl || !nextEl) return undefined;
-    const prev = metas.get(prevEl)!;
-    const next = metas.get(nextEl)!;
-    const prevSize = store[prev.id] ?? 0;
-    const nextSize = store[next.id] ?? 0;
-    return { prev, next, prevSize, total: prevSize + nextSize };
-  };
+  const adjacentOf = (handleEl: HTMLElement) =>
+    registry.adjacent(handleEl, (id) => store[id] ?? 0);
 
   /** 把一对相邻面板的尺寸更新进 store，并上报各自的 resize / collapse 变化 */
   const applyPair = (
@@ -256,11 +237,7 @@ export function useResizablePanelGroup(
 
   /** 命令式设置单个 panel,并把它与相邻 panel 之间重新分配 */
   const applyPanelTarget = (meta: ResizablePanelMeta, targetSize: number) => {
-    const index = order.indexOf(meta.element);
-    const nextElement = order[index + 1];
-    const prevElement = order[index - 1];
-    const nextMeta = nextElement ? metas.get(nextElement) : undefined;
-    const prevMeta = prevElement ? metas.get(prevElement) : undefined;
+    const { prev: prevMeta, next: nextMeta } = registry.neighbors(meta);
     if (nextMeta) {
       const total = (store[meta.id] ?? 0) + (store[nextMeta.id] ?? 0);
       applyPair(meta, nextMeta, targetSize, total);
