@@ -6,10 +6,19 @@ import type {
   ResizableOrientation,
   ResizablePanelMeta,
 } from "./resizable.types";
-import { clamp, normalizeSizes, roundPercent } from "./resizable.utils";
-
-const EPSILON = 0.001;
-const STORAGE_PREFIX = "neut-resizable:";
+import { distributeInitialSizes, resolvePairSize } from "./resizable.resize";
+import {
+  constraintBounds,
+  effectiveMin,
+  isCollapsedSize,
+  pairConstraintsOf,
+} from "./resizable.constraints";
+import {
+  persistLayout,
+  readSavedLayout,
+  type PersistContext,
+} from "./resizable.storage";
+import { normalizeSizes, roundPercent } from "./resizable.utils";
 
 interface Options {
   orientation: Accessor<ResizableOrientation>;
@@ -46,21 +55,10 @@ export function useResizablePanelGroup(
       .map((element) => metas.get(element))
       .filter((meta): meta is ResizablePanelMeta => !!meta);
 
-  /** 可折叠时为 collapsedSize,否则为 minSize(即拖拽能到的最小值) */
-  const effMin = (meta: ResizablePanelMeta) =>
-    meta.collapsible() ? meta.collapsedSize() : meta.minSize();
-
-  const isCollapsedSize = (meta: ResizablePanelMeta, size: number) =>
-    meta.collapsible() && size <= meta.collapsedSize() + EPSILON;
-
-  const storageOf = (): Storage | undefined =>
-    options.storage() ??
-    (typeof localStorage !== "undefined" ? localStorage : undefined);
-
-  const storageKey = (): string | undefined => {
-    const id = options.autoSaveId();
-    return id ? `${STORAGE_PREFIX}${id}` : undefined;
-  };
+  const persistContext = (): PersistContext => ({
+    autoSaveId: options.autoSaveId(),
+    storage: options.storage(),
+  });
 
   const layout = (): ResizableLayout => {
     const result: ResizableLayout = {};
@@ -70,48 +68,20 @@ export function useResizablePanelGroup(
     return result;
   };
 
-  const persist = (next: ResizableLayout) => {
-    const key = storageKey();
-    const storage = storageOf();
-    if (!key || !storage) return;
-    try {
-      storage.setItem(key, JSON.stringify(next));
-    } catch {
-      // 隐私模式等场景下忽略持久化失败
-    }
-  };
-
-  /** 只通知布局变化(拖拽的每一帧),不写 storage */
+  /** 只通知布局变化（拖拽的每一帧），不写 storage */
   const notify = () => options.onLayoutChange(layout());
 
-  /** 通知 + 持久化(离散操作与拖拽结束) */
+  /** 通知 + 持久化（离散操作与拖拽结束） */
   const commit = () => {
     const next = layout();
     options.onLayoutChange(next);
-    persist(next);
+    persistLayout(persistContext(), next);
   };
 
-  const readSaved = (): ResizableLayout | undefined => {
-    const key = storageKey();
-    const storage = storageOf();
-    if (!key || !storage) return undefined;
-    try {
-      const raw = storage.getItem(key);
-      if (!raw) return undefined;
-      const parsed = JSON.parse(raw) as unknown;
-      return typeof parsed === "object" && parsed !== null
-        ? (parsed as ResizableLayout)
-        : undefined;
-    } catch {
-      return undefined;
-    }
-  };
+  const readSaved = (): ResizableLayout | undefined =>
+    readSavedLayout(persistContext());
 
-  const bounds = () =>
-    orderedMetas().map((meta) => ({
-      min: effMin(meta),
-      max: meta.maxSize(),
-    }));
+  const bounds = () => constraintBounds(orderedMetas());
 
   const reportResize = (
     meta: ResizablePanelMeta,
@@ -148,17 +118,11 @@ export function useResizablePanelGroup(
   const buildInitial = (): number[] => {
     const list = orderedMetas();
     const saved = readSaved() ?? options.defaultLayout();
-    const raw = list.map((meta) => {
-      const fromLayout = saved?.[meta.id];
-      if (fromLayout !== undefined) return fromLayout;
-      return meta.defaultSize;
-    });
-    const defined = raw.filter((value): value is number => value !== undefined);
-    const unknown = raw.length - defined.length;
-    const used = defined.reduce((acc, value) => acc + value, 0);
-    const remaining = Math.max(0, 100 - used);
-    const fill = unknown > 0 ? remaining / unknown : 0;
-    return raw.map((value) => value ?? fill);
+    return distributeInitialSizes(
+      list.map((meta) => meta.id),
+      saved,
+      list.map((meta) => meta.defaultSize),
+    );
   };
 
   const initialize = () => {
@@ -223,40 +187,18 @@ export function useResizablePanelGroup(
     return { prev, next, prevSize, total: prevSize + nextSize };
   };
 
+  /** 把一对相邻面板的尺寸更新进 store，并上报各自的 resize / collapse 变化 */
   const applyPair = (
     prev: ResizablePanelMeta,
     next: ResizablePanelMeta,
     targetPrev: number,
     total: number,
   ) => {
-    const lo = Math.max(effMin(prev), total - next.maxSize());
-    const hi = Math.min(prev.maxSize(), total - effMin(next));
-    let size = clamp(targetPrev, lo, hi);
-
-    // 折叠吸附:落在 (collapsedSize, minSize) 之间时贴向较近的一端
-    if (
-      prev.collapsible() &&
-      size < prev.minSize() - EPSILON &&
-      size > prev.collapsedSize() + EPSILON
-    ) {
-      size =
-        size - prev.collapsedSize() < prev.minSize() - size
-          ? prev.collapsedSize()
-          : prev.minSize();
-    }
-    if (
-      next.collapsible() &&
-      total - size < next.minSize() - EPSILON &&
-      total - size > next.collapsedSize() + EPSILON
-    ) {
-      const rest = total - size;
-      size =
-        total -
-        (rest - next.collapsedSize() < next.minSize() - rest
-          ? next.collapsedSize()
-          : next.minSize());
-    }
-    size = clamp(size, lo, hi);
+    const size = resolvePairSize(
+      pairConstraintsOf(prev, next),
+      targetPrev,
+      total,
+    );
 
     const prevOld = store[prev.id] ?? 0;
     const nextOld = store[next.id] ?? 0;
