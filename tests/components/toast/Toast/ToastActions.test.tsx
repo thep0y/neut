@@ -44,7 +44,9 @@ describe("ToastActions", () => {
   });
 
   it("取消项渲染独立的 toast-cancel 插槽", () => {
-    const { container } = renderActions({ cancel: { label: "不再提示", onClick: vi.fn() } });
+    const { container } = renderActions({
+      cancel: { label: "不再提示", onClick: vi.fn() },
+    });
 
     expect(
       container.querySelector('[data-slot="toast-cancel"]'),
