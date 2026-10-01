@@ -1,7 +1,8 @@
 import { createUniqueId, mergeProps, onCleanup, splitProps } from "solid-js";
 import { clsx } from "~/utils";
 import { useResizablePanelGroupContext } from "../resizable.context";
-import { parseSize, roundPercent, toKebabCase } from "../resizable.utils";
+import { toKebabCase } from "~/utils";
+import { parseSize, roundPercent } from "../resizable.utils";
 import type {
   ResizablePanelMeta,
   ResizablePanelProps,

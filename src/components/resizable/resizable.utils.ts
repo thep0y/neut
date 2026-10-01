@@ -1,3 +1,5 @@
+import { clamp } from "~/utils";
+
 /** 解析尺寸:number/`"25%"`/`"25"` 都按百分比处理(不支持 px,按需再扩展) */
 export function parseSize(
   value: number | string | undefined,
@@ -8,14 +10,8 @@ export function parseSize(
     return Number.isFinite(value) ? value : fallback;
   }
   const trimmed = value.trim();
-  const numeric = trimmed.endsWith("%")
-    ? Number.parseFloat(trimmed)
-    : Number.parseFloat(trimmed);
+  const numeric = Number.parseFloat(trimmed);
   return Number.isFinite(numeric) ? numeric : fallback;
-}
-
-export function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
 }
 
 /** 百分比保留 2 位小数,避免 onLayoutChange/layout 输出出现长尾浮点 */
@@ -73,10 +69,4 @@ export function normalizeSizes(
     }
   }
   return result;
-}
-
-/** camelCase -> kebab-case;CSS 自定义属性(--x)原样保留 */
-export function toKebabCase(key: string): string {
-  if (key.startsWith("--")) return key;
-  return key.replace(/[A-Z]/g, (char) => `-${char.toLowerCase()}`);
 }
