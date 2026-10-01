@@ -14,6 +14,7 @@ import {
   isBefore,
   isBeforeOrSame,
   isSameDay,
+  resolveInitialMonth,
   resolveLocaleCode,
   startOfMonth,
   startOfWeek,
@@ -418,5 +419,42 @@ describe("getISOWeekNumber", () => {
     expect(getISOWeekNumber(new Date(2024, 5, 15, 23, 59))).toBe(
       getISOWeekNumber(new Date(2024, 5, 15, 0, 0)),
     );
+  });
+});
+
+describe("resolveInitialMonth", () => {
+  const today = new Date(2024, 4, 15);
+
+  it("受控 month 优先", () => {
+    expect(
+      resolveInitialMonth({
+        month: new Date(2024, 0, 10),
+        defaultMonth: new Date(2023, 0, 1),
+      }),
+    ).toEqual(new Date(2024, 0, 10));
+  });
+
+  it("其次 defaultMonth", () => {
+    expect(resolveInitialMonth({ defaultMonth: new Date(2023, 6, 1) })).toEqual(
+      new Date(2023, 6, 1),
+    );
+  });
+
+  it("再取选中日期（selected 优先于 defaultSelected）", () => {
+    expect(
+      resolveInitialMonth({
+        selected: today,
+        defaultSelected: new Date(2020, 0, 1),
+      }),
+    ).toEqual(today);
+    expect(resolveInitialMonth({ defaultSelected: today })).toEqual(today);
+  });
+
+  it("都没有时回退到今天", () => {
+    const before = Date.now();
+
+    const resolved = resolveInitialMonth({});
+
+    expect(resolved.getTime()).toBeGreaterThanOrEqual(before);
   });
 });

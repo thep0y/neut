@@ -1,4 +1,4 @@
-import type { CalendarSelected } from "./Calendar.types";
+import type { CalendarProps, CalendarSelected } from "./Calendar.types";
 
 export function toDateOnly(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -99,4 +99,19 @@ export function getISOWeekNumber(date: Date): number {
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
+/** 初始展示月份：受控 month > defaultMonth > 选中日期 > 今天 */
+export function resolveInitialMonth(
+  props: Pick<
+    CalendarProps,
+    "month" | "defaultMonth" | "selected" | "defaultSelected"
+  >,
+): Date {
+  return (
+    props.month ??
+    props.defaultMonth ??
+    getFirstDate(props.selected ?? props.defaultSelected) ??
+    new Date()
+  );
 }
