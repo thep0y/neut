@@ -17,12 +17,13 @@
 
     "paths": {
       "~/*": ["./src/*"],
+      "~tests/*": ["./tests/*"],
     },
 
     // Type Checking & Safety
     "strict": true,
     "types": ["vite/client"],
   },
-  "include": ["src"],
+  "include": ["src", "tests", "vitest.d.ts"],
   "exclude": ["node_modules", "dist", "./dev", "example"],
 }

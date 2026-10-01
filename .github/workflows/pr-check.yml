@@ -12,7 +12,10 @@ on:
             - "bunfig.toml"
             - "tsconfig.json"
             - "vite.config.ts"
+            - "vitest.config.ts"
+            - "vitest.setup.ts"
             - "biome.json"
+            - "TESTING.md"
 
 env:
     CARGO_TERM_COLOR: always
@@ -48,6 +51,22 @@ jobs:
 
             - name: Run check script
               run: bun run check
+
+            # 门禁：覆盖率四项指标必须 100%（见 TESTING.md §1/§9）
+            - name: Test with coverage
+              run: bun run test:coverage
+
+            # 反作弊检查：禁止 .only / .skip 与覆盖率屏蔽注释（见 TESTING.md §4.7/§9）
+            - name: Guard against test cheating
+              run: |
+                if grep -rnE '(it|describe|test)\.(only|skip|todo)\(' tests --include='*.test.ts' --include='*.test.tsx'; then
+                  echo "::error::检测到 .only / .skip / .todo，见 TESTING.md §4.7"
+                  exit 1
+                fi
+                if grep -rnE '(istanbul|v8|c8) ignore' tests --include='*.test.ts' --include='*.test.tsx'; then
+                  echo "::error::检测到覆盖率屏蔽注释，见 TESTING.md §9"
+                  exit 1
+                fi
 
             - name: Build frontend
               run: bun run build
