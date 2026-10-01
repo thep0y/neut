@@ -25,6 +25,11 @@ import {
   type ToastT,
   type ToastTypes,
 } from "./Toast.types";
+import {
+  getAnimationClasses,
+  getToastStyle,
+  resolveToastContent,
+} from "./Toast.utils";
 
 const TOAST_LIFETIME = 4000;
 const EXIT_ANIMATION_MS = 200;
@@ -44,10 +49,6 @@ function getDefaultIcon(type: ToastTypes) {
     default:
       return undefined;
   }
-}
-
-function resolveContent(value: ToastT["title"]) {
-  return typeof value === "function" ? value() : value;
 }
 
 export function Toast(props: ToastProps) {
@@ -127,44 +128,22 @@ export function Toast(props: ToastProps) {
     );
   };
 
-  const isFront = () => local.index === 0;
-  const yPosition = () => (local.position.startsWith("top") ? "top" : "bottom");
-
-  const collapsedTransform = () => {
-    if (isFront()) return undefined;
-    const lift = yPosition() === "bottom" ? -1 : 1;
-    const scale = Math.max(0.8, 1 - local.index * 0.05);
-    return `translateY(calc(${lift * local.gap * local.index}px)) scale(${scale})`;
-  };
-
   const toastStyle = () =>
-    ({
-      ...toast().style,
-      "z-index": local.total - local.index,
-      ...(local.expanded
-        ? {}
-        : {
-            "grid-area": "1 / 1",
-            "align-self": yPosition() === "bottom" ? "end" : "start",
-            transform: collapsedTransform(),
-            "pointer-events": isFront() ? "auto" : "none",
-          }),
-    }) as JSX.CSSProperties;
-
-  const slideInClass = () =>
-    yPosition() === "bottom"
-      ? "data-[state=open]:slide-in-from-bottom-2"
-      : "data-[state=open]:slide-in-from-top-2";
-
-  const slideOutClass = () =>
-    yPosition() === "bottom"
-      ? "data-[state=closed]:slide-out-to-bottom"
-      : "data-[state=closed]:slide-out-to-top";
+    getToastStyle({
+      toast: toast(),
+      index: local.index,
+      total: local.total,
+      expanded: local.expanded,
+      position: local.position,
+      gap: local.gap,
+    });
 
   const animationClasses = () =>
-    isFront() || local.expanded
-      ? `${slideInClass()} ${slideOutClass()} data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:fill-mode-both data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:fill-mode-both`
-      : "";
+    getAnimationClasses({
+      index: local.index,
+      expanded: local.expanded,
+      position: local.position,
+    });
 
   return (
     <li
@@ -214,7 +193,7 @@ export function Toast(props: ToastProps) {
                   toast().classes?.title,
                 )}
               >
-                {resolveContent(toast().title)}
+                {resolveToastContent(toast().title)}
               </div>
               <Show when={toast().description}>
                 <div
@@ -225,7 +204,7 @@ export function Toast(props: ToastProps) {
                     toast().classes?.description,
                   )}
                 >
-                  {resolveContent(toast().description)}
+                  {resolveToastContent(toast().description)}
                 </div>
               </Show>
             </div>
