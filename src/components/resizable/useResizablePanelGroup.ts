@@ -47,6 +47,11 @@ export function useResizablePanelGroup(
   const [store, setStore] = createStore<Record<string, number>>({});
 
   const registry = createPanelRegistry();
+  // 注册表变化本身不是响应式的，但 resolveAdjacent 的消费方（Handle 的 aria 值）
+  // 需要「面板挂载/卸载后重算」。这个版本号就是那条依赖边。
+  const [registryVersion, setRegistryVersion] = createSignal(0);
+  const bumpRegistryVersion = () =>
+    setRegistryVersion((version) => version + 1);
   let initialized = false;
   const collapsedMemory = new Map<string, number>();
 
@@ -142,6 +147,7 @@ export function useResizablePanelGroup(
 
   const registerPanel = (meta: ResizablePanelMeta) => {
     registry.add(meta);
+    bumpRegistryVersion();
     if (!initialized) {
       scheduleInitialize();
     } else if (store[meta.id] === undefined) {
@@ -157,6 +163,7 @@ export function useResizablePanelGroup(
     }
     return () => {
       registry.remove(meta);
+      bumpRegistryVersion();
       setStore(
         produce((draft) => {
           delete draft[meta.id];
@@ -300,7 +307,11 @@ export function useResizablePanelGroup(
     dragging,
     keyboardResizeBy: options.keyboardResizeBy,
     registerPanel,
-    resolveAdjacent: (handleEl) => adjacentOf(handleEl),
+    resolveAdjacent: (handleEl) => {
+      // 读取版本号：面板挂载/卸载后让消费方（如 aria-valuenow）重算
+      registryVersion();
+      return adjacentOf(handleEl);
+    },
     setAdjacentSize,
     nudgeAdjacent,
     toggleHandleCollapse,
