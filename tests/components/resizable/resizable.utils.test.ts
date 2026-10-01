@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildPanelStyleText,
   normalizeSizes,
   parseSize,
   roundPercent,
@@ -261,5 +262,41 @@ describe("normalizeSizes", () => {
     normalizeSizes(raw, noBounds(3));
 
     expect(raw).toEqual([1, 2, 3]);
+  });
+});
+
+describe("buildPanelStyleText", () => {
+  it("始终包含 flex-grow / shrink / basis 三段", () => {
+    expect(buildPanelStyleText(30)).toBe(
+      "flex-grow:30;flex-shrink:1;flex-basis:0%",
+    );
+  });
+
+  it("字符串 style 原样追加在末尾", () => {
+    expect(buildPanelStyleText(50, "background: red")).toBe(
+      "flex-grow:50;flex-shrink:1;flex-basis:0%;background: red",
+    );
+  });
+
+  it("对象 style 的键转成 kebab-case（camelCase 是 JS 调用方的写法，类型只声明连字符）", () => {
+    expect(buildPanelStyleText(25, { backgroundColor: "red" } as never)).toBe(
+      "flex-grow:25;flex-shrink:1;flex-basis:0%;background-color:red",
+    );
+  });
+
+  it("对象 style 跳过 null / undefined 值", () => {
+    expect(
+      buildPanelStyleText(10, {
+        borderTopWidth: undefined,
+        color: null,
+        opacity: 0.5,
+      } as never),
+    ).toBe("flex-grow:10;flex-shrink:1;flex-basis:0%;opacity:0.5");
+  });
+
+  it("小数尺寸不会被截断", () => {
+    expect(buildPanelStyleText(52.5)).toBe(
+      "flex-grow:52.5;flex-shrink:1;flex-basis:0%",
+    );
   });
 });
