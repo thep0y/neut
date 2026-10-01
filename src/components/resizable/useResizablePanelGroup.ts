@@ -9,7 +9,6 @@ import type {
 import { distributeInitialSizes, resolvePairSize } from "./resizable.resize";
 import {
   constraintBounds,
-  effectiveMin,
   isCollapsedSize,
   pairConstraintsOf,
 } from "./resizable.constraints";
