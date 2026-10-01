@@ -22,14 +22,15 @@ import {
   isAction,
   type ToastIcons,
   type ToastProps,
-  type ToastT,
   type ToastTypes,
 } from "./Toast.types";
 import {
   getAnimationClasses,
+  getToastAction,
   getToastStyle,
   resolveToastContent,
 } from "./Toast.utils";
+import { ToastActionButton } from "./ToastActionButton";
 
 const TOAST_LIFETIME = 4000;
 const EXIT_ANIMATION_MS = 200;
@@ -209,56 +210,26 @@ export function Toast(props: ToastProps) {
               </Show>
             </div>
 
-            <Show when={toast().action && isAction(toast().action)}>
-              <button
-                type="button"
-                data-slot="toast-action"
-                class={clsx(
-                  "shrink-0 rounded-md bg-foreground px-2.5 py-1 text-xs font-medium text-background outline-none transition-colors hover:bg-foreground/80",
-                  toast().classes?.actionButton,
-                )}
-                onClick={(e) => {
-                  const action = toast().action;
-                  if (!isAction(action)) return;
-                  action.onClick?.(e);
-                  if (!e.defaultPrevented) close();
-                }}
-              >
-                {
-                  (
-                    toast().action as Extract<
-                      ToastT["action"],
-                      { label: unknown }
-                    >
-                  ).label
-                }
-              </button>
+            <Show when={getToastAction(toast().action)}>
+              {(action) => (
+                <ToastActionButton
+                  action={action()}
+                  variant="action"
+                  class={toast().classes?.actionButton}
+                  onClose={close}
+                />
+              )}
             </Show>
 
-            <Show when={toast().cancel && isAction(toast().cancel)}>
-              <button
-                type="button"
-                data-slot="toast-cancel"
-                class={clsx(
-                  "shrink-0 rounded-md bg-foreground/10 px-2.5 py-1 text-xs font-medium text-foreground outline-none transition-colors hover:bg-foreground/15",
-                  toast().classes?.cancelButton,
-                )}
-                onClick={(e) => {
-                  const cancel = toast().cancel;
-                  if (!isAction(cancel)) return;
-                  cancel.onClick?.(e);
-                  if (!e.defaultPrevented) close();
-                }}
-              >
-                {
-                  (
-                    toast().cancel as Extract<
-                      ToastT["action"],
-                      { label: unknown }
-                    >
-                  ).label
-                }
-              </button>
+            <Show when={getToastAction(toast().cancel)}>
+              {(cancel) => (
+                <ToastActionButton
+                  action={cancel()}
+                  variant="cancel"
+                  class={toast().classes?.cancelButton}
+                  onClose={close}
+                />
+              )}
             </Show>
 
             <Show when={toast().action && !isAction(toast().action)}>

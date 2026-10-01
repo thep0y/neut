@@ -1,13 +1,34 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { ToastT } from "./Toast.types";
 import {
   getAnimationClasses,
   getCollapsedTransform,
+  getToastAction,
   getToastStyle,
   getVerticalAxis,
   isFrontToast,
   resolveToastContent,
 } from "./Toast.utils";
+
+describe("getToastAction", () => {
+  it("带 label 的对象收窄为 Action", () => {
+    const action = { label: "撤销", onClick: vi.fn() };
+
+    expect(getToastAction(action)).toBe(action);
+  });
+
+  it("自定义元素返回 undefined（由另一条分支渲染）", () => {
+    expect(getToastAction("自定义内容")).toBeUndefined();
+  });
+
+  it("undefined 返回 undefined", () => {
+    expect(getToastAction(undefined)).toBeUndefined();
+  });
+
+  it("label 为 undefined 的对象不算 Action", () => {
+    expect(getToastAction({ label: undefined } as never)).toBeUndefined();
+  });
+});
 
 describe("resolveToastContent", () => {
   it("直接值原样返回", () => {

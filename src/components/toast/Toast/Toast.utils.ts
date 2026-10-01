@@ -1,5 +1,19 @@
 import type { JSX } from "solid-js";
-import type { Position, ToastT } from "./Toast.types";
+import {
+  type Action,
+  isAction,
+  type Position,
+  type ToastT,
+} from "./Toast.types";
+
+/**
+ * `action` / `cancel` 既可以是"带 label 的操作对象"，也可以是任意自定义元素。
+ * 这里把判定收敛成一个收窄函数：渲染层拿到的要么是可用的 `Action`，
+ * 要么是 `undefined`（自定义元素走另一条 Show 分支），避免每个按钮各写一遍守卫。
+ */
+export function getToastAction(value: ToastT["action"]): Action | undefined {
+  return isAction(value) ? value : undefined;
+}
 
 /**
  * `title` / `description` 允许写成惰性函数：内容可能是随信号变化的元素。

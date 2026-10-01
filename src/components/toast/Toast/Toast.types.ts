@@ -118,6 +118,8 @@ export interface ToastProps {
   gap: number;
 }
 
-export const isAction = (action: Action | JSXElement): action is Action => {
+export const isAction = (
+  action: Action | JSXElement | undefined,
+): action is Action => {
   return (action as Action)?.label !== undefined;
 };
