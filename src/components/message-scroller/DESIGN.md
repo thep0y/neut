@@ -25,11 +25,21 @@ MessageScrollerProvider          # headless 根:滚动状态机 + context(不渲
 | --- | --- |
 | 类型契约 | `message-scroller.types.ts` |
 | context | `message-scroller.context.ts` |
-| 滚动引擎 | `useMessageScrollerEngine.ts`(状态机模式、锚定、spacer、保位、命令、IO 可见性) |
+| 滚动引擎(状态机) | `useMessageScrollerEngine.ts`(模式切换、命令编排、spacer、保位、IO 可见性接线) |
+| CSS 尺寸测量(纯) | `message-scroller.measure.ts`(`parsePx` / `paddingBox` / `rowGap`) |
+| 锚点查找(纯) | `message-scroller.anchors.ts`(`firstAnchorFrom` / `firstUnhandledAnchor` / `hasMultipleAnchorsFrom`) |
+| 滚动目标计算(纯) | `message-scroller.scroll-target.ts`(`computeTargetTop` / `targetTopFor`,四种 `align`) |
 | data 属性工具 | `message-scroller.utils.ts`(`data-scrollable` 的 token 拼接) |
 | 消费 hooks | `useMessageScroller.ts`、`useMessageScrollerScrollable.ts`、`useMessageScrollerVisibility.ts` |
 | 各部件的渲染/ARIA | `MessageScroller*/` 各自目录 |
 | 滚动渐隐工具 | `src/styles/effects.css`(`scroll-fade` 家族,与 shadcn 同源) |
+
+> 2026-09 重构：把原先内联在 `useMessageScrollerEngine.ts`（852 行）里的
+> 「CSS 解析 / 锚点查找 / 对齐算法」三块**纯计算**拆成独立模块。
+> 它们不读信号、不写 DOM，因此四种 `align` 的每个分支都能脱离 jsdom 布局限制直接断言
+> （这三个模块已做到语句/分支/函数三项 100% 覆盖）。
+> 引擎只保留状态机与编排，通过 `message-scroller.scroll-target.ts` 的
+> `targetTopFor(...)` 适配器调用纯算法。
 
 ## 3. 已实现行为
 

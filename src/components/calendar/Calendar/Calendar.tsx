@@ -22,8 +22,22 @@ import type {
   CalendarMode,
   CalendarProps,
   CalendarSelected,
-  DateRange,
 } from "./Calendar.types";
+import {
+  buildMonthOptions,
+  buildYearOptions,
+  canMoveNext,
+  canMovePrev,
+  chunkIntoWeeks,
+  isDayDisabled,
+} from "./Calendar.options";
+import {
+  isDateSelected,
+  isRangeEnd,
+  isRangeMiddle,
+  isRangeStart,
+  nextSelected,
+} from "./Calendar.selection";
 import {
   addDays,
   addMonths,
@@ -33,10 +47,6 @@ import {
   formatWeekday,
   getFirstDate,
   getISOWeekNumber,
-  isAfter,
-  isAfterOrSame,
-  isBefore,
-  isBeforeOrSame,
   isSameDay,
   resolveLocaleCode,
   startOfMonth,
@@ -157,13 +167,9 @@ export function Calendar(props: CalendarProps): JSX.Element {
   const moveMonth = (delta: number) =>
     setMonth(addMonths(currentMonth(), delta));
 
-  const canPrev = () =>
-    !merged.min ||
-    isAfter(startOfMonth(currentMonth()), startOfMonth(merged.min));
+  const canPrev = () => canMovePrev(currentMonth(), merged.min);
 
-  const canNext = () =>
-    !merged.max ||
-    isBefore(startOfMonth(currentMonth()), startOfMonth(merged.max));
+  const canNext = () => canMoveNext(currentMonth(), merged.max);
 
   const monthList = createMemo(() => {
     const count = Math.max(1, merged.numberOfMonths ?? 1);
@@ -174,128 +180,47 @@ export function Calendar(props: CalendarProps): JSX.Element {
 
   const localeCode = createMemo(() => resolveLocaleCode(merged.locale));
 
+  /** 月份下拉项：按 locale 格式化月份名 */
   const monthOptions = (year: number) =>
-    Array.from({ length: 12 }, (_, i) => i)
-      .filter((i) => {
-        const beforeMin =
-          !!merged.min &&
-          (year < merged.min.getFullYear() ||
-            (year === merged.min.getFullYear() && i < merged.min.getMonth()));
-        const afterMax =
-          !!merged.max &&
-          (year > merged.max.getFullYear() ||
-            (year === merged.max.getFullYear() && i > merged.max.getMonth()));
-        return !beforeMin && !afterMax;
-      })
-      .map((i) => {
-        const monthDate = new Date(2024, i, 1);
-        return {
-          value: String(i),
-          label: new Intl.DateTimeFormat(localeCode(), {
-            month: "long",
-          }).format(monthDate),
-        };
-      });
-
-  const yearOptions = createMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const startYear = merged.min ? merged.min.getFullYear() : currentYear - 100;
-    const endYear = merged.max ? merged.max.getFullYear() : currentYear + 100;
-    return Array.from(
-      { length: Math.max(0, endYear - startYear + 1) },
-      (_, i) => startYear + i,
+    buildMonthOptions(year, { min: merged.min, max: merged.max }, (index) =>
+      new Intl.DateTimeFormat(localeCode(), { month: "long" }).format(
+        new Date(2024, index, 1),
+      ),
     );
-  });
+
+  const yearOptions = createMemo(() =>
+    buildYearOptions(
+      { min: merged.min, max: merged.max },
+      new Date().getFullYear(),
+    ),
+  );
 
   const slotClass = (key: keyof CalendarClassNames) =>
     clsx(defaultClassNames[key], merged.classNames?.[key]);
 
-  const isDisabledDay = (day: Date) => {
-    if (merged.disabled === true) return true;
-    if (typeof merged.disabled === "function") return merged.disabled(day);
-    if (merged.min && isBefore(day, merged.min)) return true;
-    if (merged.max && isAfter(day, merged.max)) return true;
-    return false;
-  };
+  const isDisabledDay = (day: Date) =>
+    isDayDisabled(day, {
+      disabled: merged.disabled,
+      min: merged.min,
+      max: merged.max,
+    });
 
-  const isRangeStart = (day: Date) => {
-    const range = selected() as DateRange | undefined;
-    return !!range?.from && isSameDay(day, range.from);
-  };
-
-  const isRangeEnd = (day: Date) => {
-    const range = selected() as DateRange | undefined;
-    return !!range?.to && isSameDay(day, range.to);
-  };
-
-  const isRangeMiddle = (day: Date) => {
-    const range = selected() as DateRange | undefined;
-    return (
-      !!range?.from &&
-      !!range?.to &&
-      isAfter(day, range.from) &&
-      isBefore(day, range.to)
-    );
-  };
-
-  const isDateSelected = (day: Date) => {
-    const value = selected();
-    if (merged.mode === "single") {
-      return value instanceof Date && isSameDay(day, value);
-    }
-    if (merged.mode === "multiple") {
-      return Array.isArray(value) && value.some((d) => isSameDay(d, day));
-    }
-    const range = value as DateRange | undefined;
-    return (
-      !!range &&
-      ((range.from && isSameDay(day, range.from)) ||
-        (range.to && isSameDay(day, range.to)) ||
-        (!!range.from &&
-          !!range.to &&
-          isAfterOrSame(day, range.from) &&
-          isBeforeOrSame(day, range.to)))
-    );
-  };
+  const isRangeStartDay = (day: Date) => isRangeStart(selected(), day);
+  const isRangeEndDay = (day: Date) => isRangeEnd(selected(), day);
+  const isRangeMiddleDay = (day: Date) => isRangeMiddle(selected(), day);
+  const isDateSelectedDay = (day: Date) =>
+    isDateSelected(merged.mode, selected(), day);
 
   const selectDay = (day: Date) => {
     if (isDisabledDay(day)) return;
-
-    if (merged.mode === "single") {
-      const current = selected();
-      commitSelected(
-        current instanceof Date && isSameDay(current, day) ? undefined : day,
-      );
-      return;
-    }
-
-    if (merged.mode === "multiple") {
-      const current = selected();
-      const list = Array.isArray(current) ? [...current] : [];
-      const index = list.findIndex((d) => isSameDay(d, day));
-      if (index >= 0) list.splice(index, 1);
-      else list.push(day);
-      commitSelected(list);
-      return;
-    }
-
-    const range = selected() as DateRange | undefined;
-    if (!range?.from || (range.from && range.to)) {
-      commitSelected({ from: day });
-    } else if (isBefore(day, range.from)) {
-      commitSelected({ from: day, to: range.from });
-    } else if (isSameDay(day, range.from)) {
-      commitSelected({ from: day, to: day });
-    } else {
-      commitSelected({ from: range.from, to: day });
-    }
+    commitSelected(nextSelected(merged.mode, selected(), day));
   };
 
   const renderDay = (day: Date, monthDate: Date) => {
     return (
       <div
         aria-disabled={isDisabledDay(day)}
-        data-selected={isDateSelected(day) ? "true" : undefined}
+        data-selected={isDateSelectedDay(day) ? "true" : undefined}
         class={clsx(
           slotClass("day"),
           day.getMonth() !== monthDate.getMonth() && slotClass("outside"),
@@ -304,15 +229,15 @@ export function Calendar(props: CalendarProps): JSX.Element {
             slotClass("hidden"),
           isSameDay(day, new Date()) && slotClass("today"),
           isDisabledDay(day) && slotClass("disabled"),
-          isRangeStart(day) && slotClass("range_start"),
-          isRangeMiddle(day) && slotClass("range_middle"),
-          isRangeEnd(day) && slotClass("range_end"),
+          isRangeStartDay(day) && slotClass("range_start"),
+          isRangeMiddleDay(day) && slotClass("range_middle"),
+          isRangeEndDay(day) && slotClass("range_end"),
         )}
       >
         <button
           type="button"
           disabled={isDisabledDay(day)}
-          aria-pressed={isDateSelected(day)}
+          aria-pressed={isDateSelectedDay(day)}
           data-day={day.toLocaleDateString(localeCode())}
           data-selected-single={
             merged.mode === "single" &&
@@ -321,9 +246,9 @@ export function Calendar(props: CalendarProps): JSX.Element {
               ? "true"
               : undefined
           }
-          data-range-start={isRangeStart(day) ? "true" : undefined}
-          data-range-end={isRangeEnd(day) ? "true" : undefined}
-          data-range-middle={isRangeMiddle(day) ? "true" : undefined}
+          data-range-start={isRangeStartDay(day) ? "true" : undefined}
+          data-range-end={isRangeEndDay(day) ? "true" : undefined}
+          data-range-middle={isRangeMiddleDay(day) ? "true" : undefined}
           onClick={() => selectDay(day)}
           class={clsx(
             buttonVariants({ variant: merged.buttonVariant }),
@@ -351,10 +276,7 @@ export function Calendar(props: CalendarProps): JSX.Element {
     const gridStart = startOfWeek(firstDay, merged.weekStartsOn);
     const gridEnd = endOfWeek(lastDay, merged.weekStartsOn);
     const days = eachDayOfInterval(gridStart, gridEnd);
-    const weeks: Date[][] = [];
-    for (let i = 0; i < days.length; i += 7) {
-      weeks.push(days.slice(i, i + 7));
-    }
+    const weeks = chunkIntoWeeks(days);
 
     const weekdayLabels = Array.from({ length: 7 }, (_, i) =>
       formatWeekday(addDays(gridStart, i), localeCode()),

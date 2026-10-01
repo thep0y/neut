@@ -54,6 +54,7 @@ export const Checkbox = (props: CheckboxProps) => {
         data-checked={checked()}
         aria-labelledby={local.id}
         class={clsx(classes, local.class)}
+        classList={local.classList}
         onClick={handleClick}
         {...others}
       >

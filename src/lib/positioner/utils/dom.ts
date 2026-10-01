@@ -46,7 +46,14 @@ export function getViewportBoundary(strategy: Strategy, padding = 0): Rect {
   };
 }
 
-function isOverflowElement(el: Element): boolean {
+/**
+ * 元素自身是否建立了滚动容器。
+ *
+ * 导出原因:`hooks/useScrollLock` 需要用它判断页面滚动条长在 html 还是 body 上,
+ * 之前那里也有一份逐字重复的实现。两处口径必须一致(同一个正则、同样只看
+ * overflow 三属性),否则"锁哪个元素"和"哪些祖先要监听 scroll"会不一致。
+ */
+export function isOverflowElement(el: Element): boolean {
   const { overflow, overflowX, overflowY } = getComputedStyle(el);
   return /auto|scroll|overlay|hidden/.test(overflow + overflowX + overflowY);
 }

@@ -5,6 +5,13 @@ import type {
   MessageScrollerProviderProps,
   MessageScrollerScrollOptions,
 } from "./message-scroller.types";
+import {
+  firstAnchorFrom,
+  firstUnhandledAnchor,
+  hasMultipleAnchorsFrom,
+} from "./message-scroller.anchors";
+import { paddingBox, rowGap } from "./message-scroller.measure";
+import { targetTopFor as computeTargetTopFor } from "./message-scroller.scroll-target";
 
 /** 滚动位置比较容差（0.5px），对应上游的 `J` */
 const AT_EDGE_TOLERANCE = 0.5;
@@ -30,30 +37,6 @@ type Mode =
 interface ScrollState {
   start: boolean;
   end: boolean;
-}
-
-interface PaddingBox {
-  start: number;
-  end: number;
-}
-
-function parsePx(value: string): number {
-  const parsed = Number.parseFloat(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function paddingBox(element: HTMLElement): PaddingBox {
-  const style = window.getComputedStyle(element);
-  return {
-    start: parsePx(style.paddingBlockStart || style.paddingTop),
-    end: parsePx(style.paddingBlockEnd || style.paddingBottom),
-  };
-}
-
-function rowGap(element: HTMLElement | null): number {
-  if (!element) return 0;
-  const style = window.getComputedStyle(element);
-  return parsePx(style.rowGap === "normal" ? style.gap : style.rowGap);
 }
 
 /**
@@ -305,27 +288,14 @@ export function useMessageScrollerEngine(
   ) => {
     const vp = viewport();
     if (!vp) return 0;
-    const pad = content() ? paddingBox(content()!) : { start: 0, end: 0 };
-    const itemTop = itemOffsetTop(element);
-    const height = element.getBoundingClientRect().height;
-    switch (command?.align ?? "start") {
-      case "center": {
-        const visible = Math.max(0, vp.clientHeight - pad.start - pad.end);
-        return itemTop - pad.start - (visible - height) / 2 - margin;
-      }
-      case "end":
-        return itemTop - vp.clientHeight + height + pad.end + margin;
-      case "nearest": {
-        const bottom = itemTop + height;
-        const vTop = vp.scrollTop + pad.start;
-        const vBottom = vp.scrollTop + vp.clientHeight - pad.end;
-        if (itemTop >= vTop && bottom <= vBottom) return vp.scrollTop;
-        if (itemTop < vTop) return itemTop - pad.start - margin;
-        return bottom - vp.clientHeight + pad.end + margin;
-      }
-      default:
-        return itemTop - pad.start - margin;
-    }
+    return computeTargetTopFor(
+      element,
+      command,
+      margin,
+      vp,
+      content(),
+      itemOffsetTop,
+    );
   };
 
   const scrollToElement = (
@@ -464,31 +434,6 @@ export function useMessageScrollerEngine(
     return true;
   };
 
-  const firstAnchorFrom = (list: HTMLElement[], from: number) => {
-    for (let index = from; index < list.length; index += 1) {
-      const el = list[index];
-      if (el?.dataset.scrollAnchor === "true") return el;
-    }
-    return null;
-  };
-
-  const firstUnhandledAnchor = (list: HTMLElement[]) =>
-    list.find(
-      (el) =>
-        el.dataset.scrollAnchor === "true" && !handledScrollAnchors.has(el),
-    ) ?? null;
-
-  const hasMultipleAnchorsFrom = (list: HTMLElement[], from: number) => {
-    let count = 0;
-    for (let index = from; index < list.length; index += 1) {
-      if (list[index]?.dataset.scrollAnchor === "true") {
-        count += 1;
-        if (count > 1) return true;
-      }
-    }
-    return false;
-  };
-
   const handleContentChange = () => {
     const root = content();
     if (!root) return;
@@ -562,7 +507,7 @@ export function useMessageScrollerEngine(
 
     // 行数没变但出现了未处理的新锚点（例如给已有行打开 scrollAnchor）
     if (list.length === previousCount) {
-      const unhandled = firstUnhandledAnchor(list);
+      const unhandled = firstUnhandledAnchor(list, handledScrollAnchors);
       if (unhandled) {
         scrollToElement(
           unhandled,

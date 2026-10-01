@@ -1,6 +1,6 @@
 import { splitProps, type JSX } from "solid-js";
 import { clsx } from "~/utils";
-import { callEventHandler } from "../call-event-handler";
+import { callEventHandler } from "~/utils";
 import {
   createToggleGroupState,
   ToggleGroupContext,

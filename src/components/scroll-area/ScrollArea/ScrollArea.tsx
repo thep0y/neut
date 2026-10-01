@@ -1,13 +1,20 @@
-import { createSignal, onCleanup, splitProps } from "solid-js";
-import type { ScrollAreaProps, ScrollMetrics } from "./ScrollArea.types";
+import { createSignal, splitProps } from "solid-js";
+import type { ScrollAreaProps } from "./ScrollArea.types";
 import { clsx } from "~/utils";
 import { ScrollBar } from "../ScrollBar";
 import { ScrollAreaContext } from "./ScrollArea.context";
-import { computeMetrics } from "./ScrollArea.utils";
+import { useScrollAreaMetrics } from "./useScrollAreaMetrics";
 
+/**
+ * 自定义滚动容器。
+ *
+ * 职责边界（SRP）：
+ * - 指标采集（scroll / resize）→ `useScrollAreaMetrics.ts`
+ * - 尺寸换算 → `ScrollArea.utils.ts`
+ * - 滚动条交互 → `ScrollBar/`
+ * - 本文件只负责：组合 Provider、渲染视口 DOM 与样式
+ */
 export const ScrollArea = (props: ScrollAreaProps) => {
-  let viewportRef: HTMLDivElement | undefined;
-
   const [local, others] = splitProps(props, [
     "orientation",
     "class",
@@ -21,54 +28,22 @@ export const ScrollArea = (props: ScrollAreaProps) => {
     "vertical" | "horizontal" | null
   >(null);
 
-  const [verticalMetrics, setVerticalMetrics] = createSignal<ScrollMetrics>({
-    thumbRatio: 1,
-    thumbOffset: 0,
-    scrollable: false,
-  });
-  const [horizontalMetrics, setHorizontalMetrics] = createSignal<ScrollMetrics>(
-    {
-      thumbRatio: 1,
-      thumbOffset: 0,
-      scrollable: false,
-    },
-  );
+  const metrics = useScrollAreaMetrics();
 
-  function updateMetrics(el: HTMLElement) {
-    setVerticalMetrics(
-      computeMetrics(el.clientHeight, el.scrollTop, el.scrollHeight),
-    );
-    setHorizontalMetrics(
-      computeMetrics(el.clientWidth, el.scrollLeft, el.scrollWidth),
-    );
-  }
-
-  function setup(el: HTMLDivElement) {
-    viewportRef = el; // ref 赋值
-
-    updateMetrics(el);
-
-    const update = () => updateMetrics(el);
-
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-
-    if (el.firstElementChild) {
-      ro.observe(el.firstElementChild);
+  const overflowClass = () => {
+    if (local.orientation === "vertical") {
+      return "overflow-y-scroll overflow-x-hidden";
     }
-
-    el.addEventListener("scroll", update, { passive: true });
-
-    onCleanup(() => {
-      ro.disconnect();
-      el.removeEventListener("scroll", update);
-    });
-  }
+    if (local.orientation === "horizontal") {
+      return "overflow-x-scroll overflow-y-hidden";
+    }
+    return "overflow-scroll";
+  };
 
   return (
     <div
       data-slot="scroll-area"
-      class={clsx("relative", local.class)}
+      class={clsx("relative", local.class, local.classList)}
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
       {...others}
@@ -76,34 +51,26 @@ export const ScrollArea = (props: ScrollAreaProps) => {
       <ScrollAreaContext.Provider
         value={{
           hovering,
-          viewportRef: () => viewportRef,
+          viewportRef: metrics.viewportRef,
           dragging,
           setDragging,
-          vertical: verticalMetrics,
-          horizontal: horizontalMetrics,
+          vertical: metrics.vertical,
+          horizontal: metrics.horizontal,
         }}
       >
         <div
-          ref={setup}
+          ref={metrics.setup}
           data-slot="scroll-area-viewport"
           role="region"
           aria-label={local["aria-label"] ?? "Scrollable content"}
           class={clsx(
-            // "size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-neutral-400/50 dark:focus-visible:ring-neutral-500/50 focus-visible:outline-1",
-            // "overflow-scroll",
-            // "[scrollbar-width:none]",
             "size-full rounded-[inherit] transition-[color,box-shadow] outline-none",
             // Native scrollbars hidden via CSS; custom ones provided below
             "scrollbar-none [&::-webkit-scrollbar]:hidden",
             // Focus ring — meets WCAG 2.4.7
             "focus-visible:ring-2 focus-visible:ring-offset-1",
             "focus-visible:ring-ring/50",
-            // Overflow based on which scrollbars are active
-            local.orientation === "vertical"
-              ? "overflow-y-scroll overflow-x-hidden"
-              : local.orientation === "horizontal"
-                ? "overflow-x-scroll overflow-y-hidden"
-                : "overflow-scroll",
+            overflowClass(),
           )}
         >
           {local.children}
