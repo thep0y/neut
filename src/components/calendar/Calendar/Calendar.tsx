@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "~/components/select";
 import { clsx } from "~/utils";
+import { CalendarDay } from "./CalendarDay";
 import { calendarClassNames } from "./Calendar.styles";
 import type {
   CalendarClassNames,
@@ -30,15 +31,8 @@ import {
   canMoveNext,
   canMovePrev,
   chunkIntoWeeks,
-  isDayDisabled,
 } from "./Calendar.options";
-import {
-  isDateSelected,
-  isRangeEnd,
-  isRangeMiddle,
-  isRangeStart,
-  nextSelected,
-} from "./Calendar.selection";
+import { nextSelected } from "./Calendar.selection";
 import {
   addDays,
   addMonths,
@@ -47,7 +41,6 @@ import {
   formatMonthYear,
   formatWeekday,
   getISOWeekNumber,
-  isSameDay,
   resolveInitialMonth,
   resolveLocaleCode,
   startOfMonth,
@@ -155,76 +148,10 @@ export function Calendar(props: CalendarProps): JSX.Element {
   const slotClass = (key: keyof CalendarClassNames) =>
     clsx(calendarClassNames[key], merged.classNames?.[key]);
 
-  const isDisabledDay = (day: Date) =>
-    isDayDisabled(day, {
-      disabled: merged.disabled,
-      min: merged.min,
-      max: merged.max,
-    });
-
-  const isRangeStartDay = (day: Date) => isRangeStart(selected(), day);
-  const isRangeEndDay = (day: Date) => isRangeEnd(selected(), day);
-  const isRangeMiddleDay = (day: Date) => isRangeMiddle(selected(), day);
-  const isDateSelectedDay = (day: Date) =>
-    isDateSelected(merged.mode, selected(), day);
-
+  // 禁用判定由 CalendarDay 负责（它同时决定按钮 disabled 与点击是否生效），
+  // 这里不再重复守卫：唯一调用方只会在可选的日期上回调。
   const selectDay = (day: Date) => {
-    if (isDisabledDay(day)) return;
     commitSelected(nextSelected(merged.mode, selected(), day));
-  };
-
-  const renderDay = (day: Date, monthDate: Date) => {
-    return (
-      <div
-        aria-disabled={isDisabledDay(day)}
-        data-selected={isDateSelectedDay(day) ? "true" : undefined}
-        class={clsx(
-          slotClass("day"),
-          day.getMonth() !== monthDate.getMonth() && slotClass("outside"),
-          !merged.showOutsideDays &&
-            day.getMonth() !== monthDate.getMonth() &&
-            slotClass("hidden"),
-          isSameDay(day, new Date()) && slotClass("today"),
-          isDisabledDay(day) && slotClass("disabled"),
-          isRangeStartDay(day) && slotClass("range_start"),
-          isRangeMiddleDay(day) && slotClass("range_middle"),
-          isRangeEndDay(day) && slotClass("range_end"),
-        )}
-      >
-        <button
-          type="button"
-          disabled={isDisabledDay(day)}
-          aria-pressed={isDateSelectedDay(day)}
-          data-day={day.toLocaleDateString(localeCode())}
-          data-selected-single={
-            merged.mode === "single" &&
-            selected() instanceof Date &&
-            isSameDay(day, selected() as Date)
-              ? "true"
-              : undefined
-          }
-          data-range-start={isRangeStartDay(day) ? "true" : undefined}
-          data-range-end={isRangeEndDay(day) ? "true" : undefined}
-          data-range-middle={isRangeMiddleDay(day) ? "true" : undefined}
-          onClick={() => selectDay(day)}
-          class={clsx(
-            buttonVariants({ variant: merged.buttonVariant }),
-            "relative isolate z-10 flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 border-0 leading-none font-normal",
-            "data-[range-end=true]:rounded-(--cell-radius) data-[range-end=true]:rounded-r-(--cell-radius) data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground",
-            "data-[range-end=true]:hover:bg-primary data-[range-end=true]:hover:text-primary-foreground",
-            "data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-muted data-[range-middle=true]:text-foreground",
-            "data-[range-middle=true]:hover:bg-muted data-[range-middle=true]:hover:text-foreground",
-            "data-[range-start=true]:rounded-(--cell-radius) data-[range-start=true]:rounded-l-(--cell-radius) data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground",
-            "data-[range-start=true]:hover:bg-primary data-[range-start=true]:hover:text-primary-foreground",
-            "data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground",
-            "data-[selected-single=true]:hover:bg-primary data-[selected-single=true]:hover:text-primary-foreground",
-            day.getMonth() !== monthDate.getMonth() && "text-muted-foreground",
-          )}
-        >
-          {day.getDate()}
-        </button>
-      </div>
-    );
   };
 
   const renderMonth = (monthDate: Date) => {
@@ -349,7 +276,24 @@ export function Calendar(props: CalendarProps): JSX.Element {
                     {getISOWeekNumber(week[0])}
                   </div>
                 </Show>
-                <For each={week}>{(day) => renderDay(day, monthDate)}</For>
+                <For each={week}>
+                  {(day) => (
+                    <CalendarDay
+                      day={day}
+                      monthDate={monthDate}
+                      mode={merged.mode}
+                      selected={selected()}
+                      showOutsideDays={merged.showOutsideDays}
+                      buttonVariant={merged.buttonVariant}
+                      localeCode={localeCode()}
+                      disabled={merged.disabled}
+                      min={merged.min}
+                      max={merged.max}
+                      slotClass={slotClass}
+                      onSelect={selectDay}
+                    />
+                  )}
+                </For>
               </div>
             )}
           </For>

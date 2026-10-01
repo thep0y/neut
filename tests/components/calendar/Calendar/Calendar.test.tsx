@@ -21,6 +21,23 @@ function renderCalendar(props: Record<string, unknown> = {}) {
   ));
 }
 
+/** 两个下拉的 trigger（captionLayout=dropdown 时按 DOM 顺序：月、年） */
+function selectTriggers(): HTMLElement[] {
+  return Array.from(document.querySelectorAll<HTMLElement>('[role="combobox"]'));
+}
+
+/** 第 index 个 listbox 里的选项 */
+function optionsOf(index: number): HTMLElement[] {
+  const listboxes = document.querySelectorAll<HTMLElement>('[role="listbox"]');
+  return Array.from(listboxes[index].querySelectorAll<HTMLElement>('[role="option"]'));
+}
+
+/** SelectItem 在 onMount 里注册，交互前先让挂载落地 */
+async function waitForMount() {
+  await Promise.resolve();
+  await Promise.resolve();
+}
+
 /** 取出某一天的 <button>（按 data-day 的本地化日期串定位） */
 function dayButton(day: Date): HTMLButtonElement | null {
   const key = day.toLocaleDateString("en-US");
@@ -407,6 +424,43 @@ describe("Calendar - captionLayout", () => {
     expect(() =>
       renderCalendar({ captionLayout: "dropdown", month: JUNE_2024 }),
     ).not.toThrow();
+  });
+
+  it("选择月份下拉会按所选月份变更（保留年份）", async () => {
+    const onMonthChange = vi.fn();
+    renderCalendar({ captionLayout: "dropdown", onMonthChange });
+    await waitForMount();
+
+    const [monthSelect] = selectTriggers();
+    fireEvent.click(monthSelect);
+    // 月份下拉是第一个 listbox，选项按 0-11 排列
+    const january = optionsOf(0)[0];
+    fireEvent.click(january);
+
+    expect(onMonthChange).toHaveBeenCalledTimes(1);
+    const next = onMonthChange.mock.calls[0][0] as Date;
+    expect(next.getFullYear()).toBe(2024);
+    expect(next.getMonth()).toBe(0);
+    expect(next.getDate()).toBe(1);
+  });
+
+  it("选择年份下拉会按所选年份变更（保留当前月）", async () => {
+    const onMonthChange = vi.fn();
+    renderCalendar({ captionLayout: "dropdown", onMonthChange });
+    await waitForMount();
+
+    const [, yearSelect] = selectTriggers();
+    fireEvent.click(yearSelect);
+    const option2020 = optionsOf(1).find(
+      (option) => option.textContent?.trim() === "2020",
+    )!;
+    fireEvent.click(option2020);
+
+    expect(onMonthChange).toHaveBeenCalledTimes(1);
+    const next = onMonthChange.mock.calls[0][0] as Date;
+    expect(next.getFullYear()).toBe(2020);
+    // defaultMonth 是 2024-06
+    expect(next.getMonth()).toBe(5);
   });
 });
 
