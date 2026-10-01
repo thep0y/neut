@@ -23,13 +23,17 @@ function renderCalendar(props: Record<string, unknown> = {}) {
 
 /** 两个下拉的 trigger（captionLayout=dropdown 时按 DOM 顺序：月、年） */
 function selectTriggers(): HTMLElement[] {
-  return Array.from(document.querySelectorAll<HTMLElement>('[role="combobox"]'));
+  return Array.from(
+    document.querySelectorAll<HTMLElement>('[role="combobox"]'),
+  );
 }
 
 /** 第 index 个 listbox 里的选项 */
 function optionsOf(index: number): HTMLElement[] {
   const listboxes = document.querySelectorAll<HTMLElement>('[role="listbox"]');
-  return Array.from(listboxes[index].querySelectorAll<HTMLElement>('[role="option"]'));
+  return Array.from(
+    listboxes[index].querySelectorAll<HTMLElement>('[role="option"]'),
+  );
 }
 
 /** SelectItem 在 onMount 里注册，交互前先让挂载落地 */

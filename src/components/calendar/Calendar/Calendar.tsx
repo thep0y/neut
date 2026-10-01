@@ -1,23 +1,13 @@
 import {
   For,
-  Show,
   createMemo,
   createSignal,
   mergeProps,
   splitProps,
   type JSX,
 } from "solid-js";
-import { ChevronLeft, ChevronRight } from "lucide-solid";
-import buttonVariants from "~/components/button/Button.styles";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/select";
 import { clsx } from "~/utils";
-import { CalendarDay } from "./CalendarDay";
+import { CalendarMonth } from "./CalendarMonth";
 import { calendarClassNames } from "./Calendar.styles";
 import type {
   CalendarClassNames,
@@ -30,21 +20,13 @@ import {
   buildYearOptions,
   canMoveNext,
   canMovePrev,
-  chunkIntoWeeks,
 } from "./Calendar.options";
 import { nextSelected } from "./Calendar.selection";
 import {
-  addDays,
   addMonths,
-  eachDayOfInterval,
-  endOfWeek,
-  formatMonthYear,
-  formatWeekday,
-  getISOWeekNumber,
   resolveInitialMonth,
   resolveLocaleCode,
   startOfMonth,
-  startOfWeek,
 } from "./Calendar.utils";
 
 /**
@@ -154,154 +136,6 @@ export function Calendar(props: CalendarProps): JSX.Element {
     commitSelected(nextSelected(merged.mode, selected(), day));
   };
 
-  const renderMonth = (monthDate: Date) => {
-    const firstDay = startOfMonth(monthDate);
-    const lastDay = addDays(addMonths(monthDate, 1), -1);
-    const gridStart = startOfWeek(firstDay, merged.weekStartsOn);
-    const gridEnd = endOfWeek(lastDay, merged.weekStartsOn);
-    const days = eachDayOfInterval(gridStart, gridEnd);
-    const weeks = chunkIntoWeeks(days);
-
-    const weekdayLabels = Array.from({ length: 7 }, (_, i) =>
-      formatWeekday(addDays(gridStart, i), localeCode()),
-    );
-
-    return (
-      <div class={slotClass("month")}>
-        <div class={slotClass("nav")}>
-          <button
-            type="button"
-            disabled={!canPrev()}
-            aria-label="Previous month"
-            onClick={() => moveMonth(-1)}
-            class={clsx(
-              buttonVariants({ variant: merged.buttonVariant }),
-              slotClass("button_previous"),
-            )}
-          >
-            <ChevronLeft class="size-4" />
-          </button>
-          <button
-            type="button"
-            disabled={!canNext()}
-            aria-label="Next month"
-            onClick={() => moveMonth(1)}
-            class={clsx(
-              buttonVariants({ variant: merged.buttonVariant }),
-              slotClass("button_next"),
-            )}
-          >
-            <ChevronRight class="size-4" />
-          </button>
-        </div>
-
-        <div class={slotClass("month_caption")}>
-          <Show
-            when={merged.captionLayout === "dropdown"}
-            fallback={
-              <span class={slotClass("caption_label")}>
-                {formatMonthYear(monthDate, localeCode())}
-              </span>
-            }
-          >
-            <div class={slotClass("dropdowns")}>
-              <Select
-                value={String(monthDate.getMonth())}
-                onValueChange={(value) => {
-                  setMonth(new Date(monthDate.getFullYear(), Number(value), 1));
-                }}
-              >
-                <SelectTrigger
-                  variant="ghost"
-                  class={clsx(
-                    "h-(--cell-size) rounded-(--cell-radius) px-2 text-sm font-medium",
-                    slotClass("dropdown_root"),
-                  )}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent class="max-h-56">
-                  <For each={monthOptions(monthDate.getFullYear())}>
-                    {(option) => (
-                      <SelectItem value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    )}
-                  </For>
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={String(monthDate.getFullYear())}
-                onValueChange={(value) => {
-                  setMonth(new Date(Number(value), monthDate.getMonth(), 1));
-                }}
-              >
-                <SelectTrigger
-                  variant="ghost"
-                  class={clsx(
-                    "h-(--cell-size) rounded-(--cell-radius) px-2 text-sm font-medium tabular-nums",
-                    slotClass("dropdown_root"),
-                  )}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent class="max-h-56">
-                  <For each={yearOptions()}>
-                    {(year) => (
-                      <SelectItem value={String(year)}>{year}</SelectItem>
-                    )}
-                  </For>
-                </SelectContent>
-              </Select>
-            </div>
-          </Show>
-        </div>
-
-        <div class={slotClass("month_grid")}>
-          <div class={slotClass("weekdays")}>
-            <Show when={merged.showWeekNumber}>
-              <div class={slotClass("week_number_header")} />
-            </Show>
-            <For each={weekdayLabels}>
-              {(label) => <div class={slotClass("weekday")}>{label}</div>}
-            </For>
-          </div>
-
-          <For each={weeks}>
-            {(week) => (
-              <div class={slotClass("week")}>
-                <Show when={merged.showWeekNumber}>
-                  <div class={slotClass("week_number")}>
-                    {getISOWeekNumber(week[0])}
-                  </div>
-                </Show>
-                <For each={week}>
-                  {(day) => (
-                    <CalendarDay
-                      day={day}
-                      monthDate={monthDate}
-                      mode={merged.mode}
-                      selected={selected()}
-                      showOutsideDays={merged.showOutsideDays}
-                      buttonVariant={merged.buttonVariant}
-                      localeCode={localeCode()}
-                      disabled={merged.disabled}
-                      min={merged.min}
-                      max={merged.max}
-                      slotClass={slotClass}
-                      onSelect={selectDay}
-                    />
-                  )}
-                </For>
-              </div>
-            )}
-          </For>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div
       data-slot="calendar"
@@ -311,7 +145,32 @@ export function Calendar(props: CalendarProps): JSX.Element {
       {...rest}
     >
       <div class={slotClass("months")}>
-        <For each={monthList()}>{(monthDate) => renderMonth(monthDate)}</For>
+        <For each={monthList()}>
+          {(monthDate) => (
+            <CalendarMonth
+              monthDate={monthDate}
+              canPrev={canPrev()}
+              canNext={canNext()}
+              onMoveMonth={moveMonth}
+              captionLayout={merged.captionLayout}
+              localeCode={localeCode()}
+              monthOptions={monthOptions}
+              yearOptions={yearOptions()}
+              onSelectMonth={setMonth}
+              showWeekNumber={merged.showWeekNumber}
+              weekStartsOn={merged.weekStartsOn}
+              mode={merged.mode}
+              selected={selected()}
+              showOutsideDays={merged.showOutsideDays}
+              buttonVariant={merged.buttonVariant}
+              disabled={merged.disabled}
+              min={merged.min}
+              max={merged.max}
+              onSelectDay={selectDay}
+              slotClass={slotClass}
+            />
+          )}
+        </For>
       </div>
     </div>
   );

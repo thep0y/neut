@@ -39,7 +39,10 @@ describe("CalendarDay 基本渲染", () => {
     const { button, day } = renderDay();
 
     expect(button()).toHaveTextContent("15");
-    expect(button()).toHaveAttribute("data-day", day.toLocaleDateString("zh-CN"));
+    expect(button()).toHaveAttribute(
+      "data-day",
+      day.toLocaleDateString("zh-CN"),
+    );
   });
 
   it("未选中时没有选中相关属性", () => {
@@ -80,15 +83,27 @@ describe("CalendarDay 选中态", () => {
   it("range 模式的起点/中点/终点分别标记并套用插槽", () => {
     const selected = { from: new Date(2024, 4, 13), to: new Date(2024, 4, 17) };
 
-    const start = renderDay({ mode: "range", selected, day: new Date(2024, 4, 13) });
+    const start = renderDay({
+      mode: "range",
+      selected,
+      day: new Date(2024, 4, 13),
+    });
     expect(start.button()).toHaveAttribute("data-range-start", "true");
     expect(start.cell()).toHaveClass("slot-range_start");
 
-    const middle = renderDay({ mode: "range", selected, day: new Date(2024, 4, 15) });
+    const middle = renderDay({
+      mode: "range",
+      selected,
+      day: new Date(2024, 4, 15),
+    });
     expect(middle.button()).toHaveAttribute("data-range-middle", "true");
     expect(middle.cell()).toHaveClass("slot-range_middle");
 
-    const end = renderDay({ mode: "range", selected, day: new Date(2024, 4, 17) });
+    const end = renderDay({
+      mode: "range",
+      selected,
+      day: new Date(2024, 4, 17),
+    });
     expect(end.button()).toHaveAttribute("data-range-end", "true");
     expect(end.cell()).toHaveClass("slot-range_end");
   });
@@ -169,7 +184,11 @@ describe("CalendarDay 非本月日期与点击", () => {
 
   it("缺省 buttonVariant / localeCode 时用默认值渲染", () => {
     const day = new Date(2024, 4, 15);
-    const { button } = renderDay({ day, buttonVariant: undefined, localeCode: undefined });
+    const { button } = renderDay({
+      day,
+      buttonVariant: undefined,
+      localeCode: undefined,
+    });
 
     // toLocaleDateString() 的默认区域，不断言具体格式，只断言属性存在
     expect(button().getAttribute("data-day")).toBeTruthy();
