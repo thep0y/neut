@@ -1,13 +1,4 @@
-import {
-  Show,
-  type JSX,
-  createEffect,
-  createMemo,
-  createSignal,
-  onCleanup,
-  onMount,
-  splitProps,
-} from "solid-js";
+import { Show, type JSX, createMemo, splitProps } from "solid-js";
 import {
   CircleCheck,
   CircleX,
@@ -31,9 +22,7 @@ import {
   resolveToastContent,
 } from "./Toast.utils";
 import { ToastActionButton } from "./ToastActionButton";
-
-const TOAST_LIFETIME = 4000;
-const EXIT_ANIMATION_MS = 200;
+import { useToastLifecycle } from "./useToastLifecycle";
 
 function getDefaultIcon(type: ToastTypes) {
   switch (type) {
@@ -69,10 +58,6 @@ export function Toast(props: ToastProps) {
     "gap",
   ]);
 
-  const [animationState, setAnimationState] = createSignal<"open" | "closed">(
-    "closed",
-  );
-
   const toast = () => local.toast;
   const toastType = createMemo(() => toast().type ?? "default");
   const richColors = createMemo(
@@ -81,44 +66,10 @@ export function Toast(props: ToastProps) {
   const dismissible = createMemo(() => toast().dismissible !== false);
   const isBusy = createMemo(() => toastType() === "loading");
 
-  onMount(() => {
-    const raf = requestAnimationFrame(() => setAnimationState("open"));
-    onCleanup(() => cancelAnimationFrame(raf));
-  });
-
-  const close = () => {
-    if (animationState() !== "open") return;
-    setAnimationState("closed");
-    toast().onDismiss?.(toast());
-    setTimeout(() => local.onRemove(toast().id), EXIT_ANIMATION_MS);
-  };
-
-  // 外部 dismiss：把 delete 标记转换成退场动画
-  createEffect(() => {
-    if (toast().delete && animationState() === "open") {
-      close();
-    }
-  });
-
-  // 自动关闭计时器
-  createEffect(() => {
-    const current = toast();
-    if (
-      current.delete ||
-      current.type === "loading" ||
-      current.duration === Infinity ||
-      current.duration === 0
-    ) {
-      return;
-    }
-
-    const delay = current.duration ?? local.duration ?? TOAST_LIFETIME;
-    const timer = setTimeout(() => {
-      current.onAutoClose?.(current);
-      close();
-    }, delay);
-
-    onCleanup(() => clearTimeout(timer));
+  const { animationState, close } = useToastLifecycle({
+    toast,
+    duration: () => local.duration,
+    onRemove: (id) => local.onRemove(id),
   });
 
   const icon = () => {
