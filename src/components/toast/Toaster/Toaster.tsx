@@ -1,13 +1,4 @@
-import {
-  For,
-  createMemo,
-  createSignal,
-  mergeProps,
-  onCleanup,
-  onMount,
-  Show,
-  type Component,
-} from "solid-js";
+import { For, mergeProps, Show, type Component } from "solid-js";
 import { Portal } from "solid-js/web";
 import { clsx } from "~/utils";
 import { Toast } from "../Toast";
@@ -20,6 +11,7 @@ import {
   getPositionClass,
   resolveOffsetStyle,
 } from "./Toaster.utils";
+import { useToaster } from "./useToaster";
 
 export const Toaster: Component<ToasterProps> = (props) => {
   const merged = mergeProps(
@@ -35,50 +27,16 @@ export const Toaster: Component<ToasterProps> = (props) => {
   );
 
   const { toasts } = useSonner();
-  const [expanded, setExpanded] = createSignal(false);
 
-  const filteredToasts = createMemo(() => {
-    const id = merged.id;
-    return id
-      ? toasts.filter((toast) => toast.toasterId === id)
-      : toasts.filter((toast) => !toast.toasterId);
-  });
-
-  const possiblePositions = createMemo(() =>
-    Array.from(
-      new Set(
-        [merged.position].concat(
-          filteredToasts()
-            .filter((toast) => toast.position)
-            .map((toast) => toast.position as Position),
-        ),
-      ),
-    ),
-  );
-
-  const toastsForPosition = (position: Position) =>
-    filteredToasts().filter((toast) => {
-      if (toast.position) return toast.position === position;
-      return position === merged.position;
+  const { expanded, setExpanded, possiblePositions, visibleToastsForPosition } =
+    useToaster({
+      toasts: () => toasts,
+      toasterId: () => merged.id,
+      position: () => merged.position,
+      visibleToasts: () => merged.visibleToasts,
+      expand: () => merged.expand,
+      hotkey: () => merged.hotkey,
     });
-
-  const visibleToastsForPosition = (position: Position) => {
-    const list = toastsForPosition(position);
-    if (merged.expand) return list;
-    return list.slice(0, merged.visibleToasts);
-  };
-
-  onMount(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      const hotkeyPressed =
-        merged.hotkey.length > 0 &&
-        merged.hotkey.every((key) => (e as any)[key] || e.code === key);
-      if (hotkeyPressed) setExpanded(true);
-      if (e.code === "Escape") setExpanded(false);
-    };
-    document.addEventListener("keydown", onKeyDown);
-    onCleanup(() => document.removeEventListener("keydown", onKeyDown));
-  });
 
   const offsetStyle = (position: Position) =>
     resolveOffsetStyle(position, merged.offset, merged.mobileOffset);

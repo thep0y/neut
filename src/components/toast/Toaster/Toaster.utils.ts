@@ -70,13 +70,23 @@ export function resolveOffsetStyle(
   return style;
 }
 
+/**
+ * 根据位置推导默认的滑动关闭方向。
+ *
+ * `Position` 的第二段可能是 `"center"`，而它**不是**合法的 `SwipeDirection`
+ * （只有 top/right/bottom/left）。之前实现直接把它 `as SwipeDirection` 塞进结果，
+ * 导致 `top-center` 会产出 `["top", "center"]` —— 调用方按方向匹配手势时
+ * 永远命中不了 `"center"`，等于多了一个无效方向。
+ * 这里按白名单过滤，保证返回的每一项都是真正可用的方向。
+ */
 export function getDefaultSwipeDirections(
   position: Position,
 ): SwipeDirection[] {
   const [y, x] = position.split("-");
   const directions: SwipeDirection[] = [];
-  if (y) directions.push(y as SwipeDirection);
-  if (x) directions.push(x as SwipeDirection);
+  if (y === "top" || y === "bottom") directions.push(y);
+  // 只有 left / right 能滑动关闭；center 位置没有水平滑动方向
+  if (x === "left" || x === "right") directions.push(x);
   return directions;
 }
 
