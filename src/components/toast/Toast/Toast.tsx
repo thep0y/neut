@@ -1,46 +1,21 @@
-import { Show, type JSX, createMemo, splitProps } from "solid-js";
-import {
-  CircleCheck,
-  CircleX,
-  Info,
-  LoaderCircle,
-  TriangleAlert,
-  X,
-} from "lucide-solid";
+import { Show, createMemo, splitProps } from "solid-js";
 import { clsx } from "~/utils";
-import { toastIconVariants, toastVariants } from "./Toast.styles";
-import {
-  isAction,
-  type ToastIcons,
-  type ToastProps,
-  type ToastTypes,
-} from "./Toast.types";
-import {
-  getAnimationClasses,
-  getToastAction,
-  getToastStyle,
-  resolveToastContent,
-} from "./Toast.utils";
-import { ToastActionButton } from "./ToastActionButton";
+import { toastVariants } from "./Toast.styles";
+import type { ToastIcons, ToastProps, ToastT } from "./Toast.types";
+import { getAnimationClasses, getToastStyle } from "./Toast.utils";
+import { ToastActions } from "./ToastActions";
+import { ToastCloseButton, isCloseButtonVisible } from "./ToastCloseButton";
+import { ToastContent } from "./ToastContent";
+import { ToastIcon } from "./ToastIcon";
 import { useToastLifecycle } from "./useToastLifecycle";
 
-function getDefaultIcon(type: ToastTypes) {
-  switch (type) {
-    case "success":
-      return <CircleCheck />;
-    case "info":
-      return <Info />;
-    case "warning":
-      return <TriangleAlert />;
-    case "error":
-      return <CircleX />;
-    case "loading":
-      return <LoaderCircle class="animate-spin" />;
-    default:
-      return undefined;
-  }
-}
-
+/**
+ * 单条 toast 的骨架：状态属性（data-*）+ 尺寸/层叠样式 + 四个插槽。
+ *
+ * 渲染层只做组合，具体内容分别由
+ * `ToastIcon` / `ToastContent` / `ToastActions` / `ToastCloseButton` 承担，
+ * 进出场与自动关闭由 `useToastLifecycle` 承担。
+ */
 export function Toast(props: ToastProps) {
   const [local] = splitProps(props, [
     "toast",
@@ -63,22 +38,12 @@ export function Toast(props: ToastProps) {
   const richColors = createMemo(
     () => toast().richColors ?? local.defaultRichColors ?? false,
   );
-  const dismissible = createMemo(() => toast().dismissible !== false);
-  const isBusy = createMemo(() => toastType() === "loading");
 
   const { animationState, close } = useToastLifecycle({
     toast,
     duration: () => local.duration,
     onRemove: (id) => local.onRemove(id),
   });
-
-  const icon = () => {
-    if (toast().icon !== undefined) return toast().icon;
-    return (
-      local.icons?.[toastType() as keyof ToastIcons] ??
-      getDefaultIcon(toastType())
-    );
-  };
 
   const toastStyle = () =>
     getToastStyle({
@@ -118,97 +83,41 @@ export function Toast(props: ToastProps) {
       <Show
         when={toast().jsx}
         fallback={
-          <>
-            <Show when={icon()}>
-              <div
-                data-slot="toast-icon"
-                class={clsx(
-                  toastIconVariants({ type: toastType() }),
-                  toast().classes?.icon,
-                )}
-              >
-                {icon()}
-              </div>
-            </Show>
-
-            <div
-              data-slot="toast-content"
-              class={clsx(
-                "flex min-w-0 flex-1 flex-col gap-0.5",
-                toast().classes?.content,
-              )}
-            >
-              <div
-                data-slot="toast-title"
-                class={clsx(
-                  "text-sm font-medium leading-snug",
-                  toast().classes?.title,
-                )}
-              >
-                {resolveToastContent(toast().title)}
-              </div>
-              <Show when={toast().description}>
-                <div
-                  data-slot="toast-description"
-                  class={clsx(
-                    "text-sm leading-relaxed text-muted-foreground",
-                    toast().descriptionClass,
-                    toast().classes?.description,
-                  )}
-                >
-                  {resolveToastContent(toast().description)}
-                </div>
-              </Show>
-            </div>
-
-            <Show when={getToastAction(toast().action)}>
-              {(action) => (
-                <ToastActionButton
-                  action={action()}
-                  variant="action"
-                  class={toast().classes?.actionButton}
-                  onClose={close}
-                />
-              )}
-            </Show>
-
-            <Show when={getToastAction(toast().cancel)}>
-              {(cancel) => (
-                <ToastActionButton
-                  action={cancel()}
-                  variant="cancel"
-                  class={toast().classes?.cancelButton}
-                  onClose={close}
-                />
-              )}
-            </Show>
-
-            <Show when={toast().action && !isAction(toast().action)}>
-              {toast().action as JSX.Element}
-            </Show>
-            <Show when={toast().cancel && !isAction(toast().cancel)}>
-              {toast().cancel as JSX.Element}
-            </Show>
-
-            <Show when={local.closeButton && dismissible() && !isBusy()}>
-              <button
-                type="button"
-                data-slot="toast-close"
-                aria-label={local.closeButtonAriaLabel ?? "Close toast"}
-                class={clsx(
-                  "absolute top-2.5 right-2.5 flex size-5 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground",
-                  toast().classes?.closeButton,
-                )}
-                onClick={close}
-              >
-                <X class="size-3.5" />
-              </button>
-            </Show>
-          </>
+          <ToastBody
+            toast={toast()}
+            icons={local.icons}
+            closeButton={local.closeButton}
+            closeButtonAriaLabel={local.closeButtonAriaLabel}
+            onClose={close}
+          />
         }
       >
         {toast().jsx}
       </Show>
     </li>
+  );
+}
+
+/** 默认内容布局：图标 / 文案 / 操作 / 关闭按钮（依次排布，各自独立） */
+function ToastBody(props: {
+  toast: ToastT;
+  icons?: ToastIcons;
+  closeButton: boolean;
+  closeButtonAriaLabel?: string;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      <ToastIcon toast={props.toast} icons={props.icons} />
+      <ToastContent toast={props.toast} />
+      <ToastActions toast={props.toast} onClose={props.onClose} />
+      <Show when={isCloseButtonVisible(props.toast, props.closeButton)}>
+        <ToastCloseButton
+          ariaLabel={props.closeButtonAriaLabel}
+          class={props.toast.classes?.closeButton}
+          onClose={props.onClose}
+        />
+      </Show>
+    </>
   );
 }
