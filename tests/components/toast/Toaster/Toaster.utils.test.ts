@@ -4,6 +4,7 @@ import {
   getDefaultSwipeDirections,
   getDocumentDirection,
   getPositionClass,
+  getViewportLayoutClass,
   resolveOffsetStyle,
 } from "~/components/toast/Toaster/Toaster.utils";
 
@@ -285,5 +286,26 @@ describe("getDocumentDirection", () => {
       // 必须在本文件 afterEach 触碰 document 之前还原
       vi.unstubAllGlobals();
     }
+  });
+});
+
+describe("getViewportLayoutClass", () => {
+  it("收起时用 grid 叠放（与位置无关）", () => {
+    expect(getViewportLayoutClass("top-left", false)).toBe("grid");
+    expect(getViewportLayoutClass("bottom-right", false)).toBe("grid");
+  });
+
+  it("展开时顶部位置正向排列", () => {
+    expect(getViewportLayoutClass("top-left", true)).toBe("flex flex-col");
+    expect(getViewportLayoutClass("top-center", true)).toBe("flex flex-col");
+  });
+
+  it("展开时底部位置反向排列（最新一条贴边）", () => {
+    expect(getViewportLayoutClass("bottom-right", true)).toBe(
+      "flex flex-col-reverse",
+    );
+    expect(getViewportLayoutClass("bottom-center", true)).toBe(
+      "flex flex-col-reverse",
+    );
   });
 });

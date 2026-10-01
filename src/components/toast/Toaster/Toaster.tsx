@@ -1,18 +1,15 @@
-import { For, mergeProps, Show, type Component } from "solid-js";
+import { For, Show, mergeProps, type Component } from "solid-js";
 import { Portal } from "solid-js/web";
-import { clsx } from "~/utils";
-import { Toast } from "../Toast";
-import type { Position, ToastT } from "../Toast/Toast.types";
 import { removeToast, useSonner } from "../state/toast";
 import type { ToasterProps } from "./Toaster.types";
-import { toasterContainerClass } from "./Toaster.styles";
-import {
-  getDocumentDirection,
-  getPositionClass,
-  resolveOffsetStyle,
-} from "./Toaster.utils";
+import { getDocumentDirection } from "./Toaster.utils";
+import { ToastViewport } from "./ToastViewport";
 import { useToaster } from "./useToaster";
 
+/**
+ * toast 容器：负责"有哪些视口、每个视口放哪些 toast"，具体渲染交给
+ * `ToastViewport`，选择/展开算法交给 `useToaster`。
+ */
 export const Toaster: Component<ToasterProps> = (props) => {
   const merged = mergeProps(
     {
@@ -38,9 +35,6 @@ export const Toaster: Component<ToasterProps> = (props) => {
       hotkey: () => merged.hotkey,
     });
 
-  const offsetStyle = (position: Position) =>
-    resolveOffsetStyle(position, merged.offset, merged.mobileOffset);
-
   return (
     <Portal>
       <div
@@ -50,60 +44,23 @@ export const Toaster: Component<ToasterProps> = (props) => {
         <For each={possiblePositions()}>
           {(position) => (
             <Show when={visibleToastsForPosition(position).length > 0}>
-              <ol
-                data-slot="toaster-viewport"
-                data-position={position}
-                aria-live="polite"
-                aria-relevant="additions text"
-                aria-atomic="false"
-                aria-label={merged.customAriaLabel ?? merged.containerAriaLabel}
-                tabIndex={-1}
-                class={clsx(
-                  toasterContainerClass,
-                  getPositionClass(position),
-                  expanded()
-                    ? position.startsWith("top")
-                      ? "flex flex-col"
-                      : "flex flex-col-reverse"
-                    : "grid",
-                )}
-                style={{
-                  gap: `${merged.gap}px`,
-                  ...offsetStyle(position),
-                  ...(merged.style as Record<string, string | number>),
-                }}
-                onMouseEnter={() => setExpanded(true)}
-                onMouseLeave={() => setExpanded(false)}
-              >
-                <For each={visibleToastsForPosition(position)}>
-                  {(toast: ToastT, index) => (
-                    <Toast
-                      toast={toast}
-                      index={index()}
-                      total={visibleToastsForPosition(position).length}
-                      expanded={expanded()}
-                      position={position}
-                      gap={merged.gap}
-                      closeButton={
-                        toast.closeButton ??
-                        merged.toastOptions?.closeButton ??
-                        merged.closeButton ??
-                        false
-                      }
-                      duration={
-                        merged.toastOptions?.duration ?? merged.duration
-                      }
-                      class={merged.toastOptions?.class}
-                      icons={merged.icons}
-                      closeButtonAriaLabel={
-                        merged.toastOptions?.closeButtonAriaLabel
-                      }
-                      defaultRichColors={merged.richColors}
-                      onRemove={removeToast}
-                    />
-                  )}
-                </For>
-              </ol>
+              <ToastViewport
+                position={position}
+                toasts={visibleToastsForPosition(position)}
+                expanded={expanded()}
+                gap={merged.gap}
+                ariaLabel={merged.customAriaLabel ?? merged.containerAriaLabel}
+                offset={merged.offset}
+                mobileOffset={merged.mobileOffset}
+                style={merged.style}
+                closeButton={merged.closeButton}
+                duration={merged.duration}
+                icons={merged.icons}
+                richColors={merged.richColors}
+                toastOptions={merged.toastOptions}
+                onExpandChange={setExpanded}
+                onRemove={removeToast}
+              />
             </Show>
           )}
         </For>

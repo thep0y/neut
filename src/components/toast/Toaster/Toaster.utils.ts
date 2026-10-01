@@ -101,3 +101,16 @@ export function getDocumentDirection(): "rtl" | "ltr" | "auto" {
   }
   return dir as "rtl" | "ltr" | "auto";
 }
+
+/**
+ * 视口的排布类名：收起时用 `grid` 把多层叠在同一格（靠 Toast 的 transform 错开），
+ * 展开时按位置改成纵向 flex——顶部位置正向排、底部位置反向排，
+ * 保证"最新的一条永远靠近视口边缘"。
+ */
+export function getViewportLayoutClass(
+  position: Position,
+  expanded: boolean,
+): string {
+  if (!expanded) return "grid";
+  return position.startsWith("top") ? "flex flex-col" : "flex flex-col-reverse";
+}
