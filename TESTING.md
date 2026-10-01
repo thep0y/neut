@@ -95,8 +95,8 @@ if (weirdEdgeCase) { ... }
    仓库用 `vitest.d.ts` 自己做接口合并，参数列表必须写成
    `Assertion<R extends void | Promise<void> = void, T = unknown>` 与 vitest 对齐。
 2. **`unplugin-dts` 会把 `*.test.d.ts` 打进 `dist/`**，等于把测试类型发布给使用者。
-   `vite.config.ts` 的 `dts()` 已配 `exclude` 排除测试文件——新增测试目录时
-   仍要落在 `src/**` 下才会被这条规则覆盖。
+   现在测试整体位于 `tests/`（不在 `src/` 下），library 入口与 dts 都扫不到它们；
+   `vite.config.ts` 的 `dts()` 仍保留 `exclude` 作为兜底——**不要**把测试文件放回 `src/`。
 3. `vi.stubEnv("DEV", ...)` **确实能作用于 `import.meta.env.DEV`**（已实测），
    所以 `logger.ts` / `warn-once.ts` 的两个分支都能真测，不需要排除它们。
 
@@ -108,22 +108,35 @@ if (weirdEdgeCase) { ... }
 
 ## 3. 目录与命名约定
 
-测试文件与被测源码同目录，命名 `<文件名>.test.ts(x)`：
+**测试用例一律放在仓库根目录的 `tests/` 下，与 `src/` 结构一一镜像；源码目录里不允许出现
+任何 `*.test.*` / `*.spec.*` / 测试脚手架文件。** 测试文件名沿用 `<被测文件名>.test.ts(x)`，
+因此从路径即可反推被测文件（`tests/components/tabs/Tabs/Tabs.test.tsx` →
+`src/components/tabs/Tabs/Tabs.tsx`）。
 
 ```
-src/components/tabs/
+tests/components/tabs/
 ├── Tabs/
-│   ├── useTabsKeyboard.ts
-│   ├── useTabsKeyboard.test.ts        # 纯逻辑，node 环境即可
-│   ├── Tabs.context.tsx
+│   ├── useTabsKeyboard.test.ts        # 纯逻辑
 │   ├── Tabs.context.test.tsx          # 需要 jsdom（依赖 document.activeElement）
-│   ├── Tabs.tsx
 │   └── Tabs.test.tsx                  # 组件渲染 + 行为
 ├── TabsTrigger/
-│   ├── TabsTrigger.tsx
 │   └── TabsTrigger.test.tsx
 └── Tabs.integration.test.tsx          # 跨子组件的组合行为
 ```
+
+导入规则（**强约定**）：
+
+- 引用被测源码一律走 `~/*` 别名（`~` → `src/`），**不要**写 `../../src/...`；
+- 测试之间互相引用辅助文件走 `~tests/*` 别名（`~tests` → `tests/`），
+  例如共享脚手架 `~tests/lib/positioner/test-utils.ts`；
+- 同一个测试目录内的私有辅助可以用相对路径，跨目录一律用别名。
+
+> 只有测试使用、`src/` 不依赖的文件（共享脚手架、夹具）也必须放在 `tests/` 下，
+> 并且不得出现在 `src/` 的任何 `index.ts` 导出里。
+
+`tsconfig.json` 的 `include` 含 `tests`，`vitest.config.ts` 的 `include` 只扫
+`tests/**`，`coverage.include` 只扫 `src/**`：三者共同保证"测试被类型检查、被运行，
+但从不进入覆盖率与产物"。
 
 分层命名（**强约定**，一眼看出测的是什么）：
 
@@ -143,10 +156,10 @@ src/components/tabs/
 
 | 文件                                                   | 演示了什么                                                                                           |
 | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| `src/utils/clsx.test.ts`                               | 纯函数测试、`toHaveAttribute` 之外的普通断言                                                         |
-| `src/utils/ref.test.ts`                                | 函数 ref 合并、调用顺序断言                                                                          |
-| `src/utils/warn-once.test.ts`                          | `vi.stubEnv` 切 DEV/PROD、`vi.resetModules()` 重载模块级状态                                         |
-| `src/components/tabs/TabsTrigger/TabsTrigger.test.tsx` | Solid 组件渲染、`getByRole` 查询、ARIA 交叉引用、`data-*` 双向断言、`user-event` 点击、disabled 分支 |
+| `tests/utils/clsx.test.ts`                             | 纯函数测试、`toHaveAttribute` 之外的普通断言                                                         |
+| `tests/utils/ref.test.ts`                              | 函数 ref 合并、调用顺序断言                                                                          |
+| `tests/utils/warn-once.test.ts`                        | `vi.stubEnv` 切 DEV/PROD、`vi.resetModules()` 重载模块级状态                                         |
+| `tests/components/tabs/TabsTrigger/TabsTrigger.test.tsx` | Solid 组件渲染、`getByRole` 查询、ARIA 交叉引用、`data-*` 双向断言、`user-event` 点击、disabled 分支 |
 
 ---
 
@@ -313,7 +326,7 @@ it("test handleKeyDown", () => {});
 
 ## 6. 必须纳入测试的既有行为（回归清单）
 
-以下行为目前在代码里有明确实现。**带 ✅ 的已完成**（对应测试文件就在旁边），
+以下行为目前在代码里有明确实现。**带 ✅ 的已完成**（测试文件在 `tests/` 下同名路径），
 其余为待补项。补测试时按此清单优先，每条都对应一个已声明的契约：
 
 | 模块                                   | 行为                                                                                                                 | 状态                                                                                                       |
@@ -412,11 +425,11 @@ it("test handleKeyDown", () => {});
 
 - name: Guard against test cheating
   run: |
-      if grep -rnE '(it|describe|test)\.(only|skip|todo)\(' src --include='*.test.ts' --include='*.test.tsx'; then
+      if grep -rnE '(it|describe|test)\.(only|skip|todo)\(' tests --include='*.test.ts' --include='*.test.tsx'; then
         echo "::error::检测到 .only / .skip / .todo，见 TESTING.md §4.7"
         exit 1
       fi
-      if grep -rnE '(istanbul|v8|c8) ignore' src --include='*.test.ts' --include='*.test.tsx'; then
+      if grep -rnE '(istanbul|v8|c8) ignore' tests --include='*.test.ts' --include='*.test.tsx'; then
         echo "::error::检测到覆盖率屏蔽注释，见 TESTING.md §9"
         exit 1
       fi
@@ -426,9 +439,10 @@ it("test handleKeyDown", () => {});
 
 1. 覆盖率四项指标**全部 100%**，否则 `vitest` 退出码非 0、CI 失败
    （已在本地实测：阈值生效）；
-2. 机械检查 `.only` / `.skip` / `.todo` 与覆盖率屏蔽注释；
+2. 机械检查 `.only` / `.skip` / `.todo` 与覆盖率屏蔽注释（只扫 `tests/`，
+   源码目录里本就不该有测试）；
 3. `bun run build` 仍必须通过，且 `dist/` 里不得出现 `*.test.*`
-   （`vite.config.ts` 的 `dts.exclude` 负责）。
+   （测试不在 `src/` 下，`dts.exclude` 只是兜底）。
 
 本地提交前至少跑：
 
@@ -454,7 +468,7 @@ bun run build
 
 提交前逐条打勾，任何一条打不上就是没做完：
 
-- [ ] 新增/修改的每个源文件都有同名 `.test.ts(x)`，四个覆盖率指标 100%；
+- [ ] 新增/修改的每个源文件都在 `tests/` 下有镜像路径的同名 `.test.ts(x)`（源码目录里不放测试），四个覆盖率指标 100%；
 - [ ] 受控/非受控两条路径都有独立用例；
 - [ ] 每个 `data-*` 状态属性都有"设置"与"清除"双向断言；
 - [ ] ARIA 交叉引用成对断言，查询用 `getByRole` 而非 class；

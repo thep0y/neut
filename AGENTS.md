@@ -18,13 +18,15 @@
 包管理器是 **bun**（见 `bun.lock`）。**所有命令一律用 `bun` / `bunx`，禁止 `npx` / `npm` /
 `yarn` / `pnpm`**。
 
-| 命令 | 用途 |
-| --- | --- |
-| `bun install` | 安装依赖 |
-| `bun run dev` | 启动 dev playground（等价 `vite ./dev`，默认 <http://localhost:5173>） |
-| `bun run build` | 构建组件库到 `dist/`（含 `.d.ts`） |
-| `bun run serve` | 预览构建产物 |
-| `bun run check` | `tsc --noEmit && biome check --write src`，提交前必须通过 |
+| 命令                    | 用途                                                                   |
+| ----------------------- | ---------------------------------------------------------------------- |
+| `bun install`           | 安装依赖                                                               |
+| `bun run dev`           | 启动 dev playground（等价 `vite ./dev`，默认 <http://localhost:5173>） |
+| `bun run build`         | 构建组件库到 `dist/`（含 `.d.ts`）                                     |
+| `bun run serve`         | 预览构建产物                                                           |
+| `bun run check`         | `tsc --noEmit && biome check --write src tests`，提交前必须通过        |
+| `bun run test`          | 跑单元测试（vitest）                                                   |
+| `bun run test:coverage` | 跑测试并强制覆盖率 100%，提交前必须通过                                |
 
 注意事项：
 
@@ -32,12 +34,14 @@
   `check --write` 会静默跳过、漏掉 lint/a11y 报错。仓库 Biome 直接用 PATH 里的 `biome`，
   或 `bunx @biomejs/biome`。
 - Biome 不在 `devDependencies` 中，CI 通过 `biomejs/setup-biome` 提供。本地需要时用
-  `bunx @biomejs/biome check --write src`。
+  `biome`（PATH 里已有）或 `bunx @biomejs/biome check --write src tests`。
 - 只做快速类型检查：`bunx tsc --noEmit`。
 - 已知噪声：`lucide-solid@1.47` 的类型声明引用了未安装的 `@lucide/shared/types`，会报
   `TS2307`（位于 `node_modules` 内，与本仓库源码无关）。过滤掉它再判断是否有自己引入的错误。
-- 本仓库目前**没有单元测试框架**。`dev/` playground 是主要的手动验证面；需要自动化验证时，
-  临时搭 jsdom/浏览器环境自测，验证完删除，不要提交测试脚手架。
+- 单元测试栈是 **vitest + jsdom + `@solidjs/testing-library`**（配置见 `vitest.config.ts`、
+  `vitest.setup.ts`）。**写测试前必须先读 [`TESTING.md`](./TESTING.md)**——它规定了
+  100% 覆盖率门槛、必测场景清单，以及禁止"为过测试而改实现 / 把实现抄进测试 /
+  空洞断言 / 快照替代行为测试"等作弊行为的硬性条款。`dev/` playground 仍是交互的手动验证面。
 
 ## 目录结构
 
@@ -50,12 +54,17 @@ src/
 ├── utils/                   # clsx、mergeRefs、logger、getStyleValue、warnOnce
 ├── hooks/                   # 跨组件 hooks
 └── styles/                  # Tailwind 入口、动画、字体
+tests/                       # 全部测试用例：与 src/ 一一镜像（源码目录里禁止放测试）
 dev/                         # Solid Router playground：examples + pages + routes.ts
 example/                     # 独立的消费者示例工程（依赖已发布的 @neut/ui），不参与根检查
 dist/                        # 构建产物，gitignored，不要手改
+vitest.config.ts             # 测试与覆盖率门槛配置（100%）
+vitest.setup.ts              # jsdom polyfill + 每个用例后的清理
+TESTING.md                   # 测试撰写规则（强制）：覆盖率、必测清单、反作弊条款
 ```
 
-- 路径别名 `~/*` → `src/*`（见 `tsconfig.json` 与两个 `vite.config.ts`）。
+- 路径别名 `~/*` → `src/*`、`~tests/*` → `tests/*`（见 `tsconfig.json` 与 `vitest.config.ts`）。
+  测试引用被测源码用 `~/*`，测试之间引用脚手架用 `~tests/*`。
 - 根 `tsconfig.json` 的 `exclude` 包含 `./dev` 与 `example`，即 `bun run check` **不会**
   类型检查它们；改动 dev 后请用 `bun run dev`/`vite build ./dev` 验证。
 
@@ -91,9 +100,25 @@ button/
 └── <component>.styles.ts / <component>.utils.ts / <component>.types.ts  # 共享内部文件
 ```
 
-**单一职责**是硬要求：一个文件只做一件事，渲染 / 状态 / 交互算法 / ARIA 语义互相解耦。
-非平凡组件请在组件目录下补一份 `DESIGN.md`（格式参考 `src/components/tabs/DESIGN.md`：
-状态、移植目标、SRP 分工表、文件结构）。
+## 开发原则
+
+本项目遵循SRP，必须遵守如下原则：
+
+- 单文件只能承担一个职责，渲染 / 状态 / 交互算法 / ARIA 语义互相解耦。
+- 函数也只能承担一个职责；
+- 函数体一般不能超过 20 行，如果必须写 20 行以上的函数需要在函数注释中说明不可拆分的理由。
+- 非平凡组件请在组件目录下补一份 `DESIGN.md`（格式参考 `src/components/tabs/DESIGN.md`：状态、移植目标、SRP 分工表、文件结构）。
+- 测试覆盖率达到 100%，测试撰写规则见项目根目录的 `TESTING.md`。**测试用例一律放在 `tests/`
+  下、与 `src/` 镜像的路径里，源码目录中不得出现任何测试文件**：`src/components/toast/Toast/Toast.tsx`
+  对应 `tests/components/toast/Toast/Toast.test.tsx`；跨子组件的组合行为放
+  `<component>.integration.test.tsx`。命名、分层、别名与必测清单见 `TESTING.md` §3/§5.3。
+- 重构必须"小步、可验证、可回滚"：
+    - 先补/确认用例，再动结构——覆盖率就是重构的安全网；
+    - 一步只做一件事（拆一个函数、搬一个文件、改一处引用），做完立刻`bunx tsc -b`、`bunx biome check src`，并跑相关用例；
+    - 每步通过后**单独提交**；跑不绿就 `git checkout` 回滚，绝不留半成品；
+    - **不要用正则/脚本去切源码结构**（按名字找函数、按花括号配平）：名字会重复、
+      签名里会有对象类型、相邻函数容易被一起吃掉。要手工改，或用带 `assert` 的一次性脚本，并在写回前核对（例如断言抽取结果里关键标识只出现一次）；
+    - 批量改写导入后逐条核对 `tsc` 报错。
 
 ## 编码约定
 
@@ -107,9 +132,9 @@ button/
   `useXxxContext("组件名")` 消费；缺失时抛出中文错误（`<X> 必须渲染在 <Y> 内部`）。
 - 属性拆分用 `splitProps`，默认值合并用 `mergeProps`。
 - 事件绑定有两种既定写法，按是否需要暴露同名 prop 选择：
-  - 组件**不**暴露该事件 prop：用 `addEventListener`（在 ref 回调里绑定，`onCleanup` 解绑），
-    这样调用方自己的 `onClick`/`onContextMenu` 不会被覆盖。
-  - 组件**要**暴露该事件 prop：显式 `splitProps` 出来并在内部调用用户回调，避免双触发。
+    - 组件**不**暴露该事件 prop：用 `addEventListener`（在 ref 回调里绑定，`onCleanup` 解绑），
+      这样调用方自己的 `onClick`/`onContextMenu` 不会被覆盖。
+    - 组件**要**暴露该事件 prop：显式 `splitProps` 出来并在内部调用用户回调，避免双触发。
 
 ### 多态组件
 
@@ -118,7 +143,7 @@ button/
 
 ```ts
 export type ContextMenuTriggerProps<T extends ValidComponent = "div"> =
-  PolymorphicProps<T>;
+    PolymorphicProps<T>;
 ```
 
 ```tsx
@@ -170,9 +195,9 @@ export type ContextMenuTriggerProps<T extends ValidComponent = "div"> =
   `src/hooks/index.ts`、`src/utils/index.ts` 作为入口，`preserveModules` 输出，
   由 `unplugin-dts` 生成 `.d.ts`。
 - 因此**新增一个顶层组件后**：
-  1. 建立 `src/components/<name>/index.ts` 作为公开出口；
-  2. 在 `src/index.ts` 增加 `export * from "~/components/<name>";`；
-  3. 无需改 `vite.config.ts`（入口会自动发现）。
+    1. 建立 `src/components/<name>/index.ts` 作为公开出口；
+    2. 在 `src/index.ts` 增加 `export * from "~/components/<name>";`；
+    3. 无需改 `vite.config.ts`（入口会自动发现）。
 - `package.json` 的 `exports` 提供 `@neut/ui`、`/hooks`、`/hooks/*`、`/utils`、`/utils/*`、
   `/components/*`。
 - `dist/` 是生成物，不要手改，也不要提交（已在 `.gitignore`）。
@@ -193,10 +218,14 @@ export type ContextMenuTriggerProps<T extends ValidComponent = "div"> =
 ## 常见任务清单
 
 - **新增组件**：建目录 → 写 `types/context/useXxx/Xxx.tsx/index.ts` → 更新 `src/index.ts`
-  → 加 dev 示例与路由 → `bun run check` + `bun run build`。
+  → 加 dev 示例与路由 → **在 `tests/` 的镜像路径下按 `TESTING.md` 写测试并跑到 100% 覆盖率**
+  → `bun run check`
+    - `bun run build`。
 - **修改公开 API**：同步更新 `*.types.ts`、组件注释里的 `@example`、`index.ts` 导出、
-  dev 示例；破坏性变更在提交信息里用 `!` 标注（仓库历史有先例，如 `feat(toggle-group)!:`）。
+  dev 示例、测试；破坏性变更在提交信息里用 `!` 标注（仓库历史有先例，如
+  `feat(toggle-group)!:`）。
 - **改交互行为**：先对照 Base UI 的对应部件语义；把"为什么"写进注释，必要时补 `DESIGN.md`。
+- **修 bug**：先写一个能复现的失败测试，再改实现，保留该测试作为回归用例（`TESTING.md` §7）。
 
 ## 验证要求
 
@@ -204,6 +233,7 @@ export type ContextMenuTriggerProps<T extends ValidComponent = "div"> =
 
 ```bash
 bunx tsc --noEmit     # 或 bun run check（含 biome）
+bun run test:coverage # 四项覆盖率必须 100%（测试在 tests/，覆盖率只扫 src/），见 TESTING.md
 bun run build         # 库构建 + d.ts
 bun run dev           # 手动过一遍受影响的交互
 ```
@@ -218,3 +248,9 @@ bun run dev           # 手动过一遍受影响的交互
 - 不要给根 `tsconfig.json` 加 `dev`/`example` 的包含项来"顺手"检查它们。
 - 不要在 `src/components/*/index.ts` 与 `src/index.ts` 之外额外维护导出清单。
 - 不要只改实现却漏掉同步的 `data-slot`、`data-*` 状态属性或中文注释。
+- 不要把测试文件、测试脚手架或夹具放进 `src/`（包括"反正只在测试里用"的 helpers）；
+  一律放 `tests/` 下的镜像路径，详见 `TESTING.md` §3。
+- 不要新增组件/修 bug 却不写测试；不要用 `it.skip`、`it.only`、快照或空洞断言
+  凑覆盖率；更不要为了测试变绿去改实现语义（详见 `TESTING.md` §4）。
+- 不要替换测试栈（`jest` / `@testing-library/react` / `enzyme` 一律禁止），
+  也不要调低 `vitest.config.ts` 里的覆盖率阈值。
