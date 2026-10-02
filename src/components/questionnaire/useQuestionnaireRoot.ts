@@ -13,13 +13,8 @@ import type {
   QuestionnaireItemDefinition,
   QuestionnaireShortcutMode,
 } from "./questionnaire.types";
-import {
-  compareDocumentOrder,
-  isAnswerFilled,
-  isNativeRadio,
-  isTypingElement,
-  normalizeShortcut,
-} from "./questionnaire.utils";
+import { handleQuestionnaireKeyDown } from "./questionnaire.keys";
+import { compareDocumentOrder } from "./questionnaire.utils";
 
 interface Options {
   item: Accessor<string | undefined>;
@@ -187,68 +182,15 @@ export function useQuestionnaireRoot(options: Options): {
   const handleKeyDown = (event: KeyboardEvent) => {
     const item = activeItem();
     if (!item) return;
-    if (
-      event.defaultPrevented ||
-      event.isComposing ||
-      event.keyCode === 229 ||
-      !(event.target instanceof Element)
-    ) {
-      return;
-    }
-    const target = event.target;
 
-    if (
-      event.key === "Enter" &&
-      (event.metaKey || event.ctrlKey) &&
-      !event.altKey &&
-      !event.shiftKey
-    ) {
-      event.preventDefault();
-      if (!event.repeat) submitOrNext();
-      return;
-    }
-    if (event.metaKey || event.ctrlKey || event.altKey) return;
-
-    if (
-      (event.key === "ArrowUp" || event.key === "ArrowDown") &&
-      item.moveAnswerFocus(
-        target,
-        event.key === "ArrowDown" ? "next" : "previous",
-      )
-    ) {
-      event.preventDefault();
-      return;
-    }
-
-    if (
-      (event.key === "ArrowLeft" || event.key === "ArrowRight") &&
-      !isTypingElement(target) &&
-      !isNativeRadio(target)
-    ) {
-      event.preventDefault();
-      if (event.repeat) return;
-      if (event.key === "ArrowLeft") goPrevious();
-      else if (item.status() !== "unanswered") goNext();
-      return;
-    }
-
-    if (event.key === "Enter") {
-      const answer = item.getAnswerByElement(target);
-      if (!answer) return;
-      event.preventDefault();
-      if (!event.repeat && isAnswerFilled(answer)) submitOrNext();
-      return;
-    }
-
-    const mode = options.shortcuts() ?? null;
-    if (!mode || isTypingElement(target)) return;
-    const shortcut = normalizeShortcut(event.key, mode);
-    const answer = shortcut ? item.getAnswerByShortcut(shortcut) : null;
-    if (!answer) return;
-    event.preventDefault();
-    if (event.repeat) return;
-    answer.element.focus();
-    if (answer.type === "choice") (answer.element as HTMLInputElement).click();
+    handleQuestionnaireKeyDown(event, {
+      item,
+      status: () => item.status(),
+      shortcuts: options.shortcuts() ?? null,
+      goNext,
+      goPrevious,
+      submitOrNext,
+    });
   };
 
   // 导航后聚焦新激活项(或它的首个答案控件)
