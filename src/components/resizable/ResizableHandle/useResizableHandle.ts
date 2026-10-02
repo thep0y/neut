@@ -1,5 +1,6 @@
 import { onCleanup } from "solid-js";
 import { useResizablePanelGroupContext } from "../resizable.context";
+import { handleResizableHandleKeyDown } from "./resizable.handle-keys";
 
 interface DragState {
   pointerId: number;
@@ -94,47 +95,17 @@ export function useResizableHandle(options: Options) {
 
   const onKeyDown = (event: KeyboardEvent) => {
     if (options.disabled()) return;
+
     const handle = event.currentTarget as HTMLElement;
-    const step = (ctx.keyboardResizeBy() / (ctx.groupSizePx() || 1)) * 100;
-    const rtl = ctx.orientation() === "horizontal" && ctx.isRtl();
-    let handled = true;
-    switch (event.key) {
-      case "ArrowLeft":
-        ctx.nudgeAdjacent(handle, rtl ? step : -step);
-        break;
-      case "ArrowRight":
-        ctx.nudgeAdjacent(handle, rtl ? -step : step);
-        break;
-      case "ArrowUp":
-        ctx.nudgeAdjacent(handle, -step);
-        break;
-      case "ArrowDown":
-        ctx.nudgeAdjacent(handle, step);
-        break;
-      case "Home": {
-        const adjacent = ctx.resolveAdjacent(handle);
-        if (adjacent) {
-          ctx.setAdjacentSize(handle, 0);
-          ctx.commitLayout();
-        }
-        break;
-      }
-      case "End": {
-        const adjacent = ctx.resolveAdjacent(handle);
-        if (adjacent) {
-          ctx.setAdjacentSize(handle, adjacent.total);
-          ctx.commitLayout();
-        }
-        break;
-      }
-      case "Enter":
-      case " ":
-        ctx.toggleHandleCollapse(handle);
-        break;
-      default:
-        handled = false;
-    }
-    if (handled) event.preventDefault();
+    handleResizableHandleKeyDown(event, handle, {
+      stepPercent: (ctx.keyboardResizeBy() / (ctx.groupSizePx() || 1)) * 100,
+      rtl: ctx.orientation() === "horizontal" && ctx.isRtl(),
+      resolveAdjacent: (target) => ctx.resolveAdjacent(target),
+      nudgeAdjacent: (target, delta) => ctx.nudgeAdjacent(target, delta),
+      setAdjacentSize: (target, size) => ctx.setAdjacentSize(target, size),
+      commitLayout: () => ctx.commitLayout(),
+      toggleHandleCollapse: (target) => ctx.toggleHandleCollapse(target),
+    });
   };
 
   return { onPointerDown, onPointerMove, onPointerUp: endDrag, onKeyDown };
