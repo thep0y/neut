@@ -7,10 +7,14 @@ import {
 } from "./questionnaire.context";
 import type { QuestionnaireItemStatus } from "./questionnaire.types";
 import {
+  buildShortcutByAnswerId,
+  buildShortcutByChoiceValue,
+  findAnswerByShortcut,
+} from "./questionnaire.shortcuts";
+import {
   isAnswerFilled,
   isNativeRadio,
   isTypingElement,
-  shortcutAlphabet,
 } from "./questionnaire.utils";
 
 interface Options {
@@ -206,51 +210,27 @@ export function useQuestionnaireItem(
   const getAnswerByElement = (target: Element) =>
     answers().find((entry) => entry.element === target) ?? null;
 
-  const shortcutByChoiceValue = createMemo<Map<string, string> | null>(() => {
-    const mode = root.shortcuts();
-    const definition = root.itemDefinitions()?.get(options.name);
-    if (!mode || !definition?.choices) return null;
-    const alphabet = shortcutAlphabet(mode);
-    const map = new Map<string, string>();
-    let cursor = 0;
-    for (const choice of definition.choices) {
-      if (choice.disabled) continue;
-      const letter = alphabet[cursor];
-      if (!letter) break;
-      map.set(choice.value, letter);
-      cursor += 1;
-    }
-    return map;
-  });
+  const shortcutByChoiceValue = createMemo(() =>
+    buildShortcutByChoiceValue(
+      root.itemDefinitions()?.get(options.name),
+      root.shortcuts(),
+    ),
+  );
 
-  const shortcutByAnswerId = createMemo<Map<string, string>>(() => {
-    if (shortcutByChoiceValue()) return new Map();
-    const alphabet = shortcutAlphabet(root.shortcuts());
-    const choices = answers().filter((entry) => entry.type === "choice");
-    return new Map(
-      choices
-        .slice(0, alphabet.length)
-        .map((entry, index) => [entry.id, alphabet[index]!]),
-    );
-  });
+  const shortcutByAnswerId = createMemo(() =>
+    buildShortcutByAnswerId(
+      answers(),
+      shortcutByChoiceValue() !== null,
+      root.shortcuts(),
+    ),
+  );
 
-  const getAnswerByShortcut = (shortcut: string) => {
-    const byValue = shortcutByChoiceValue();
-    if (byValue) {
-      const value = [...byValue.entries()].find(
-        ([, letter]) => letter === shortcut,
-      )?.[0];
-      return (
-        answers().find(
-          (entry) => entry.type === "choice" && entry.value === value,
-        ) ?? null
-      );
-    }
-    const id = [...shortcutByAnswerId().entries()].find(
-      ([, letter]) => letter === shortcut,
-    )?.[0];
-    return answers().find((entry) => entry.id === id) ?? null;
-  };
+  const getAnswerByShortcut = (shortcut: string) =>
+    findAnswerByShortcut(shortcut, {
+      byChoiceValue: shortcutByChoiceValue(),
+      byAnswerId: shortcutByAnswerId(),
+      answers: answers(),
+    });
 
   const moveAnswerFocus = (target: Element, direction: "next" | "previous") => {
     const scope = element();
