@@ -12,13 +12,11 @@ import {
   keyboardScrollDelta,
   maxScrollOf,
   type Orientation,
-  pointerCoord,
-  scrollFromDrag,
   scrollFromKeyboard,
   scrollFromTrackClick,
   scrollPosOf,
-  thumbDragRatio,
 } from "./ScrollBar.utils";
+import { createThumbDrag } from "./scroll-bar.thumb-drag";
 
 interface Options {
   /** track 元素访问器（拖动比例、点击换算都要读它的尺寸） */
@@ -43,55 +41,17 @@ export function useScrollBarInteraction({
   orientation,
   onDragChange,
 }: Options): ScrollBarInteraction {
-  /** 拖动期间挂到 window 上的监听器，用于组件卸载时兜底清理 */
-  let detach: (() => void) | null = null;
+  // 拖动滑块的会话逻辑在 scroll-bar.thumb-drag：本 hook 只管接线与卸载兜底
+  const thumbDrag = createThumbDrag({
+    track,
+    viewport,
+    orientation,
+    onDragChange,
+  });
 
-  onCleanup(() => detach?.());
+  onCleanup(thumbDrag.dispose);
 
-  /**
-   * 拖动滑块：把指针位移按「滚动距离 / 可用轨道长度」的比例映射成滚动位置。
-   * 监听挂在 window 上，指针移出 track 也继续跟手。
-   */
-  const onThumbPointerDown = (event: PointerEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const vp = viewport();
-    const el = track();
-    const thumb = event.currentTarget as HTMLDivElement | null;
-    if (!vp || !el || !thumb) return;
-
-    const axis = orientation();
-    const vertical = isVertical(axis);
-    const startPointer = pointerCoord(axis, event);
-    const startScroll = scrollPosOf(axis, vp);
-    const maxScroll = maxScrollOf(axis, vp);
-    const trackSize = vertical ? el.clientHeight : el.clientWidth;
-    const thumbSize = vertical ? thumb.clientHeight : thumb.clientWidth;
-    const ratio = thumbDragRatio(maxScroll, trackSize, thumbSize);
-
-    const onMove = (moveEvent: PointerEvent) => {
-      const delta = pointerCoord(axis, moveEvent) - startPointer;
-      applyScrollPos(
-        axis,
-        vp,
-        scrollFromDrag(startScroll, delta, ratio, maxScroll),
-      );
-    };
-
-    const onUp = () => detach?.();
-
-    detach = () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      detach = null;
-      onDragChange(false);
-    };
-
-    onDragChange(true);
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-  };
+  const onThumbPointerDown = (event: PointerEvent) => thumbDrag.start(event);
 
   /**
    * 点击 track：按点击比例平滑滚到对应位置。
