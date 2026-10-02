@@ -22,18 +22,18 @@ function answer(
 describe("buildShortcutByChoiceValue", () => {
   it("没有快捷键模式时返回 null", () => {
     expect(
-      buildShortcutByChoiceValue({ choices: [{ value: "a" }] }, null),
+      buildShortcutByChoiceValue({ name: "q1", choices: [{ value: "a" }] }, null),
     ).toBeNull();
   });
 
   it("定义里没有 choices 时返回 null", () => {
     expect(buildShortcutByChoiceValue(undefined, "letters")).toBeNull();
-    expect(buildShortcutByChoiceValue({}, "letters")).toBeNull();
+    expect(buildShortcutByChoiceValue({ name: "q1" }, "letters")).toBeNull();
   });
 
   it("letters 模式按选项顺序分配 A/B/C", () => {
     const map = buildShortcutByChoiceValue(
-      { choices: [{ value: "one" }, { value: "two" }, { value: "three" }] },
+      { name: "q1", choices: [{ value: "one" }, { value: "two" }, { value: "three" }] },
       "letters",
     );
 
@@ -44,7 +44,7 @@ describe("buildShortcutByChoiceValue", () => {
 
   it("numbers 模式按 1/2/3 分配", () => {
     const map = buildShortcutByChoiceValue(
-      { choices: [{ value: "one" }, { value: "two" }] },
+      { name: "q1", choices: [{ value: "one" }, { value: "two" }] },
       "numbers",
     );
 
@@ -54,6 +54,7 @@ describe("buildShortcutByChoiceValue", () => {
   it("跳过 disabled 的选项（不占字母）", () => {
     const map = buildShortcutByChoiceValue(
       {
+        name: "q1",
         choices: [
           { value: "one" },
           { value: "two", disabled: true },
@@ -73,7 +74,7 @@ describe("buildShortcutByChoiceValue", () => {
       value: `v${index}`,
     }));
 
-    const map = buildShortcutByChoiceValue({ choices }, "letters");
+    const map = buildShortcutByChoiceValue({ name: "q1", choices }, "letters");
 
     expect(map?.size).toBe(26);
     expect(map?.get("v25")).toBe("Z");
