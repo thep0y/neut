@@ -28,10 +28,9 @@ import type {
   ContextMenuSide,
   ContextMenuSubmenuContextValue,
 } from "../context-menu.types";
+import { handleMenuKeyDown } from "../context-menu.keyboard";
+import { createTypeahead } from "../context-menu.typeahead";
 import { toContextMenuPlacement } from "../context-menu.utils";
-
-/** 键盘字符导航的缓冲窗口(毫秒) */
-const TYPEAHEAD_TIMEOUT = 500;
 
 export interface CreateContextMenuPopupOptions {
   root: ContextMenuContextValue;
@@ -199,105 +198,25 @@ export function createContextMenuPopupRuntime(
   });
 
   // --- 键盘字符导航 ---
-  let typeaheadBuffer = "";
-  let typeaheadTimer: number | undefined;
-
-  const runTypeahead = (char: string) => {
-    typeaheadBuffer += char.toLowerCase();
-    if (typeaheadTimer !== undefined) window.clearTimeout(typeaheadTimer);
-    typeaheadTimer = window.setTimeout(() => {
-      typeaheadBuffer = "";
-      typeaheadTimer = undefined;
-    }, TYPEAHEAD_TIMEOUT);
-
-    const match = enabledItems().find((item) =>
-      item.label().toLowerCase().startsWith(typeaheadBuffer),
-    );
-    if (match) setActiveId(match.id);
-  };
-
-  onCleanup(() => {
-    if (typeaheadTimer !== undefined) window.clearTimeout(typeaheadTimer);
+  const typeahead = createTypeahead({
+    candidates: () =>
+      enabledItems().map((item) => ({ id: item.id, label: item.label() })),
+    onMatch: (id) => setActiveId(id),
   });
 
-  const onKeyDown = (e: KeyboardEvent) => {
-    const submenu = options.submenu;
-    const horizontal = orientation() === "horizontal";
+  onCleanup(() => typeahead.dispose());
 
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        moveActive(1);
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        moveActive(-1);
-        break;
-      case "ArrowRight": {
-        if (horizontal) {
-          e.preventDefault();
-          moveActive(1);
-          break;
-        }
-        const entry = activeEntry();
-        if (entry?.hasPopup()) {
-          e.preventDefault();
-          entry.openPopup?.("list-navigation", e);
-        }
-        break;
-      }
-      case "ArrowLeft": {
-        if (horizontal) {
-          e.preventDefault();
-          moveActive(-1);
-          break;
-        }
-        if (submenu) {
-          e.preventDefault();
-          // 阻止冒泡,避免父级浮层也处理这次按键
-          e.stopPropagation();
-          submenu.closeSubmenu("list-navigation", e, true);
-        }
-        break;
-      }
-      case "Home":
-        e.preventDefault();
-        focusFirst();
-        break;
-      case "End":
-        e.preventDefault();
-        focusLast();
-        break;
-      case "Enter":
-      case " ": {
-        e.preventDefault();
-        const entry = activeEntry();
-        if (entry && !entry.disabled()) entry.activate();
-        break;
-      }
-      case "Escape": {
-        e.preventDefault();
-        e.stopPropagation();
-        if (submenu && !submenu.closeParentOnEsc()) {
-          submenu.closeSubmenu("escape-key", e, true);
-        } else {
-          root.closeAll("escape-key", e);
-        }
-        break;
-      }
-      case "Tab": {
-        // 关闭菜单并把焦点交还触发器,浏览器随后的 Tab 会从触发器之后继续
-        e.preventDefault();
-        root.closeAll("focus-out", e);
-        break;
-      }
-      default: {
-        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-          runTypeahead(e.key);
-        }
-      }
-    }
-  };
+  const onKeyDown = (event: KeyboardEvent) =>
+    handleMenuKeyDown(event, {
+      horizontal: orientation() === "horizontal",
+      activeEntry,
+      moveActive,
+      focusFirst,
+      focusLast,
+      typeahead: (char) => typeahead.handle(char),
+      submenu: options.submenu,
+      closeAll: (reason, e) => root.closeAll(reason, e),
+    });
 
   const popupCtx: ContextMenuPopupContextValue = {
     root,
