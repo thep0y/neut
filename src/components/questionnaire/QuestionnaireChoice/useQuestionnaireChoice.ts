@@ -7,6 +7,13 @@ import {
 } from "solid-js";
 import { useQuestionnaireItemContext } from "../questionnaire.context";
 import { keyShortcutText } from "../questionnaire.utils";
+import {
+  decideChoiceSelectionChange,
+  isChoiceRequired,
+  resolveChoiceChecked,
+  resolveChoiceName,
+  resolveChoiceShortcut,
+} from "./questionnaire-choice.utils";
 
 interface Options {
   value: string;
@@ -28,9 +35,21 @@ export function useQuestionnaireChoice(options: Options) {
   const isDisabled = () => item.disabled() || !!options.disabled?.();
   const type = () => (item.multiple() ? "checkbox" : "radio");
   const shortcut = () =>
-    item.shortcutByChoiceValue()?.get(options.value) ??
-    item.shortcutByAnswerId().get(id) ??
-    null;
+    resolveChoiceShortcut({
+      byChoiceValue: item.shortcutByChoiceValue(),
+      byAnswerId: item.shortcutByAnswerId(),
+      value: options.value,
+      id,
+    });
+
+  const required = () =>
+    isChoiceRequired({
+      required: item.required(),
+      multiple: item.multiple(),
+      hasInputAnswer: item.hasInputAnswer(),
+    });
+
+  const name = () => resolveChoiceName(item.status(), item.name);
 
   onCleanup(item.registerAnswerSelection(id, !!options.defaultChecked?.()));
   createEffect(() => item.setAnswerDefault(id, !!options.defaultChecked?.()));
@@ -49,13 +68,13 @@ export function useQuestionnaireChoice(options: Options) {
     onCleanup(unregister);
   });
 
-  const checkedResolved = () => {
-    const controlled = options.checked?.();
-    if (controlled !== undefined) {
-      return item.status() === "skipped" ? false : controlled;
-    }
-    return item.selectedAnswerIds().includes(id);
-  };
+  const checkedResolved = () =>
+    resolveChoiceChecked({
+      controlled: options.checked?.(),
+      status: item.status(),
+      selectedAnswerIds: item.selectedAnswerIds(),
+      id,
+    });
 
   // 受控同步 + reset 后强制同步 DOM checked
   createEffect(() => {
@@ -71,16 +90,18 @@ export function useQuestionnaireChoice(options: Options) {
   const handleChange = (event: Event) => {
     const target = event.target as HTMLInputElement;
     options.onChange?.(event);
-    if (event.defaultPrevented) return;
-    const controlled = options.checked?.();
-    if (controlled === undefined) {
-      item.setAnswerSelectionFromInteraction(id, target.checked);
-      return;
-    }
-    if (item.status() === "skipped" && controlled === target.checked) {
-      item.setAnswerSelectionFromInteraction(id, controlled);
-    }
+    const next = decideChoiceSelectionChange({
+      canceled: event.defaultPrevented,
+      controlled: options.checked?.(),
+      status: item.status(),
+      checked: target.checked,
+    });
+    if (next !== null) item.setAnswerSelectionFromInteraction(id, next);
   };
+
+  /** aria-keyshortcuts：只有"可用且当前勾选"时才附上 Enter 提示 */
+  const ariaKeyShortcuts = () =>
+    keyShortcutText(shortcut(), !isDisabled() && checkedResolved());
 
   return {
     id,
@@ -91,23 +112,18 @@ export function useQuestionnaireChoice(options: Options) {
     checkedResolved,
     handleChange,
     invalid: item.invalid,
-    required: () =>
-      item.required() && !item.multiple() && !item.hasInputAnswer(),
-    name: () => (item.status() === "skipped" ? undefined : item.name),
-    ariaKeyShortcuts: () =>
-      keyShortcutText(shortcut(), !isDisabled() && checkedResolved()),
+    required,
+    name,
+    ariaKeyShortcuts,
     inputProps: () => ({
-      "aria-keyshortcuts": keyShortcutText(
-        shortcut(),
-        !isDisabled() && checkedResolved(),
-      ),
+      "aria-keyshortcuts": ariaKeyShortcuts(),
       "aria-invalid": item.invalid() || undefined,
       checked: checkedResolved(),
       disabled: isDisabled(),
       id,
-      name: item.status() === "skipped" ? undefined : item.name,
+      name: name(),
       onChange: handleChange,
-      required: item.required() && !item.multiple() && !item.hasInputAnswer(),
+      required: required(),
       type: type(),
       value: options.value,
     }),
