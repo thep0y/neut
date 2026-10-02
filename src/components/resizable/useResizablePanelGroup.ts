@@ -12,6 +12,7 @@ import {
   isCollapsedSize,
   pairConstraintsOf,
 } from "./resizable.constraints";
+import { createCollapseMemory, nextCollapseAction } from "./resizable.collapse";
 import { createPanelRegistry } from "./resizable.registry";
 import {
   persistLayout,
@@ -52,7 +53,7 @@ export function useResizablePanelGroup(
   const bumpRegistryVersion = () =>
     setRegistryVersion((version) => version + 1);
   let initialized = false;
-  const collapsedMemory = new Map<string, number>();
+  const collapsedMemory = createCollapseMemory();
 
   const orderedMetas = (): ResizablePanelMeta[] => registry.ordered();
 
@@ -224,7 +225,7 @@ export function useResizablePanelGroup(
     if (!meta?.collapsible()) return false;
     const current = store[id] ?? 0;
     if (isCollapsedSize(meta, current)) return false;
-    collapsedMemory.set(id, current);
+    collapsedMemory.remember(id, current);
     applyPanelTarget(meta, meta.collapsedSize());
     commit();
     return true;
@@ -235,7 +236,7 @@ export function useResizablePanelGroup(
     if (!meta?.collapsible()) return false;
     const current = store[id] ?? 0;
     if (!isCollapsedSize(meta, current)) return false;
-    const remembered = collapsedMemory.get(id) ?? meta.minSize();
+    const remembered = collapsedMemory.recall(id, meta.minSize());
     applyPanelTarget(meta, Math.max(remembered, meta.minSize()));
     commit();
     return true;
@@ -265,23 +266,12 @@ export function useResizablePanelGroup(
   const toggleHandleCollapse = (handleEl: HTMLElement) => {
     const adjacent = adjacentOf(handleEl);
     if (!adjacent) return;
-    const { prev, next } = adjacent;
-    if (prev.collapsible()) {
-      if (isCollapsedSize(prev, store[prev.id] ?? 0)) {
-        expandPanel(prev.id);
-      } else {
-        collapsePanel(prev.id);
-      }
-      return;
-    }
-    if (next.collapsible()) {
-      if (isCollapsedSize(next, store[next.id] ?? 0)) {
-        expandPanel(next.id);
-      } else {
-        collapsePanel(next.id);
-      }
-      return;
-    }
+
+    const decision = nextCollapseAction(adjacent, (id) => store[id] ?? 0);
+    if (!decision) return;
+
+    if (decision.action === "expand") expandPanel(decision.id);
+    else collapsePanel(decision.id);
   };
 
   const groupSizePx = () => {
