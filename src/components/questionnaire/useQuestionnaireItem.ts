@@ -7,15 +7,15 @@ import {
 } from "./questionnaire.context";
 import type { QuestionnaireItemStatus } from "./questionnaire.types";
 import {
+  focusItem,
+  moveAnswerFocus as moveAnswerFocusInItem,
+} from "./questionnaire.focus";
+import {
   buildShortcutByAnswerId,
   buildShortcutByChoiceValue,
   findAnswerByShortcut,
 } from "./questionnaire.shortcuts";
-import {
-  isAnswerFilled,
-  isNativeRadio,
-  isTypingElement,
-} from "./questionnaire.utils";
+import { isAnswerDisabled, isAnswerFilled } from "./questionnaire.utils";
 
 interface Options {
   name: string;
@@ -123,9 +123,6 @@ export function useQuestionnaireItem(
     applySelection(id, selected);
   };
 
-  const isEntryDisabled = (entry: QuestionnaireAnswerEntry) =>
-    entry.disabled || entry.element.disabled;
-
   const hasInputAnswer = createMemo(() =>
     answers().some(
       (entry) =>
@@ -140,7 +137,7 @@ export function useQuestionnaireItem(
     if (skipped()) return "skipped";
     const selected = selections();
     const answered = answers().some(
-      (entry) => selected.includes(entry.id) && !isEntryDisabled(entry),
+      (entry) => selected.includes(entry.id) && !isAnswerDisabled(entry),
     );
     return answered ? "answered" : "unanswered";
   });
@@ -158,17 +155,7 @@ export function useQuestionnaireItem(
         (touched() && !(skippable() || (!options.invalid() && answeredOk())))),
   );
 
-  const focus = () => {
-    const target = element();
-    if (!target) return;
-    const filled = target.querySelector<HTMLElement>(
-      "input[data-filled][name]:not(:disabled)",
-    );
-    const anyInput = target.querySelector<HTMLElement>(
-      "input:not([type=hidden]):not(:disabled), textarea:not(:disabled)",
-    );
-    (filled ?? anyInput ?? target).focus();
-  };
+  const focus = () => focusItem(element());
 
   const validate = () => {
     setTouched(true);
@@ -232,32 +219,13 @@ export function useQuestionnaireItem(
       answers: answers(),
     });
 
-  const moveAnswerFocus = (target: Element, direction: "next" | "previous") => {
-    const scope = element();
-    const focusable = answers().filter(
-      (entry) =>
-        !isEntryDisabled(entry) &&
-        entry.element.isConnected &&
-        !(isTypingElement(target) && entry.type === "input"),
-    );
-    if (!focusable.length) return false;
-    const position = focusable.findIndex((entry) => entry.element === target);
-    if (position < 0 && target !== scope) return false;
-    const nextIndex =
-      position < 0
-        ? direction === "next"
-          ? 0
-          : focusable.length - 1
-        : (position + (direction === "next" ? 1 : -1) + focusable.length) %
-          focusable.length;
-    const next = focusable[nextIndex];
-    if (!next || next.element === target) return false;
-    next.element.focus();
-    if (next.type === "choice" && isNativeRadio(next.element)) {
-      (next.element as HTMLInputElement).click();
-    }
-    return true;
-  };
+  const moveAnswerFocus = (target: Element, direction: "next" | "previous") =>
+    moveAnswerFocusInItem({
+      scope: element(),
+      target,
+      direction,
+      answers: answers(),
+    });
 
   const describedBy = () => {
     const ids = [...descriptionIds(), ...(invalid() ? errorIds() : [])];

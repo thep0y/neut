@@ -22,7 +22,10 @@ function answer(
 describe("buildShortcutByChoiceValue", () => {
   it("没有快捷键模式时返回 null", () => {
     expect(
-      buildShortcutByChoiceValue({ name: "q1", choices: [{ value: "a" }] }, null),
+      buildShortcutByChoiceValue(
+        { name: "q1", choices: [{ value: "a" }] },
+        null,
+      ),
     ).toBeNull();
   });
 
@@ -33,7 +36,10 @@ describe("buildShortcutByChoiceValue", () => {
 
   it("letters 模式按选项顺序分配 A/B/C", () => {
     const map = buildShortcutByChoiceValue(
-      { name: "q1", choices: [{ value: "one" }, { value: "two" }, { value: "three" }] },
+      {
+        name: "q1",
+        choices: [{ value: "one" }, { value: "two" }, { value: "three" }],
+      },
       "letters",
     );
 

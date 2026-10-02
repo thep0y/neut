@@ -92,3 +92,14 @@ export function compareDocumentOrder(a: Element, b: Element): number {
   if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1;
   return 0;
 }
+
+/**
+ * 答案是否处于禁用态：组件层标记（`disabled` prop）或原生控件自身禁用。
+ * 判定被"状态推导 / 焦点移动 / 校验"共用，因此集中在这里。
+ */
+export function isAnswerDisabled(entry: {
+  disabled: boolean;
+  element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+}): boolean {
+  return entry.disabled || entry.element.disabled;
+}

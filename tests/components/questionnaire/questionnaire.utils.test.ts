@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   compareDocumentOrder,
   hasText,
+  isAnswerDisabled,
   isAnswerFilled,
   isNativeRadio,
   isTextInputEmpty,
@@ -397,5 +398,32 @@ describe("compareDocumentOrder", () => {
     const sorted = [...shuffled].sort(compareDocumentOrder);
 
     expect(sorted.map((el) => el.id)).toEqual(["c", "a", "b"]);
+  });
+});
+
+describe("isAnswerDisabled", () => {
+  it("组件层标记禁用时为 true", () => {
+    expect(
+      isAnswerDisabled({
+        disabled: true,
+        element: document.createElement("input"),
+      }),
+    ).toBe(true);
+  });
+
+  it("原生控件禁用时为 true", () => {
+    const element = document.createElement("input");
+    element.disabled = true;
+
+    expect(isAnswerDisabled({ disabled: false, element })).toBe(true);
+  });
+
+  it("两者都不禁用时为 false", () => {
+    expect(
+      isAnswerDisabled({
+        disabled: false,
+        element: document.createElement("input"),
+      }),
+    ).toBe(false);
   });
 });
