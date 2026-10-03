@@ -6,8 +6,18 @@
  * 会把它从 `others` 里摘掉——如果之后不显式传给元素，这个 prop 就被**静默丢弃**。
  * 仓库里曾一次性存在 119 个这样的文件（详见 PR 记录），因此加这道机械检查防回归。
  *
- * 判定规则：文件里若出现「splitProps 的 props 数组包含 "classList"」，
- * 则必须同时出现 `classList={`（传给某个元素/组件）；
+ * 判定规则（两条，命中任一即违规）：
+ * 1. 文件里出现「splitProps 的 props 数组包含 "classList"」，但没有 `classList={`；
+ * 2. 文件里直接把 props 展开到一个**原生 DOM 元素**上（`<div {...props} … class={…}>`
+ *    或 `<Dynamic {...props} … class={…}>`），此时 Solid 用
+ *    `node.className = value` 覆盖，spread 里的 classList 会被静默丢弃
+ *    （`AttachmentTrigger` / `ContextMenuTrigger` / `BubbleContent` 曾如此）。
+ *    修法是把 class / classList 用 splitProps 摘出来，并显式传 `classList={...}`。
+ *
+ *    注意：`<Button {...props} class={…}>` 这类**子组件**不在检查范围——
+ *    classList 会经由子组件自己的 props 传下去（Button/Label/Separator 都处理了），
+ *    实测不丢。只有原生元素与 `Dynamic` 才会走 className 覆盖那条路径。
+ *
  * 确实不想支持时，写一行显式豁免注释：
  *   `// classlist-opt-out: <原因>`
  *
@@ -60,12 +70,28 @@ function offenders() {
   for (const file of collectTsx(ROOT)) {
     const source = readFileSync(file, "utf8");
     if (source.includes(OPT_OUT)) continue;
+    const appliesClassList = source.includes("classList={");
+
+    // 规则 1：摘掉了 classList 却没应用
     const takesClassList = splitPropsArrays(source).some((call) =>
       call.includes('"classList"'),
     );
-    if (!takesClassList) continue;
-    if (source.includes("classList={")) continue;
-    list.push(file);
+    if (takesClassList && !appliesClassList) {
+      list.push({ file, rule: 1 });
+      continue;
+    }
+
+    // 规则 2：把 props 展开到原生元素 / Dynamic 之后又写显式 class，
+    // 会覆盖 spread 带进来的 classList
+    const spreadsIntoRawElement =
+      /<Dynamic\s*\n?\s*\{\.\.\.(props|merged)\}/.test(source) ||
+      /<(div|span|button|a|li|ul|ol|section|nav|p|img|input|label|form|header|footer|aside|main|article|table|tr|td|th)\s*\n?\s*\{\.\.\.(props|merged)\}/.test(
+        source,
+      );
+    const writesClass = /\bclass=\{/.test(source);
+    if (spreadsIntoRawElement && writesClass && !appliesClassList) {
+      list.push({ file, rule: 2 });
+    }
   }
   return list;
 }
@@ -73,11 +99,15 @@ function offenders() {
 const bad = offenders();
 if (bad.length > 0) {
   console.error(
-    `检测到 ${bad.length} 个文件把 classList 从 splitProps 里摘掉却没有应用（见 TESTING.md §9）：`,
+    `检测到 ${bad.length} 个文件可能静默丢弃 classList（见 TESTING.md §9）：`,
   );
-  for (const file of bad) console.error(`  ${file}`);
+  for (const { file, rule } of bad) {
+    console.error(`  ${file}  (规则 ${rule})`);
+  }
   console.error(
-    "\n修法：在接收 class 的那个元素上补 `classList={local.classList}`；" +
+    "\n规则 1：classList 被 splitProps 摘掉却没应用；\n" +
+      "规则 2：`{...props}` 之后再写显式 `class=`，会覆盖 spread 里的 classList。\n" +
+      "修法：把 class / classList 用 splitProps 摘出来，并显式传 `classList={local.classList}`；" +
       `确实不支持就写 \`// ${OPT_OUT} <原因>\`。`,
   );
   process.exit(1);

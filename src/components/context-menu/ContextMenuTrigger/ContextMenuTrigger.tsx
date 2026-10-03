@@ -1,4 +1,4 @@
-import type { ValidComponent } from "solid-js";
+import { splitProps, type ValidComponent } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { clsx, mergeRefs } from "~/utils";
 import { useContextMenuTrigger } from "./useContextMenuTrigger";
@@ -19,20 +19,31 @@ export const ContextMenuTrigger = <T extends ValidComponent = "div">(
 ) => {
   const { ctx, attachListeners } = useContextMenuTrigger();
 
+  // class / classList 必须显式摘出来并一起传给 Dynamic：
+  // `{...props}` 之后再写显式 `class=` 会用 node.className 覆盖掉 classList
+  const [local, others] = splitProps(props as ContextMenuTriggerProps, [
+    "component",
+    "class",
+    "classList",
+    "ref",
+    "tabIndex",
+  ]);
+
   return (
     <Dynamic
-      {...props}
-      component={(props.component as ValidComponent) ?? "div"}
+      {...others}
+      component={(local.component as ValidComponent) ?? "div"}
       ref={mergeRefs(
         (el) => ctx.setTrigger(el as HTMLElement),
-        props.ref,
+        local.ref as Element | ((el: Element) => void) | undefined,
         attachListeners,
       )}
       data-slot="context-menu-trigger"
       data-popup-open={ctx.open() ? "" : undefined}
       data-pressed={ctx.open() ? "" : undefined}
-      tabIndex={props.tabIndex ?? 0}
-      class={clsx("select-none", props.class)}
+      tabIndex={local.tabIndex ?? 0}
+      class={clsx("select-none", local.class)}
+      classList={local.classList}
     />
   );
 };

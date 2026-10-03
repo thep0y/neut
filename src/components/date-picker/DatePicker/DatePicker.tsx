@@ -97,6 +97,9 @@ export function DatePicker(props: DatePickerProps): JSX.Element {
           local.class,
         )}
         classList={local.classList}
+        // style 是 BaseProps 的公开 prop：class / classList 都落在 trigger 上，
+        // style 也必须一起应用，否则会被静默丢弃
+        style={local.style}
       >
         <span class="truncate">{displayText()}</span>
         <ChevronDown data-icon="inline-end" />
