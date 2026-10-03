@@ -53,11 +53,11 @@ export function ContextMenuSub(props: ContextMenuSubProps): JSX.Element {
     reason: ContextMenuChangeEventReason,
     event?: Event,
   ) => {
+    const details = createChangeEventDetails(reason, event, trigger());
+    // 同根组件：先回调，cancel() 时不落状态
+    props.onOpenChange?.(next, details);
+    if (details.isCanceled) return;
     if (props.open === undefined) setInternalOpen(next);
-    props.onOpenChange?.(
-      next,
-      createChangeEventDetails(reason, event, trigger()),
-    );
   };
 
   const closeSubmenu = (
