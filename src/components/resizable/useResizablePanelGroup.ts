@@ -5,13 +5,12 @@ import type {
   ResizableOrientation,
   ResizablePanelMeta,
 } from "./resizable.types";
-import { distributeInitialSizes } from "./resizable.resize";
-import { constraintBounds, isCollapsedSize } from "./resizable.constraints";
+import { isCollapsedSize } from "./resizable.constraints";
+import { createPanelLifecycle } from "./resizable.lifecycle";
 import { createCollapseMemory, nextCollapseAction } from "./resizable.collapse";
 import { createPanelRegistry } from "./resizable.registry";
 import { createLayoutReporting } from "./resizable.reporting";
 import { createPanelSizes } from "./resizable.sizes";
-import { normalizeSizes } from "./resizable.utils";
 
 interface Options {
   orientation: Accessor<ResizableOrientation>;
@@ -40,9 +39,6 @@ export function useResizablePanelGroup(
   // 注册表变化本身不是响应式的，但 resolveAdjacent 的消费方（Handle 的 aria 值）
   // 需要「面板挂载/卸载后重算」。这个版本号就是那条依赖边。
   const [registryVersion, setRegistryVersion] = createSignal(0);
-  const bumpRegistryVersion = () =>
-    setRegistryVersion((version) => version + 1);
-  let initialized = false;
   const collapsedMemory = createCollapseMemory();
 
   const orderedMetas = (): ResizablePanelMeta[] => registry.ordered();
@@ -53,7 +49,7 @@ export function useResizablePanelGroup(
     reportSizeChange: (meta, oldSize, newSize) =>
       reporting.reportSizeChange(meta, oldSize, newSize),
   });
-  const { store, sizeOf, applyAll, applyPair, applyPanelTarget } = sizes;
+  const { store, sizeOf, applyPair, applyPanelTarget } = sizes;
 
   const reporting = createLayoutReporting({
     metas: orderedMetas,
@@ -66,58 +62,16 @@ export function useResizablePanelGroup(
   });
   const { notify, commit, readSaved } = reporting;
 
-  const bounds = () => constraintBounds(orderedMetas());
-
-  const buildInitial = (): number[] => {
-    const list = orderedMetas();
-    const saved = readSaved() ?? options.defaultLayout();
-    return distributeInitialSizes(
-      list.map((meta) => meta.id),
-      saved,
-      list.map((meta) => meta.defaultSize),
-    );
-  };
-
-  const initialize = () => {
-    if (initialized) return;
-    // SSR 不计算布局:首屏由 Panel 的 defaultSize fallback 撑起,客户端再归一化
-    if (typeof window === "undefined") return;
-    const list = orderedMetas();
-    if (list.length === 0) return;
-    initialized = true;
-    applyAll(normalizeSizes(buildInitial(), bounds()), false);
-    commit();
-  };
-
-  const scheduleInitialize = () => {
-    if (typeof window === "undefined") return;
-    queueMicrotask(() => {
-      if (!initialized) initialize();
-    });
-  };
-
-  const registerPanel = (meta: ResizablePanelMeta) => {
-    registry.add(meta);
-    bumpRegistryVersion();
-    if (!initialized) {
-      scheduleInitialize();
-    } else if (store[meta.id] === undefined) {
-      // 动态新增:给它默认尺寸,并把其它面板等比压回 100
-      const list = orderedMetas();
-      const raw = list.map((item) =>
-        item.id === meta.id
-          ? (item.defaultSize ?? 100 / list.length)
-          : (store[item.id] ?? 0),
-      );
-      applyAll(normalizeSizes(raw, bounds()));
-      commit();
-    }
-    return () => {
-      registry.remove(meta);
-      bumpRegistryVersion();
-      sizes.remove(meta.id);
-    };
-  };
+  const lifecycle = createPanelLifecycle({
+    metas: orderedMetas,
+    registry,
+    sizes,
+    readSaved,
+    defaultLayout: options.defaultLayout,
+    commit,
+    onRegistryChange: () => setRegistryVersion((version) => version + 1),
+  });
+  const registerPanel = lifecycle.registerPanel;
 
   const adjacentOf = (handleEl: HTMLElement) =>
     registry.adjacent(handleEl, sizeOf);
