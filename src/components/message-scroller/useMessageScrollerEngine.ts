@@ -12,12 +12,11 @@ import {
 } from "./message-scroller.anchors";
 import { rowGap } from "./message-scroller.measure";
 import { createDomMeasure } from "./message-scroller.dom-measure";
+import { createScrollState } from "./message-scroller.scroll-state";
 import { createVisibility } from "./message-scroller.visibility";
 import { AT_EDGE_TOLERANCE } from "./message-scroller.utils";
 import { targetTopFor as computeTargetTopFor } from "./message-scroller.scroll-target";
 
-/** 「滚动到最新」后 data-autoscrolling 的持续时间 */
-const AUTO_SCROLLING_TIMEOUT_MS = 180;
 /** 会让界面「让位」的键盘滚动键 */
 const NAV_KEYS = new Set([
   "ArrowDown",
@@ -28,17 +27,6 @@ const NAV_KEYS = new Set([
   "PageUp",
   " ",
 ]);
-
-type Mode =
-  | "following-bottom"
-  | "free-scrolling"
-  | "anchored-to-message"
-  | "settling-jump";
-
-interface ScrollState {
-  start: boolean;
-  end: boolean;
-}
 
 /**
  * MessageScroller 的滚动引擎（headless，行为对齐 `@shadcn/react`）：
@@ -61,9 +49,6 @@ export function useMessageScrollerEngine(
   const [spacer, setSpacer] = createSignal<HTMLElement>();
   const [preserveScrollOnPrepend, setPreserveScrollOnPrepend] =
     createSignal(true);
-  const [scrollableStart, setScrollableStart] = createSignal(false);
-  const [scrollableEnd, setScrollableEnd] = createSignal(false);
-  const [autoscrolling, setAutoscrolling] = createSignal(false);
   const [pendingScroll, setPendingScroll] = createSignal(
     options().defaultScrollPosition !== "start",
   );
@@ -71,8 +56,6 @@ export function useMessageScrollerEngine(
   const messageElements = new Map<string, HTMLElement>();
   const handledScrollAnchors = new WeakSet<HTMLElement>();
 
-  let mode: Mode = options().autoScroll ? "following-bottom" : "free-scrolling";
-  let lastScrollTop = 0;
   let itemCount = 0;
   let firstItem: HTMLElement | null = null;
   let defaultApplied = false;
@@ -85,8 +68,6 @@ export function useMessageScrollerEngine(
     null;
   let spacerHeight = 0;
   let spacerGap = 0;
-  let autoscrollingTimer: number | null = null;
-  let stateFrame: number | null = null;
   let pendingFrame: number | null = null;
 
   const measure = createDomMeasure({ viewport, content, spacer });
@@ -111,6 +92,17 @@ export function useMessageScrollerEngine(
     schedule: scheduleVisibilitySync,
   } = visibility;
 
+  const scrollState = createScrollState({ viewport, options, contentBottom });
+  const {
+    scrollableStart,
+    scrollableEnd,
+    autoscrolling,
+    commit: commitScrollState,
+    schedule: scheduleStateCommit,
+    beginAutoScroll,
+    releaseFollow,
+  } = scrollState;
+
   /** 设置尾部 spacer：让目标行有空间滚到指定位置；0 时隐藏 */
   const setSpacerHeight = (height: number) => {
     const sp = spacer();
@@ -121,77 +113,6 @@ export function useMessageScrollerEngine(
     sp.hidden = next === 0;
     sp.style.height = `${next}px`;
     sp.style.marginTop = next > 0 ? `${-spacerGap}px` : "";
-  };
-
-  const computeScrollable = (): ScrollState => {
-    const vp = viewport();
-    const root = content();
-    if (!vp || !root) return { start: false, end: false };
-    const threshold = options().scrollEdgeThreshold;
-    const bottom = contentBottom();
-    return {
-      start: vp.scrollTop > threshold,
-      end: bottom - vp.scrollTop - vp.clientHeight > threshold,
-    };
-  };
-
-  const updateModeFromScroll = (state: ScrollState) => {
-    const vp = viewport();
-    if (!vp) return;
-    const top = vp.scrollTop;
-    const movedUp = top < lastScrollTop - AT_EDGE_TOLERANCE;
-    lastScrollTop = top;
-    if (
-      options().autoScroll &&
-      !state.end &&
-      mode !== "settling-jump" &&
-      mode !== "anchored-to-message"
-    ) {
-      mode = "following-bottom";
-    } else if (
-      mode === "following-bottom" &&
-      state.end &&
-      movedUp &&
-      !autoscrolling()
-    ) {
-      mode = "free-scrolling";
-    }
-  };
-
-  const commitScrollState = () => {
-    const state = computeScrollable();
-    updateModeFromScroll(state);
-    // 跟随输出时对 UI 隐藏「还能向下滚」——按钮不出现，直到读者回到实时边缘
-    const exposed =
-      mode === "following-bottom" ? { ...state, end: false } : state;
-    setScrollableStart(exposed.start);
-    setScrollableEnd(exposed.end);
-  };
-
-  const scheduleStateCommit = () => {
-    if (stateFrame !== null) return;
-    stateFrame = window.requestAnimationFrame(() => {
-      stateFrame = null;
-      commitScrollState();
-    });
-  };
-
-  const applyAutoscrolling = (next: boolean) => {
-    if (autoscrollingTimer !== null) {
-      window.clearTimeout(autoscrollingTimer);
-      autoscrollingTimer = null;
-    }
-    if (autoscrolling() !== next) {
-      setAutoscrolling(next);
-      commitScrollState();
-    }
-    if (next) {
-      autoscrollingTimer = window.setTimeout(() => {
-        autoscrollingTimer = null;
-        setAutoscrolling(false);
-        commitScrollState();
-      }, AUTO_SCROLLING_TIMEOUT_MS);
-    }
   };
 
   const setScrollTop = (
@@ -209,7 +130,7 @@ export function useMessageScrollerEngine(
       commitScrollState();
       return;
     }
-    if (auto) applyAutoscrolling(true);
+    if (auto) beginAutoScroll();
     vp.scrollTo({ top: next, behavior });
     scheduleStateCommit();
   };
@@ -218,7 +139,7 @@ export function useMessageScrollerEngine(
     if (!viewport()) return false;
     setSpacerHeight(0);
     streamingTurn = null;
-    mode = "free-scrolling";
+    scrollState.setFree();
     setScrollTop(0, { behavior: command?.behavior ?? "auto" });
     scheduleVisibilitySync();
     return true;
@@ -228,7 +149,8 @@ export function useMessageScrollerEngine(
     if (!viewport()) return false;
     setSpacerHeight(0);
     streamingTurn = null;
-    mode = options().autoScroll ? "following-bottom" : "free-scrolling";
+    if (options().autoScroll) scrollState.setFollowing();
+    else scrollState.setFree();
     setScrollTop(maxScrollTop(), {
       behavior: command?.behavior ?? "auto",
       auto: true,
@@ -268,7 +190,8 @@ export function useMessageScrollerEngine(
     const target = targetTopFor(element, command, margin);
     setSpacerHeight(Math.max(0, target + vp.clientHeight - contentBottom()));
     prependAnchor = { element, viewportTop: itemTopInViewport(element) };
-    mode = keepPreviousPeek ? "anchored-to-message" : "settling-jump";
+    if (keepPreviousPeek) scrollState.anchorTo();
+    else scrollState.settleJump();
     streamingTurn = keepPreviousPeek ? element : null;
     setScrollTop(target, { behavior: command?.behavior ?? "auto" });
     scheduleVisibilitySync();
@@ -277,7 +200,7 @@ export function useMessageScrollerEngine(
 
   const reanchorToAnchoredMessage = () => {
     const el = streamingTurn;
-    if (!el?.isConnected || mode !== "anchored-to-message") return false;
+    if (!el?.isConnected || !scrollState.isAnchored()) return false;
     return scrollToElement(el, { align: "start" }, { keepPreviousPeek: true });
   };
 
@@ -443,7 +366,7 @@ export function useMessageScrollerEngine(
         // 同批新增多个锚点：跟随底部，避免在多个锚点间跳来跳去
         if (
           options().autoScroll &&
-          mode === "following-bottom" &&
+          scrollState.isFollowing() &&
           hasMultipleAnchorsFrom(list, previousCount)
         ) {
           scrollToEnd({ behavior: "auto" });
@@ -476,7 +399,7 @@ export function useMessageScrollerEngine(
       }
     }
 
-    if (mode === "following-bottom" && options().autoScroll) {
+    if (scrollState.isFollowing() && options().autoScroll) {
       scrollToEnd({ behavior: "auto" });
     } else {
       commitScrollState();
@@ -486,7 +409,7 @@ export function useMessageScrollerEngine(
   };
 
   const handleResize = () => {
-    if (mode === "following-bottom" && options().autoScroll) {
+    if (scrollState.isFollowing() && options().autoScroll) {
       scrollToEnd({ behavior: "auto" });
       return;
     }
@@ -505,18 +428,6 @@ export function useMessageScrollerEngine(
     commitScrollState();
     scheduleVisibilitySync();
     capturePrependAnchor();
-  };
-
-  /** 滚轮/触摸/键盘滚动：立刻放弃跟随，把位置交还读者 */
-  const releaseFollow = () => {
-    if (
-      mode === "following-bottom" ||
-      mode === "anchored-to-message" ||
-      mode === "settling-jump"
-    ) {
-      applyAutoscrolling(false);
-      mode = "free-scrolling";
-    }
   };
 
   const registerMessage = (
@@ -629,9 +540,8 @@ export function useMessageScrollerEngine(
   });
 
   onCleanup(() => {
-    if (autoscrollingTimer !== null) window.clearTimeout(autoscrollingTimer);
-    if (stateFrame !== null) window.cancelAnimationFrame(stateFrame);
     if (pendingFrame !== null) window.cancelAnimationFrame(pendingFrame);
+    scrollState.dispose();
     visibility.dispose();
   });
 
