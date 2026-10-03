@@ -14,12 +14,8 @@ import {
 } from "./resizable.constraints";
 import { createCollapseMemory, nextCollapseAction } from "./resizable.collapse";
 import { createPanelRegistry } from "./resizable.registry";
-import {
-  persistLayout,
-  readSavedLayout,
-  type PersistContext,
-} from "./resizable.storage";
-import { normalizeSizes, roundPercent } from "./resizable.utils";
+import { createLayoutReporting } from "./resizable.reporting";
+import { normalizeSizes } from "./resizable.utils";
 
 interface Options {
   orientation: Accessor<ResizableOrientation>;
@@ -57,46 +53,18 @@ export function useResizablePanelGroup(
 
   const orderedMetas = (): ResizablePanelMeta[] => registry.ordered();
 
-  const persistContext = (): PersistContext => ({
-    autoSaveId: options.autoSaveId(),
-    storage: options.storage(),
+  const reporting = createLayoutReporting({
+    metas: orderedMetas,
+    sizeOf: (id) => store[id] ?? 0,
+    onLayoutChange: options.onLayoutChange,
+    persist: () => ({
+      autoSaveId: options.autoSaveId(),
+      storage: options.storage(),
+    }),
   });
-
-  const layout = (): ResizableLayout => {
-    const result: ResizableLayout = {};
-    for (const meta of orderedMetas()) {
-      result[meta.id] = roundPercent(store[meta.id] ?? 0);
-    }
-    return result;
-  };
-
-  /** 只通知布局变化（拖拽的每一帧），不写 storage */
-  const notify = () => options.onLayoutChange(layout());
-
-  /** 通知 + 持久化（离散操作与拖拽结束） */
-  const commit = () => {
-    const next = layout();
-    options.onLayoutChange(next);
-    persistLayout(persistContext(), next);
-  };
-
-  const readSaved = (): ResizableLayout | undefined =>
-    readSavedLayout(persistContext());
+  const { notify, commit, readSaved } = reporting;
 
   const bounds = () => constraintBounds(orderedMetas());
-
-  const reportResize = (
-    meta: ResizablePanelMeta,
-    oldSize: number,
-    newSize: number,
-  ) => {
-    meta.onResize?.(roundPercent(newSize));
-    if (!meta.collapsible()) return;
-    const was = isCollapsedSize(meta, oldSize);
-    const now = isCollapsedSize(meta, newSize);
-    if (!was && now) meta.onCollapse?.();
-    else if (was && !now) meta.onExpand?.();
-  };
 
   const applySizes = (values: number[], report = true) => {
     const list = orderedMetas();
@@ -112,7 +80,9 @@ export function useResizablePanelGroup(
     if (report) {
       list.forEach((meta, index) => {
         const value = values[index];
-        if (value !== undefined) reportResize(meta, before[index]!, value);
+        if (value !== undefined) {
+          reporting.reportSizeChange(meta, before[index]!, value);
+        }
       });
     }
   };
@@ -196,8 +166,8 @@ export function useResizablePanelGroup(
         draft[next.id] = total - size;
       }),
     );
-    reportResize(prev, prevOld, size);
-    reportResize(next, nextOld, total - size);
+    reporting.reportSizeChange(prev, prevOld, size);
+    reporting.reportSizeChange(next, nextOld, total - size);
   };
 
   const setAdjacentSize = (handleEl: HTMLElement, targetPrevSize: number) => {
