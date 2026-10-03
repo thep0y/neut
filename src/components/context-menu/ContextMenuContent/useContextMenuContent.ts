@@ -1,5 +1,4 @@
 import {
-  createEffect,
   createSignal,
   createUniqueId,
   onCleanup,
@@ -27,6 +26,7 @@ import type {
   ContextMenuSubmenuContextValue,
 } from "../context-menu.types";
 import { handleMenuKeyDown } from "../context-menu.keyboard";
+import { createHighlight } from "./context-menu.highlight";
 import { createItemCollection } from "./context-menu.popup-items";
 import { createTypeahead } from "../context-menu.typeahead";
 import { toContextMenuPlacement } from "../context-menu.utils";
@@ -93,7 +93,6 @@ export function createContextMenuPopupRuntime(
   const [popupEl, setPopupEl] = createSignal<HTMLElement>();
   const [positionerEl, setPositionerEl] = createSignal<HTMLElement>();
   const { registerItem, orderedItems, enabledItems } = createItemCollection();
-  const [activeId, setActiveIdInternal] = createSignal<string | undefined>();
   const [openPopupState, setOpenPopupState] =
     createSignal<ContextMenuOpenPopupState>();
   const [availableHeight, setAvailableHeight] = createSignal<number>();
@@ -120,62 +119,24 @@ export function createContextMenuPopupRuntime(
     ],
   });
 
-  const activeEntry = () =>
-    orderedItems().find((item) => item.id === activeId());
-
   const closeOpenPopup = () => setOpenPopupState(undefined);
 
-  /** 高亮某项;若高亮切到了别的项,顺手关掉已展开的子菜单 */
-  const setActiveId = (id: string | undefined) => {
-    setActiveIdInternal(id);
-    const state = openPopupState();
-    if (state && state.id !== id) closeOpenPopup();
-  };
-
-  const moveActive = (delta: 1 | -1) => {
-    const list = enabledItems();
-    if (list.length === 0) return;
-    const currentIndex = list.findIndex((item) => item.id === activeId());
-    let nextIndex: number;
-    if (currentIndex === -1) {
-      nextIndex = delta > 0 ? 0 : list.length - 1;
-    } else {
-      nextIndex = currentIndex + delta;
-      if (nextIndex < 0) {
-        nextIndex = loopFocus() ? list.length - 1 : 0;
-      } else if (nextIndex >= list.length) {
-        nextIndex = loopFocus() ? 0 : list.length - 1;
-      }
-    }
-    setActiveId(list[nextIndex].id);
-  };
-
-  const focusFirst = () => {
-    const list = enabledItems();
-    setActiveId(list.length > 0 ? list[0].id : undefined);
-  };
-
-  const focusLast = () => {
-    const list = enabledItems();
-    setActiveId(list.length > 0 ? list[list.length - 1].id : undefined);
-  };
-
-  // 高亮项变化时滚动到可见区域
-  createEffect(() => {
-    const id = activeId();
-    if (!id) return;
-    orderedItems()
-      .find((item) => item.id === id)
-      ?.element.scrollIntoView({ block: "nearest" });
+  const highlight = createHighlight({
+    orderedItems,
+    enabledItems,
+    loopFocus,
+    openPopupId: () => openPopupState()?.id,
+    closeOpenPopup,
+    open: options.open,
   });
-
-  // 关闭时清空高亮与子菜单状态,保证下次打开重新从第一项开始。
-  createEffect(() => {
-    if (!options.open()) {
-      setActiveIdInternal(undefined);
-      setOpenPopupState(undefined);
-    }
-  });
+  const {
+    activeId,
+    activeEntry,
+    setActiveId,
+    moveActive,
+    focusFirst,
+    focusLast,
+  } = highlight;
 
   // --- 键盘字符导航 ---
   const typeahead = createTypeahead({
