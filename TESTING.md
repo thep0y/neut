@@ -431,6 +431,7 @@ it("test handleKeyDown", () => {});
 
 ```yaml
 - name: Test with coverage
+  id: coverage
   run: bun run test:coverage
 
 - name: Guard against test cheating
@@ -444,6 +445,20 @@ it("test handleKeyDown", () => {});
         exit 1
       fi
 ```
+
+覆盖率结果会由 `.github/scripts/coverage-comment.mjs` 整理成一条 **PR 评论**：
+
+- 用隐藏标记 `<!-- neut-ui-coverage-report -->` 在**同一个 PR 上原地更新**，不会刷屏；
+- 内容：四项总览（覆盖数 / 百分比 / 门槛 / 状态）、**本 PR 改动的源码文件**逐个的覆盖率、
+  以及"最接近达标"的未覆盖文件（整个仓库有几百个 0% 的文件，列它们只是噪声）；
+- 该步骤 `if: always()` + `continue-on-error: true`：**没达标时才更需要看到报告**，
+  而 fork PR 只有只读 token、发不出去也不该让门禁再多一条红；
+- 明细（`lcov-report` 的 HTML）随运行产物 `coverage-report` 上传，保留 7 天；
+- 本地核对：`node .github/scripts/coverage-comment.mjs --print`。
+
+因此 `vitest.config.ts` 的 coverage reporter 里有 `json-summary`（多写一份机器可读的
+汇总，不改变任何门槛）；`reportOnFailure: true` 保证**即使门禁失败也会写出报告**，
+否则报告恰恰在最需要的时候缺席。
 
 门禁规则：
 

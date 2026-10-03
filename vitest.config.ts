@@ -20,7 +20,9 @@ export default defineConfig({
     include: ["tests/**/*.{test,spec}.{ts,tsx}"],
     coverage: {
       provider: "v8",
-      reporter: ["text", "lcov"],
+      // json-summary 供 CI 的 PR 覆盖率评论读取（.github/scripts/coverage-comment.mjs）；
+      // 它只是多写一份机器可读的汇总，不改变任何门槛
+      reporter: ["text", "lcov", "json-summary"],
       // 覆盖率必须扫全部源码：只统计"被 import 过的文件"会漏掉未被测试的文件，
       // 100% 门槛就形同虚设（见 TESTING.md §1.1）
       include: ["src/**/*.{ts,tsx}"],
