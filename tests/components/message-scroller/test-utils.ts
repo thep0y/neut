@@ -146,7 +146,8 @@ export function addRow(
 ): HTMLElement {
   const row = document.createElement("div");
   row.setAttribute("data-message-id", id);
-  if (anchor) row.setAttribute("data-scroll-anchor", "");
+  // 与 MessageScrollerItem 一致：始终输出 "true"/"false"
+  row.setAttribute("data-scroll-anchor", anchor ? "true" : "false");
   stubRect(row, box);
   content.appendChild(row);
   return row;
@@ -185,9 +186,23 @@ export function renderEngine(overrides: Partial<EngineOptions> = {}) {
   );
 }
 
-/** 让引擎完成一次分帧提交（内部走 requestAnimationFrame） */
+/** 只冲刷微任务（MutationObserver 等），不推进到下一帧 */
 export async function flushState(): Promise<void> {
   await vi.advanceTimersByTimeAsync(0);
+}
+
+/**
+ * 推进到下一帧。
+ *
+ * 假定时器把 `requestAnimationFrame` 实现成 16ms 的定时器（不是 0ms），
+ * 而引擎里 resize / 分帧提交 / 可见性同步都排在 rAF 上；某些路径还要
+ * "观察器回调里再排一帧"（触发 → rAF#1 → handleResize → rAF#2 → 提交），
+ * 因此默认推进两帧。
+ */
+export async function flushFrames(times = 2): Promise<void> {
+  for (let index = 0; index < times; index += 1) {
+    await vi.advanceTimersByTimeAsync(16);
+  }
 }
 
 /** 挂载 viewport + content，并跑完一次分帧提交 */
@@ -264,5 +279,57 @@ export function stubIntersectionObserver(): ObserverStub {
   return {
     instances,
     last: () => instances.at(-1),
+  };
+}
+
+/** 记录型 ResizeObserver：可手动触发回调，用于驱动引擎的 `handleResize` */
+export interface ResizeObserverStub {
+  instances: Array<{
+    observed: Set<Element>;
+    trigger: () => void;
+    disconnect: () => void;
+  }>;
+  /** 触发所有实例（引擎里 content / viewport 各挂一个） */
+  triggerAll: () => void;
+  disconnectCalls: () => number;
+}
+
+export function stubResizeObserver(): ResizeObserverStub {
+  const instances: ResizeObserverStub["instances"] = [];
+  let disconnects = 0;
+
+  class RecordingResizeObserver {
+    observed = new Set<Element>();
+    constructor(private callback: ResizeObserverCallback) {
+      instances.push(
+        this as unknown as ResizeObserverStub["instances"][number],
+      );
+    }
+    observe = (el: Element) => {
+      this.observed.add(el);
+    };
+    unobserve = (el: Element) => {
+      this.observed.delete(el);
+    };
+    disconnect = () => {
+      this.observed.clear();
+      disconnects += 1;
+    };
+    trigger = () => {
+      this.callback(
+        [...this.observed].map((target) => ({ target }) as ResizeObserverEntry),
+        this as unknown as ResizeObserver,
+      );
+    };
+  }
+
+  vi.stubGlobal("ResizeObserver", RecordingResizeObserver);
+
+  return {
+    instances,
+    triggerAll: () => {
+      for (const instance of instances) instance.trigger();
+    },
+    disconnectCalls: () => disconnects,
   };
 }
