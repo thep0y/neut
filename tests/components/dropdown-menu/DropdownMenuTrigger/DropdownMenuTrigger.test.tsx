@@ -138,7 +138,9 @@ describe("DropdownMenuTrigger - 禁用守卫的默认与组合", () => {
     ));
 
     fireEvent.keyDown(
-      document.querySelector('[data-slot="dropdown-menu-trigger"]') as HTMLElement,
+      document.querySelector(
+        '[data-slot="dropdown-menu-trigger"]',
+      ) as HTMLElement,
       { key: "ArrowDown" },
     );
 
@@ -159,7 +161,9 @@ describe("DropdownMenuTrigger - 禁用守卫的默认与组合", () => {
     ));
 
     fireEvent.click(
-      document.querySelector('[data-slot="dropdown-menu-trigger"]') as HTMLElement,
+      document.querySelector(
+        '[data-slot="dropdown-menu-trigger"]',
+      ) as HTMLElement,
     );
 
     expect(onOpenChange).not.toHaveBeenCalled();
