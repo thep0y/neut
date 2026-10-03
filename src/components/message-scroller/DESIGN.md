@@ -25,11 +25,16 @@ MessageScrollerProvider          # headless 根:滚动状态机 + context(不渲
 | --- | --- |
 | 类型契约 | `message-scroller.types.ts` |
 | context | `message-scroller.context.ts` |
-| 滚动引擎(状态机) | `useMessageScrollerEngine.ts`(模式切换、命令编排、spacer、保位、IO 可见性接线) |
+| 滚动引擎(装配) | `useMessageScrollerEngine.ts`(信号、行注册表、内容/视口两个 effect、ctx 组装) |
+| DOM 几何测量 | `message-scroller.dom-measure.ts`(`items` / `itemOffsetTop` / `itemTopInViewport` / `contentBottom` / `maxScrollTop`) |
+| 滚动状态机 | `message-scroller.scroll-state.ts`(四种模式与**唯一**迁移入口、可滚动状态、autoscrolling、让位) |
+| 滚动命令与 spacer | `message-scroller.commands.ts`(`setScrollTop` / `scrollToStart` / `scrollToEnd` / `scrollToElement` / `targetTopFor` / spacer 三态) |
+| 可见性与阅读锚点 | `message-scroller.visibility.ts`(IO 按需订阅、无 IO 退化、`currentAnchorId` / `visibleMessageIds`) |
+| 锚定与保位 | `message-scroller.anchoring.ts`(初次定位、prepend 保位、新回合锚定、重锚定、排队补滚、resize) |
 | CSS 尺寸测量(纯) | `message-scroller.measure.ts`(`parsePx` / `paddingBox` / `rowGap`) |
 | 锚点查找(纯) | `message-scroller.anchors.ts`(`firstAnchorFrom` / `firstUnhandledAnchor` / `hasMultipleAnchorsFrom`) |
 | 滚动目标计算(纯) | `message-scroller.scroll-target.ts`(`computeTargetTop` / `targetTopFor`,四种 `align`) |
-| data 属性工具 | `message-scroller.utils.ts`(`data-scrollable` 的 token 拼接) |
+| data 属性工具 / 共享常量 | `message-scroller.utils.ts`(`data-scrollable` 的 token 拼接、`AT_EDGE_TOLERANCE`) |
 | 消费 hooks | `useMessageScroller.ts`、`useMessageScrollerScrollable.ts`、`useMessageScrollerVisibility.ts` |
 | 各部件的渲染/ARIA | `MessageScroller*/` 各自目录 |
 | 滚动渐隐工具 | `src/styles/effects.css`(`scroll-fade` 家族,与 shadcn 同源) |
@@ -40,6 +45,17 @@ MessageScrollerProvider          # headless 根:滚动状态机 + context(不渲
 > （这三个模块已做到语句/分支/函数三项 100% 覆盖）。
 > 引擎只保留状态机与编排，通过 `message-scroller.scroll-target.ts` 的
 > `targetTopFor(...)` 适配器调用纯算法。
+>
+> 2026-10 重构：引擎从 797 行降到 245 行，按 `REFACTOR-PLAN.md` 的边界拆出
+> 「DOM 几何测量 / 滚动状态机 / 滚动命令与 spacer / 可见性 / 锚定与保位」五块，
+> 引擎只剩信号、行注册表、两个 effect 与 ctx 组装。两条设计约束值得记住：
+> **`mode` 只有一个写入者**（`scroll-state` 的 `setFollowing` / `setFree` /
+> `anchorTo` / `settleJump`，其它模块不再直接赋值）；**行注册表留在引擎**
+> （它同时被 anchoring 与 visibility 需要，搬走会形成循环依赖，注册时由引擎
+> 转调 `visibility.observe` 与 `anchoring.notifyMessageRegistered`）。
+> 拆分前先把引擎的分支覆盖率从 39.93% 补到 92.7%（220 条用例），
+> 再逐块搬迁；五个新模块的语句/函数/行均为 100%，残留的两条复合条件短路侧
+> 已按 `TESTING.md` §8 以变异测试确认不可达。
 
 ## 3. 已实现行为
 
