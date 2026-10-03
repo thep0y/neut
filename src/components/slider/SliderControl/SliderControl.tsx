@@ -15,6 +15,7 @@ export const SliderControl = (props: SliderControlProps) => {
 
   return (
     <div
+      data-slot="slider-control"
       data-orientation={ctx.orientation()}
       data-disabled={ctx.disabled()}
       onPointerDown={handlePointerDown}
