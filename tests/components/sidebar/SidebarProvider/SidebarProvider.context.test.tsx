@@ -32,7 +32,7 @@ describe("useSidebar", () => {
         useSidebar();
         return <div />;
       }),
-    ).toThrow("useSidebar must be used within a SidebarProvider.");
+    ).toThrow("useSidebar 必须用在 <SidebarProvider> 内部");
 
     spy.mockRestore();
   });

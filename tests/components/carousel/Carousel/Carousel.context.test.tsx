@@ -14,7 +14,7 @@ import {
  * （TESTING.md §5.3 的「上下文约束」条目）。
  */
 
-const MESSAGE = "useCarouselContext must be used within a <Carousel />";
+const MESSAGE = "useCarouselContext 必须用在 <Carousel> 内部";
 
 describe("useCarouselContext - 脱离 Carousel", () => {
   it("CarouselContent 脱离 Carousel 渲染时报错", () => {

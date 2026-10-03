@@ -303,7 +303,7 @@ describe("ScrollArea - Context 约束", () => {
     };
 
     expect(() => render(() => <Probe />)).toThrow(
-      "useScrollAreaContext must be used within a ScrollAreaProvider",
+      "useScrollAreaContext 必须用在 <ScrollArea> 内部",
     );
 
     spy.mockRestore();

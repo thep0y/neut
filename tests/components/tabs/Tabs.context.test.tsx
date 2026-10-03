@@ -14,13 +14,13 @@ import { useTabsListContext } from "~/components/tabs/TabsList/TabsList.context"
 describe("Tabs 上下文约束", () => {
   it("TabsTrigger 脱离 Tabs 渲染时抛出中文错误", () => {
     expect(() => render(() => <TabsTrigger value="a">a</TabsTrigger>)).toThrow(
-      "useTabsContext must be used within a <Tabs> component",
+      "useTabsContext 必须用在 <Tabs> 内部",
     );
   });
 
   it("TabsContent 脱离 Tabs 渲染时抛出中文错误", () => {
     expect(() => render(() => <TabsContent value="a">a</TabsContent>)).toThrow(
-      "useTabsContext must be used within a <Tabs> component",
+      "useTabsContext 必须用在 <Tabs> 内部",
     );
   });
 
@@ -31,7 +31,7 @@ describe("Tabs 上下文约束", () => {
           <TabsTrigger value="a">a</TabsTrigger>
         </TabsList>
       )),
-    ).toThrow("useTabsContext must be used within a <Tabs> component");
+    ).toThrow("useTabsContext 必须用在 <Tabs> 内部");
   });
 
   it("TabsTrigger 脱离 TabsList 渲染时抛出中文错误", () => {
@@ -41,18 +41,18 @@ describe("Tabs 上下文约束", () => {
           <TabsTrigger value="a">a</TabsTrigger>
         </Tabs>
       )),
-    ).toThrow("useTabsListContext must be used within a <TabsList> component");
+    ).toThrow("useTabsListContext 必须用在 <TabsList> 内部");
   });
 
   it("useTabsContext 在 Provider 之外返回时抛错", () => {
     expect(() => render(() => <Probe />)).toThrow(
-      "useTabsContext must be used within a <Tabs> component",
+      "useTabsContext 必须用在 <Tabs> 内部",
     );
   });
 
   it("useTabsListContext 在 Provider 之外返回时抛错", () => {
     expect(() => render(() => <ListProbe />)).toThrow(
-      "useTabsListContext must be used within a <TabsList> component",
+      "useTabsListContext 必须用在 <TabsList> 内部",
     );
   });
 

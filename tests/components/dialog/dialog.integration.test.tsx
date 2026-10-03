@@ -29,6 +29,7 @@ function renderDialog(
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
     lockScroll?: boolean;
+    dismissOnEscape?: boolean;
     contentProps?: Record<string, unknown>;
   } = {},
 ) {
@@ -38,6 +39,7 @@ function renderDialog(
       open={props.open}
       onOpenChange={props.onOpenChange}
       lockScroll={props.lockScroll}
+      dismissOnEscape={props.dismissOnEscape}
     >
       <DialogTrigger>打开</DialogTrigger>
       <DialogContent {...props.contentProps}>
@@ -108,7 +110,7 @@ describe("Dialog - 基础状态", () => {
     renderDialog({ defaultOpen: true, onOpenChange });
     const surface = content()!;
 
-    // Dialog 没有内置的 Escape 处理，关闭靠 DialogClose 或点击 overlay
+    // 关闭方式：Escape / DialogClose / 点击 overlay
     fireEvent.click(document.querySelector('[data-slot="dialog-overlay"]')!);
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
@@ -313,5 +315,58 @@ describe("Dialog - 结构子组件", () => {
     const overlay = document.querySelector('[data-slot="dialog-overlay"]')!;
     expect(overlay).toHaveAttribute("role", "presentation");
     expect(overlay).toHaveAttribute("aria-hidden", "true");
+  });
+});
+
+/**
+ * 无障碍契约（回归）。
+ *
+ * 此前浮层既没有 `aria-modal`、也没有 `tabindex`，打开时焦点仍留在触发按钮上
+ * （实测 `document.activeElement` 是 BODY），键盘/读屏用户拿不到"对话框已打开"
+ * 的上下文；Escape 也完全没有处理。Drawer 早就做对了这三件事，这里与它对齐。
+ */
+describe("dialog 集成 - 无障碍", () => {
+  it("浮层标记 aria-modal=true 且可编程聚焦", () => {
+    renderDialog({ defaultOpen: true });
+
+    expect(content()).toHaveAttribute("aria-modal", "true");
+    expect(content()).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("打开时把焦点移进浮层", async () => {
+    renderDialog({ defaultOpen: true });
+    // 聚焦走 requestAnimationFrame（等 Portal 挂载完成）
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+
+    expect(document.activeElement).toBe(
+      document.querySelector("[data-dialog-surface]"),
+    );
+  });
+
+  it("Escape 关闭对话框", () => {
+    const onOpenChange = vi.fn();
+    renderDialog({ defaultOpen: true, onOpenChange });
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("dismissOnEscape=false 时 Escape 不关闭", () => {
+    const onOpenChange = vi.fn();
+    renderDialog({ defaultOpen: true, dismissOnEscape: false, onOpenChange });
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("Escape 之外的按键不关闭", () => {
+    const onOpenChange = vi.fn();
+    renderDialog({ defaultOpen: true, onOpenChange });
+
+    fireEvent.keyDown(document, { key: "a" });
+
+    expect(onOpenChange).not.toHaveBeenCalled();
   });
 });
