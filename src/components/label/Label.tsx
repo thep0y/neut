@@ -14,15 +14,10 @@ export const Label = (props: LabelProps) => {
         `[aria-labelledby="${htmlFor}"]`,
       );
       if (!target) return;
-      // 原生 `<label for>` 已经会把这次点击转发给 `for` 对应的表单控件。
-      // 当那个控件**就是**我们要点的目标时，本次点击到此为止：
-      // 既不再手动点一次，也不让它继续冒泡到自定义控件——本仓库的自定义控件
-      // （如 Checkbox）内部也是"把点击代理给隐藏 input"，
-      // 两者叠加会让同一个 input 被点两次、状态净变化为 0、onChange 触发两次。
-      if (ref?.control === target) {
-        e.stopPropagation();
-        return;
-      }
+      // 这里点的是 `for` 指向的自定义控件（可见的那个），
+      // 原生 `<label for>` 转发的是隐藏的原生控件，两者分工不同，不会重复。
+      // 自定义控件一侧必须避免"再代理一次"（见 Checkbox 的可见 span），
+      // 否则同一个 input 会被点两遍、状态翻转两次回到原值。
       target.click();
       return;
     }
