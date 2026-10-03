@@ -9,9 +9,7 @@ export const ProgressContext = createContext<ProgressContextValue>();
 export const useProgressContext = () => {
   const context = useContext(ProgressContext);
   if (!context) {
-    throw new Error(
-      "useProgressContext must be used within a ProgressProvider",
-    );
+    throw new Error("useProgressContext 必须用在 <Progress> 内部");
   }
   return context;
 };
