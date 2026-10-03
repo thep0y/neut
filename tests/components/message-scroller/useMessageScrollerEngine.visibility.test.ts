@@ -244,6 +244,41 @@ describe("useMessageScrollerEngine - 可见性（有 IntersectionObserver）", (
     fixture.cleanup();
   });
 
+  it("先订阅、后挂视口：观察器在视口就绪时补建", async () => {
+    const observer = stubIntersectionObserver();
+    const rows = buildFixture({});
+    const hook = renderEngine({ defaultScrollPosition: "start" });
+    hook.result.setContent(rows.content);
+    hook.result.registerItem({ id: "m1", element: rows.m1 });
+    const release = hook.result.subscribeVisibility();
+    await flushFrames();
+    // 还没有视口，观察器建不起来
+    expect(observer.instances.length).toBe(0);
+
+    hook.result.setViewport(rows.viewport);
+    await flushFrames();
+
+    expect(observer.instances.length).toBe(1);
+    expect(observer.last()?.options?.root).toBe(rows.viewport);
+    release();
+    hook.cleanup();
+  });
+
+  it("订阅后更换视口元素不会重复建立观察器", async () => {
+    const observer = stubIntersectionObserver();
+    const fixture = await mountVisibility({});
+    const built = observer.instances.length;
+
+    const next = document.createElement("div");
+    fixture.viewport.appendChild(next);
+    stubRect(next, { top: 0, bottom: 400, height: 400 });
+    fixture.result.setViewport(next);
+    await flushFrames();
+
+    expect(observer.instances.length).toBe(built);
+    fixture.cleanup();
+  });
+
   it("重新订阅会重建观察器", async () => {
     const observer = stubIntersectionObserver();
     const fixture = await mountVisibility({});

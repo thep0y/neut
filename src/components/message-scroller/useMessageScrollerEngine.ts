@@ -12,10 +12,10 @@ import {
 } from "./message-scroller.anchors";
 import { rowGap } from "./message-scroller.measure";
 import { createDomMeasure } from "./message-scroller.dom-measure";
+import { createVisibility } from "./message-scroller.visibility";
+import { AT_EDGE_TOLERANCE } from "./message-scroller.utils";
 import { targetTopFor as computeTargetTopFor } from "./message-scroller.scroll-target";
 
-/** 滚动位置比较容差（0.5px），对应上游的 `J` */
-const AT_EDGE_TOLERANCE = 0.5;
 /** 「滚动到最新」后 data-autoscrolling 的持续时间 */
 const AUTO_SCROLLING_TIMEOUT_MS = 180;
 /** 会让界面「让位」的键盘滚动键 */
@@ -67,13 +67,8 @@ export function useMessageScrollerEngine(
   const [pendingScroll, setPendingScroll] = createSignal(
     options().defaultScrollPosition !== "start",
   );
-  const [currentAnchorId, setCurrentAnchorId] = createSignal<string | null>(
-    null,
-  );
-  const [visibleMessageIds, setVisibleMessageIds] = createSignal<string[]>([]);
 
   const messageElements = new Map<string, HTMLElement>();
-  const visibleIds = new Set<string>();
   const handledScrollAnchors = new WeakSet<HTMLElement>();
 
   let mode: Mode = options().autoScroll ? "following-bottom" : "free-scrolling";
@@ -92,10 +87,7 @@ export function useMessageScrollerEngine(
   let spacerGap = 0;
   let autoscrollingTimer: number | null = null;
   let stateFrame: number | null = null;
-  let visibilityFrame: number | null = null;
   let pendingFrame: number | null = null;
-  let observer: IntersectionObserver | null = null;
-  let visibilitySubscribers = 0;
 
   const measure = createDomMeasure({ viewport, content, spacer });
   const {
@@ -105,6 +97,19 @@ export function useMessageScrollerEngine(
     contentBottom,
     maxScrollTop,
   } = measure;
+
+  const visibility = createVisibility({
+    viewport,
+    content,
+    items,
+    options,
+    registeredElements: () => messageElements.values(),
+  });
+  const {
+    currentAnchorId,
+    visibleMessageIds,
+    schedule: scheduleVisibilitySync,
+  } = visibility;
 
   /** 设置尾部 spacer：让目标行有空间滚到指定位置；0 时隐藏 */
   const setSpacerHeight = (height: number) => {
@@ -168,14 +173,6 @@ export function useMessageScrollerEngine(
     stateFrame = window.requestAnimationFrame(() => {
       stateFrame = null;
       commitScrollState();
-    });
-  };
-
-  const scheduleVisibilitySync = () => {
-    if (visibilityFrame !== null) return;
-    visibilityFrame = window.requestAnimationFrame(() => {
-      visibilityFrame = null;
-      if (visibilitySubscribers > 0) computeVisibility();
     });
   };
 
@@ -522,97 +519,6 @@ export function useMessageScrollerEngine(
     }
   };
 
-  const computeVisibility = () => {
-    const vp = viewport();
-    const root = content();
-    if (!vp || !root) {
-      setVisibleMessageIds([]);
-      setCurrentAnchorId(null);
-      return;
-    }
-    const vpRect = vp.getBoundingClientRect();
-    const readingLine =
-      vpRect.top + options().scrollMargin + options().scrollPreviousItemPeek;
-    const hasObserver = typeof IntersectionObserver === "undefined";
-    const visible: string[] = [];
-    let anchorId: string | null = null;
-    for (const item of items()) {
-      const id = item.dataset.messageId;
-      if (!id) continue;
-      const isAnchor = item.dataset.scrollAnchor === "true";
-      const rect =
-        isAnchor || hasObserver ? item.getBoundingClientRect() : null;
-      const isVisible =
-        hasObserver && rect
-          ? rect.bottom > readingLine && rect.top < vpRect.bottom
-          : visibleIds.has(id);
-      if (isVisible) visible.push(id);
-      if (isAnchor && rect && rect.top <= readingLine + AT_EDGE_TOLERANCE) {
-        anchorId = id;
-      }
-    }
-    if (visible.length === 0 && anchorId === null) {
-      setVisibleMessageIds([]);
-      setCurrentAnchorId(null);
-      return;
-    }
-    setVisibleMessageIds(visible);
-    setCurrentAnchorId(anchorId);
-  };
-
-  const startVisibilityObserver = () => {
-    if (typeof IntersectionObserver === "undefined") {
-      scheduleVisibilitySync();
-      return;
-    }
-    const vp = viewport();
-    if (!observer && vp) {
-      observer = new IntersectionObserver(
-        (entries) => {
-          for (const entry of entries) {
-            const id = (entry.target as HTMLElement).dataset.messageId;
-            if (!id) continue;
-            if (entry.isIntersecting) visibleIds.add(id);
-            else visibleIds.delete(id);
-          }
-          scheduleVisibilitySync();
-        },
-        {
-          root: vp,
-          rootMargin: `${-(options().scrollMargin + options().scrollPreviousItemPeek)}px 0px 0px 0px`,
-          threshold: [0, 0.01, 0.5, 1],
-        },
-      );
-    }
-    for (const element of messageElements.values()) observer?.observe(element);
-    scheduleVisibilitySync();
-  };
-
-  const stopVisibilityObserver = () => {
-    if (visibilityFrame !== null) {
-      window.cancelAnimationFrame(visibilityFrame);
-      visibilityFrame = null;
-    }
-    observer?.disconnect();
-    observer = null;
-    visibleIds.clear();
-    setVisibleMessageIds([]);
-    setCurrentAnchorId(null);
-  };
-
-  const subscribeVisibility = () => {
-    visibilitySubscribers += 1;
-    if (visibilitySubscribers === 1) startVisibilityObserver();
-    scheduleVisibilitySync();
-    let released = false;
-    return () => {
-      if (released) return;
-      released = true;
-      visibilitySubscribers -= 1;
-      if (visibilitySubscribers === 0) stopVisibilityObserver();
-    };
-  };
-
   const registerMessage = (
     id: string,
     element: HTMLElement | undefined,
@@ -620,15 +526,14 @@ export function useMessageScrollerEngine(
   ) => {
     if (element) {
       messageElements.set(id, element);
-      observer?.observe(element);
+      visibility.observe(element);
       scheduleVisibilitySync();
       if (pendingMessage?.id === id) schedulePendingFlush();
       return;
     }
     if (previous && messageElements.get(id) === previous) {
       messageElements.delete(id);
-      visibleIds.delete(id);
-      observer?.unobserve(previous);
+      visibility.unobserve(id, previous);
       scheduleVisibilitySync();
     }
   };
@@ -691,7 +596,7 @@ export function useMessageScrollerEngine(
   createEffect(() => {
     const vp = viewport();
     if (!vp) return;
-    if (visibilitySubscribers > 0 && !observer) startVisibilityObserver();
+    visibility.ensureObserver();
 
     const onScroll = () => syncAfterScroll();
     const onIntent = () => releaseFollow();
@@ -727,9 +632,7 @@ export function useMessageScrollerEngine(
     if (autoscrollingTimer !== null) window.clearTimeout(autoscrollingTimer);
     if (stateFrame !== null) window.cancelAnimationFrame(stateFrame);
     if (pendingFrame !== null) window.cancelAnimationFrame(pendingFrame);
-    if (visibilityFrame !== null) window.cancelAnimationFrame(visibilityFrame);
-    observer?.disconnect();
-    observer = null;
+    visibility.dispose();
   });
 
   return {
@@ -750,7 +653,7 @@ export function useMessageScrollerEngine(
     scrollToMessage,
     currentAnchorId,
     visibleMessageIds,
-    subscribeVisibility,
+    subscribeVisibility: visibility.subscribe,
     options,
   };
 }
