@@ -43,8 +43,14 @@ export const CarouselContent = (props: CarouselContentProps) => {
           local.class,
         )}
         classList={local.classList}
-        style={{ transform: translate() }}
         {...rest}
+        // transform 由内部提供：用户的 style 必须**合并**而不是覆盖，
+        // 否则轮播会因为没有 transform 而完全不再位移。
+        // 因此这里放在 spread **之后**，让内部 transform 胜出。
+        style={{
+          ...(rest.style as Record<string, string>),
+          transform: translate(),
+        }}
       />
     </div>
   );
