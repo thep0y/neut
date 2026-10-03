@@ -70,7 +70,8 @@ export const Sidebar = (props: SidebarProps) => {
                 : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
               local.class,
             )}
-            {...props}
+            classList={local.classList}
+            {...others}
           >
             <div
               data-sidebar="sidebar"

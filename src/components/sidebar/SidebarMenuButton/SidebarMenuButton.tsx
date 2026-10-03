@@ -67,6 +67,7 @@ export const SidebarMenuButton = <T extends ValidComponent = "button">(
             }),
             local.class,
           )}
+          classList={local.classList}
           {...others}
         />
         <TooltipContent
