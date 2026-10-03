@@ -84,7 +84,7 @@ describe("AlertDialogCancel", () => {
       () => (
         <AlertDialogCancel
           onClick={(event) => {
-            seen.push((event?.currentTarget as HTMLElement).tagName);
+            seen.push((event.currentTarget as HTMLElement).tagName);
           }}
         >
           取消

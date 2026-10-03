@@ -2,7 +2,6 @@ import { render } from "@solidjs/testing-library";
 import { describe, expect, it, vi } from "vitest";
 import { Progress } from "~/components/progress/Progress/Progress";
 import { ProgressTrack } from "~/components/progress/ProgressTrack/ProgressTrack";
-import { ProgressIndicator } from "~/components/progress/ProgressIndicator/ProgressIndicator";
 
 /**
  * Progress 根组件：`role="progressbar"` + 三个 aria 值，

@@ -4,7 +4,7 @@ import { Progress } from "~/components/progress/Progress/Progress";
 import { ProgressValue } from "~/components/progress/ProgressValue/ProgressValue";
 
 /** ProgressValue：把 context 的 value 渲染成 "N%"。 */
-function valueOf(container: HTMLElement): HTMLElement {
+function progressValue(container: HTMLElement): HTMLElement {
   return container.querySelector('[data-slot="progress-value"]') as HTMLElement;
 }
 
@@ -16,12 +16,12 @@ describe("ProgressValue", () => {
       </Progress>
     ));
 
-    expect(valueOf(container).textContent).toBe("42%");
+    expect(progressValue(container).textContent).toBe("42%");
   });
 
   it("边界值渲染 0% / 100%", () => {
     expect(
-      valueOf(
+      progressValue(
         render(() => (
           <Progress value={0}>
             <ProgressValue />
@@ -30,7 +30,7 @@ describe("ProgressValue", () => {
       ).textContent,
     ).toBe("0%");
     expect(
-      valueOf(
+      progressValue(
         render(() => (
           <Progress value={100}>
             <ProgressValue />
@@ -46,7 +46,7 @@ describe("ProgressValue", () => {
         <ProgressValue class="my-value" classList={{ bold: true }} id="v" />
       </Progress>
     ));
-    const element = valueOf(container);
+    const element = progressValue(container);
 
     expect(element.className).toContain("my-value");
     expect(element.className).toContain("bold");
