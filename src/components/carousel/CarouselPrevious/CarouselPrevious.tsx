@@ -22,6 +22,7 @@ export const CarouselPrevious = (props: CarouselPreviousProps) => {
           : "-top-12 left-1/2 -translate-x-1/2 rotate-90",
         local.class,
       )}
+      classList={local.classList}
       disabled={!canScrollPrev()}
       onClick={scrollPrev}
       aria-label="Previous slide"

@@ -44,6 +44,7 @@ export const ScrollArea = (props: ScrollAreaProps) => {
     <div
       data-slot="scroll-area"
       class={clsx("relative", local.class, local.classList)}
+      classList={local.classList}
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
       {...others}

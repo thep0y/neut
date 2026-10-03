@@ -96,6 +96,7 @@ export const ScrollBar = (props: ScrollBarProps) => {
         local.class,
         local.classList,
       )}
+      classList={local.classList}
       {...others}
     >
       <div

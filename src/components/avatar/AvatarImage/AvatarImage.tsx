@@ -22,6 +22,7 @@ export const AvatarImage = (props: AvatarImageProps) => {
           "aspect-square size-full rounded-full object-cover",
           local.class,
         )}
+        classList={local.classList}
         {...others}
       />
     </Show>

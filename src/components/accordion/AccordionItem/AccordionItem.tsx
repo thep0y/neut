@@ -28,6 +28,7 @@ export const AccordionItem = (props: AccordionItemProps) => {
   return (
     <div
       class={clsx(s, local.class)}
+      classList={local.classList}
       data-slot="accordion-item"
       data-orientation={orientation}
       data-open={open()}

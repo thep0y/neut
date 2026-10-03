@@ -46,6 +46,7 @@ export const Slider = <T extends number | number[]>(props: SliderProps<T>) => {
         data-slot="slider"
         data-orientation={local.orientation}
         class={clsx(classes, local.class)}
+        classList={local.classList}
         {...others}
       >
         <SliderControl>

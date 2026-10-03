@@ -24,6 +24,7 @@ export const PaginationLink = (props: PaginationLinkProps) => {
       data-slot="pagination-link"
       data-active={local.isActive}
       class={clsx(local.class)}
+      classList={local.classList}
       icon={local.page}
       aria-label={
         local.page !== undefined && !local.children

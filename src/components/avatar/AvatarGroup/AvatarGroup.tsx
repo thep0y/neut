@@ -12,6 +12,7 @@ export const AvatarGroup = (props: AvatarGroupProps) => {
         "group/avatar-group flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-white dark:*:data-[slot=avatar]:ring-neutral-950",
         local.class,
       )}
+      classList={local.classList}
       {...others}
     />
   );

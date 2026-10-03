@@ -16,6 +16,7 @@ export const AvatarFallback = (props: AvatarFallbackProps) => {
           "flex size-full items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 text-sm text-neutral-500 dark:text-neutral-400 group-data-[size=sm]/avatar:text-xs",
           local.class,
         )}
+        classList={local.classList}
         {...others}
       />
     </Show>

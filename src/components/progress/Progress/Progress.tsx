@@ -26,6 +26,7 @@ export const Progress = (props: ProgressProps) => {
       role="progressbar"
       data-progressing={local.value > 0 && local.value < 100}
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     >
       <ProgressContext.Provider

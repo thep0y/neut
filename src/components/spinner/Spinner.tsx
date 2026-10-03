@@ -10,6 +10,7 @@ export const Spinner = (props: SpinnerProps) => {
   return (
     <LoaderCircle
       class={clsx(classes, local.class)}
+      classList={local.classList}
       role="status"
       aria-label="Loading"
       {...others}

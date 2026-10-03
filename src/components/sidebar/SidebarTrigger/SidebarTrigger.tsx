@@ -15,6 +15,7 @@ export const SidebarTrigger = (props: SidebarTriggerProps) => {
       variant="ghost"
       size="sm"
       class={local.class}
+      classList={local.classList}
       onClick={(event) => {
         local.onClick?.(event);
         toggleSidebar();

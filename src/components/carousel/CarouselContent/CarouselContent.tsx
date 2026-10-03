@@ -42,6 +42,7 @@ export const CarouselContent = (props: CarouselContentProps) => {
           orientation() === "horizontal" ? "-ml-4" : "-mt-4 flex-col",
           local.class,
         )}
+        classList={local.classList}
         style={{ transform: translate() }}
         {...rest}
       />

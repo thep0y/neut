@@ -77,6 +77,10 @@ jobs:
                   exit 1
                 fi
 
+            # 组件约定守卫：splitProps 拿走了 classList 就必须真正应用（见 TESTING.md §9）
+            - name: Guard against dropped classList
+              run: node .github/scripts/check-classlist.mjs
+
             - name: Build frontend
               run: bun run build
 

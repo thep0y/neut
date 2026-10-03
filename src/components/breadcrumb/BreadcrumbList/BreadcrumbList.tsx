@@ -10,6 +10,7 @@ export const BreadcrumbList = (props: BreadcrumbListProps) => {
     <ol
       data-slot="breadcrumb-list"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

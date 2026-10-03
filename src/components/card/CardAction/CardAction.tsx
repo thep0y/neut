@@ -7,6 +7,11 @@ export const CardAction = (props: CardActionProps) => {
   const [local, rest] = splitProps(props, ["class", "classList"]);
 
   return (
-    <div data-slot="card-action" class={clsx(classes, local.class)} {...rest} />
+    <div
+      data-slot="card-action"
+      class={clsx(classes, local.class)}
+      classList={local.classList}
+      {...rest}
+    />
   );
 };

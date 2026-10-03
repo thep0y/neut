@@ -23,6 +23,7 @@ export const DialogOverlay = (props: DialogOverlayProps) => {
       aria-hidden="true"
       data-open={open()}
       class={clsx(classes, local.class)}
+      classList={local.classList}
       onClick={(
         event: MouseEvent & {
           currentTarget: HTMLDivElement;

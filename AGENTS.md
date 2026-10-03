@@ -248,6 +248,9 @@ bun run dev           # 手动过一遍受影响的交互
 - 不要给根 `tsconfig.json` 加 `dev`/`example` 的包含项来"顺手"检查它们。
 - 不要在 `src/components/*/index.ts` 与 `src/index.ts` 之外额外维护导出清单。
 - 不要只改实现却漏掉同步的 `data-slot`、`data-*` 状态属性或中文注释。
+- 不要把 `classList` 从 `splitProps` 里摘掉却不应用：它是 `BaseProps` 的公开 prop，
+  摘掉等于静默丢弃。要么在元素上写 `classList={local.classList}`，要么写
+  `// classlist-opt-out: <原因>` 显式豁免（CI 有机械守卫，见 `TESTING.md` §9.1）。
 - 不要把测试文件、测试脚手架或夹具放进 `src/`（包括"反正只在测试里用"的 helpers）；
   一律放 `tests/` 下的镜像路径，详见 `TESTING.md` §3。
 - 不要新增组件/修 bug 却不写测试；不要用 `it.skip`、`it.only`、快照或空洞断言

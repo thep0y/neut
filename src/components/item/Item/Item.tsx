@@ -26,6 +26,7 @@ export const Item = <T extends ValidComponent = "div">(props: ItemProps<T>) => {
         itemVariants({ variant: local.variant, size: local.size }),
         local.class,
       )}
+      classList={local.classList}
       {...others}
     />
   );

@@ -20,6 +20,7 @@ export const DialogDescription = (props: DialogDescriptionProps) => {
       id={id}
       data-slot="dialog-description"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

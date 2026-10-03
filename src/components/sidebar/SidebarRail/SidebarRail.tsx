@@ -25,6 +25,7 @@ export const SidebarRail = (props: SidebarRailProps) => {
         "[[data-side=right][data-collapsible=offcanvas]_&]:-left-2",
         local.class,
       )}
+      classList={local.classList}
       {...others}
     />
   );

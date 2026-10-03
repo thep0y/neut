@@ -10,6 +10,7 @@ export const AlertTitle = (props: AlertTitleProps) => {
     <div
       data-slot="alert-title"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

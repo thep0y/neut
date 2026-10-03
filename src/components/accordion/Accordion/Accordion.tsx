@@ -40,6 +40,7 @@ export const Accordion = (props: AccordionProps) => {
   return (
     <section
       class={clsx(s, local.class)}
+      classList={local.classList}
       data-orientation={local.orientation}
       data-slot="accordion"
       dir={local.dir}

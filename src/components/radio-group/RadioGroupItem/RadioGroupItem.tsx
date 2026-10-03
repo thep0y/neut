@@ -94,6 +94,7 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
         "data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground dark:data-checked:bg-primary",
         local.class,
       )}
+      classList={local.classList}
       {...rest}
     >
       <Show when={checked()}>

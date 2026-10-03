@@ -12,6 +12,7 @@ export const Card = (props: CardProps) => {
       data-slot="card"
       data-size={local.size}
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

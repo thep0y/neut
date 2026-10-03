@@ -464,6 +464,11 @@ it("test handleKeyDown", () => {});
 
 1. 覆盖率四项指标**全部 100%**，否则 `vitest` 退出码非 0、CI 失败
    （已在本地实测：阈值生效）；
+1.1 组件约定守卫 `node .github/scripts/check-classlist.mjs`：凡在 `splitProps` 里
+   拿走 `classList` 的文件，必须在元素上写 `classList={...}`，否则报错——
+   `classList` 是 `BaseProps` 的公开 prop，被摘掉却不应用等于**静默丢弃**
+   （仓库里曾一次性存在 119 个这样的文件）。确实不支持时写
+   `// classlist-opt-out: <原因>` 显式豁免。写新组件时最容易漏这一条；
 2. 机械检查 `.only` / `.skip` / `.todo` 与覆盖率屏蔽注释（只扫 `tests/`，
    源码目录里本就不该有测试）；
 3. `bun run build` 仍必须通过，且 `dist/` 里不得出现 `*.test.*`

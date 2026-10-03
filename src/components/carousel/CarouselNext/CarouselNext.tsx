@@ -22,6 +22,7 @@ export const CarouselNext = (props: CarouselNextProps) => {
           : "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",
         local.class,
       )}
+      classList={local.classList}
       aria-label="Next slide"
       disabled={!canScrollNext()}
       onClick={scrollNext}

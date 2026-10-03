@@ -10,6 +10,7 @@ export const AlertDescription = (props: AlertDescriptionProps) => {
     <div
       data-slot="alert-description"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

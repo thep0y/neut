@@ -31,6 +31,7 @@ export const Sidebar = (props: SidebarProps) => {
             "bg-sidebar text-sidebar-foreground",
             local.class,
           )}
+          classList={local.classList}
           {...others}
         >
           {local.children}

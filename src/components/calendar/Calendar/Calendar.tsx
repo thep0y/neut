@@ -140,6 +140,7 @@ export function Calendar(props: CalendarProps): JSX.Element {
     <div
       data-slot="calendar"
       class={clsx(slotClass("root"), local.class)}
+      classList={local.classList}
       style={local.style}
       dir={local.dir}
       {...rest}

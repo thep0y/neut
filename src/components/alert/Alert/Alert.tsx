@@ -11,6 +11,7 @@ export const Alert = (props: AlertProps) => {
       data-slot="alert"
       role="alert"
       class={clsx(alertVariants({ variant: local.variant }), local.class)}
+      classList={local.classList}
       {...others}
     />
   );

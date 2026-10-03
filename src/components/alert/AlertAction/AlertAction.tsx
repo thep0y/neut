@@ -10,6 +10,7 @@ export const AlertAction = (props: AlertActionProps) => {
     <div
       data-slot="alert-action"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

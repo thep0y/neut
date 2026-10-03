@@ -15,6 +15,7 @@ export const SliderTrack = (props: SliderTrackProps) => {
       data-orientation={ctx.orientation()}
       ref={ctx.setTrackRef}
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

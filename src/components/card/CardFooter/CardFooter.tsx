@@ -7,6 +7,11 @@ export const CardFooter = (props: CardFooterProps) => {
   const [local, rest] = splitProps(props, ["class", "classList"]);
 
   return (
-    <div data-slot="card-footer" class={clsx(classes, local.class)} {...rest} />
+    <div
+      data-slot="card-footer"
+      class={clsx(classes, local.class)}
+      classList={local.classList}
+      {...rest}
+    />
   );
 };

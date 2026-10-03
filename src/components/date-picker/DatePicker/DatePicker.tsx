@@ -96,6 +96,7 @@ export function DatePicker(props: DatePickerProps): JSX.Element {
           "data-[empty=true]:text-muted-foreground",
           local.class,
         )}
+        classList={local.classList}
       >
         <span class="truncate">{displayText()}</span>
         <ChevronDown data-icon="inline-end" />

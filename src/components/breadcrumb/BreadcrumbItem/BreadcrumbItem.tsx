@@ -10,6 +10,7 @@ export const BreadcrumbItem = (props: BreadcrumbItemProps) => {
     <li
       data-slot="breadcrumb-item"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

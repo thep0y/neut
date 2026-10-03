@@ -9,6 +9,7 @@ export const Badge = (props: BadgeProps) => {
   return (
     <span
       class={clsx(badgeVariants({ variant: local.variant }), local.class)}
+      classList={local.classList}
       {...others}
     />
   );

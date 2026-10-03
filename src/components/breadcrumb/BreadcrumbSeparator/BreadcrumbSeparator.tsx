@@ -13,6 +13,7 @@ export const BreadcrumbSeparator = (props: BreadcrumbSeparatorProps) => {
       role="presentation"
       aria-hidden="true"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     >
       <Show

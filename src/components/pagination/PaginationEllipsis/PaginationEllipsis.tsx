@@ -14,6 +14,7 @@ export const PaginationEllipsis = (props: PaginationEllipsisProps) => {
         "flex size-8 items-center justify-center [&_svg:not([class*='size-'])]:size-4",
         local.class,
       )}
+      classList={local.classList}
       {...others}
     >
       <Ellipsis />

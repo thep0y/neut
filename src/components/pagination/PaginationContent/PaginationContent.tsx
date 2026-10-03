@@ -9,6 +9,7 @@ export const PaginationContent = (props: PaginationContentProps) => {
     <ul
       data-slot="pagination-content"
       class={clsx("flex items-center gap-0.5", local.class)}
+      classList={local.classList}
       {...others}
     />
   );

@@ -14,6 +14,7 @@ export const PaginationPrevious = (props: PaginationPreviousProps) => {
       aria-label="Go to previous page"
       size="md"
       class={clsx("pl-1.5!", local.class)}
+      classList={local.classList}
       {...others}
     >
       <ChevronLeft data-icon="inline-start" class="cn-rtl-flip" />

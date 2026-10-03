@@ -72,7 +72,11 @@ export const AccordionContent = (props: AccordionContentProps) => {
         onAnimationEnd={handleAnimationEnd}
         {...others}
       >
-        <div ref={contentRef} class={clsx(s.wrapper, local.class)}>
+        <div
+          ref={contentRef}
+          class={clsx(s.wrapper, local.class)}
+          classList={local.classList}
+        >
           {local.children}
         </div>
       </div>

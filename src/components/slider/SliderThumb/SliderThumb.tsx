@@ -21,6 +21,7 @@ export const SliderThumb = (props: SliderThumbProps) => {
       aria-disabled={ctx.disabled()}
       tabindex={ctx.disabled() ? -1 : 0}
       class={clsx(classes, local.class)}
+      classList={local.classList}
       style={positionStyle()}
       onKeyDown={handleKeyDown}
       onFocus={() => ctx.setActiveThumbIndex(local.index)}

@@ -21,6 +21,7 @@ export const SliderControl = (props: SliderControlProps) => {
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );
