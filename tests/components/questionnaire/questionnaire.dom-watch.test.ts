@@ -50,31 +50,36 @@ describe("createDomVersionWatcher", () => {
     expect(result()).toBe(0);
   });
 
-  it("观察 root，配置为 childList + subtree", () => {
+  it("观察 root，配置为 childList + subtree，并在挂载时先自增一次", () => {
     const form = document.createElement("form");
+    const observe = vi.spyOn(MutationObserver.prototype, "observe");
     const { result } = setup(form);
 
-    expect(result()).toBe(0);
-    expect(typeof MutationObserver).toBe("function");
+    // 挂载时先自增一次：题目的 ref 早于节点插入文档，排序 memo 需要这次
+    // 失效才能在节点连上文档后按真实 DOM 顺序重排（否则顺序会颠倒）
+    expect(result()).toBe(1);
+    const options = observe.mock.calls.at(-1)?.[1] as MutationObserverInit;
+    expect(options).toMatchObject({ childList: true, subtree: true });
 
-    // 真的插入一个子节点：观察生效则版本号自增
+    // 真的插入一个子节点：观察生效则版本号继续自增
     form.appendChild(document.createElement("fieldset"));
 
     return flushObserver().then(() => {
-      expect(result()).toBe(1);
+      expect(result()).toBe(2);
     });
   });
 
   it("每次 DOM 变化都自增（可被 memo 依赖）", async () => {
     const form = document.createElement("form");
     const { result } = setup(form);
+    const initial = result();
 
     form.appendChild(document.createElement("fieldset"));
     await flushObserver();
     form.appendChild(document.createElement("fieldset"));
     await flushObserver();
 
-    expect(result()).toBe(2);
+    expect(result()).toBe(initial + 2);
   });
 
   it("root 换成新元素后改为观察新元素并断开旧的", async () => {

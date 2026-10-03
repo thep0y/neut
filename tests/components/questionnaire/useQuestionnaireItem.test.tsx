@@ -100,7 +100,6 @@ function renderItem(
         multiple,
         disabled,
         invalid,
-        onStatusChange: options.onStatusChange as never,
       }),
     { wrapper: root.wrapper },
   );

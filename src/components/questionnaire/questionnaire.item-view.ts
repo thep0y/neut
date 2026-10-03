@@ -43,11 +43,19 @@ export interface ItemView {
  * 不改变任何状态——所以它可以在不触发导航的前提下被单独断言。
  */
 export function createItemView(options: ItemViewOptions): ItemView {
+  /**
+   * 排序键：DOM 顺序优先；两者都还没连进文档（注册早于插入）时返回 0，
+   * 由 sort 的稳定性保持注册顺序——注册顺序就是渲染顺序，因此初始挂载也是对的。
+   * 节点连上文档后 domVersion 会变化，这里再按真实 DOM 顺序收敛。
+   */
   const ordered = createMemo(() => {
     options.domVersion();
-    return [...options.registered()].sort((a, b) =>
-      compareDocumentOrder(a.element, b.element),
-    );
+    const registered = options.registered();
+    return [...registered].sort((a, b) => {
+      const byDom = compareDocumentOrder(a.element, b.element);
+      if (byDom !== 0) return byDom;
+      return registered.indexOf(a) - registered.indexOf(b);
+    });
   });
 
   const enabled = createMemo(() =>

@@ -10,7 +10,6 @@ import {
   createIdRegistry,
 } from "./questionnaire.aria";
 import { createAnswerBookkeeping } from "./questionnaire.answers";
-import type { QuestionnaireItemStatus } from "./questionnaire.types";
 import {
   focusItem,
   moveAnswerFocus as moveAnswerFocusInItem,
@@ -32,7 +31,6 @@ interface Options {
   multiple: Accessor<boolean>;
   disabled: Accessor<boolean>;
   invalid: Accessor<boolean>;
-  onStatusChange?: (status: QuestionnaireItemStatus) => void;
 }
 
 export interface QuestionnaireItemDomProps {

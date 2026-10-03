@@ -358,8 +358,10 @@ describe("compareDocumentOrder", () => {
     const first = document.createElement("div");
     const second = document.createElement("div");
     parent.append(first, second);
+    document.body.appendChild(parent);
 
     expect(compareDocumentOrder(first, second)).toBe(-1);
+    parent.remove();
   });
 
   it("文档中靠后的元素返回 1", () => {
@@ -367,25 +369,38 @@ describe("compareDocumentOrder", () => {
     const first = document.createElement("div");
     const second = document.createElement("div");
     parent.append(first, second);
+    document.body.appendChild(parent);
 
     expect(compareDocumentOrder(second, first)).toBe(1);
+    parent.remove();
   });
 
-  it("分离的节点之间：引擎会置 FOLLOWING 位，因此返回 -1 而非兜底 0", () => {
-    // 测试能力缺口：`compareDocumentOrder` 的 `return 0` 兜底分支需要
-    // `compareDocumentPosition` 既不含 FOLLOWING 也不含 PRECEDING 位，
-    // 但 jsdom（以及 Chromium）对任何两个不同节点都会置其中一位，
-    // 因此该分支不可达。已登记于 TESTING.md §8。
+  it("分离节点之间返回 0（不拿实现相关的 FOLLOWING 位排序）", () => {
+    // 回归：题目在 ref 里注册时 fieldset 还没插入文档，若拿
+    // compareDocumentPosition 的结果排序，jsdom 恒返回 FOLLOWING，
+    // 会导致初次挂载题目顺序整体颠倒。
     const a = document.createElement("div");
     const b = document.createElement("div");
     const detachedRoot = document.createElement("div");
     detachedRoot.appendChild(b);
 
-    expect(compareDocumentOrder(a, b)).toBe(-1);
+    expect(compareDocumentOrder(a, b)).toBe(0);
+    expect(compareDocumentOrder(b, a)).toBe(0);
+  });
+
+  it("一个连在文档里、另一个是分离节点时返回 0（无法比较）", () => {
+    const connected = document.createElement("div");
+    document.body.appendChild(connected);
+    const detached = document.createElement("div");
+
+    expect(compareDocumentOrder(connected, detached)).toBe(0);
+    expect(compareDocumentOrder(detached, connected)).toBe(0);
+    connected.remove();
   });
 
   it("可用于排序：结果符合文档顺序", () => {
     const parent = document.createElement("div");
+    document.body.appendChild(parent);
     const ids = ["c", "a", "b"];
     const els = ids.map((id) => {
       const el = document.createElement("div");

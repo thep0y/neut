@@ -18,6 +18,10 @@ export function createDomVersionWatcher(
 
     const observer = new MutationObserver(() => setVersion((v) => v + 1));
     observer.observe(element, { childList: true, subtree: true });
+    // 初始挂载不会产生 MutationObserver 能观察到的 childList 变更，但题目的
+    // ref 是在"插入文档之前"执行的：这里再自增一次版本号，让排序 memo 在
+    // 节点真正连上文档之后重算一次（否则顺序会停在"按注册顺序"的初值上）。
+    setVersion((v) => v + 1);
     onCleanup(() => observer.disconnect());
   });
 
