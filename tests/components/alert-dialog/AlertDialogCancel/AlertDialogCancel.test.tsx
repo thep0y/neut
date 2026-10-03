@@ -84,6 +84,8 @@ describe("AlertDialogCancel", () => {
       () => (
         <AlertDialogCancel
           onClick={(event) => {
+            // 事件形参在类型上是可选的；这里断言的是"用户回调确实收到了事件"
+            if (!event) return;
             seen.push((event.currentTarget as HTMLElement).tagName);
           }}
         >
