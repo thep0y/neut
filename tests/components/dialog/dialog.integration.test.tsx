@@ -2,7 +2,9 @@ import { fireEvent, render } from "@solidjs/testing-library";
 import userEvent from "@testing-library/user-event";
 import { createSignal } from "solid-js";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { useDialogContext } from "~/components/dialog/Dialog/Dialog.context";
 import { Dialog } from "~/components/dialog/Dialog/Dialog";
+import { useDialogContentContext } from "~/components/dialog/DialogContent/DialogContent.context";
 import { DialogClose } from "~/components/dialog/DialogClose/DialogClose";
 import { DialogContent } from "~/components/dialog/DialogContent/DialogContent";
 import { DialogDescription } from "~/components/dialog/DialogDescription/DialogDescription";
@@ -366,6 +368,75 @@ describe("dialog 集成 - 无障碍", () => {
     renderDialog({ defaultOpen: true, onOpenChange });
 
     fireEvent.keyDown(document, { key: "a" });
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("dialog 集成 - 上下文错误与动画守卫", () => {
+  it("useDialogContext 脱离 Dialog 时抛中文错误", () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const Probe = () => {
+      useDialogContext();
+      return null;
+    };
+
+    expect(() => render(() => <Probe />)).toThrow(
+      "useDialogContext 必须用在 <Dialog> 内部",
+    );
+
+    error.mockRestore();
+  });
+
+  it("useDialogContentContext 脱离 DialogContent 时抛中文错误", () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const Probe = () => {
+      useDialogContentContext();
+      return null;
+    };
+
+    expect(() => render(() => <Probe />)).toThrow(
+      "useDialogContentContext 必须用在 <DialogContent> 内部",
+    );
+
+    error.mockRestore();
+  });
+
+  it("仍处于打开状态时 animationend 不卸载浮层", () => {
+    renderDialog({ defaultOpen: true });
+    const surface = content()!;
+    const overlay = document.querySelector(
+      '[data-slot="dialog-overlay"]',
+    ) as HTMLElement;
+
+    // open() 为 true 时 onAnimationEnd 应直接返回，不 setShow(false)
+    fireEvent.animationEnd(overlay);
+
+    expect(content()).toBe(surface);
+    expect(surface).toHaveAttribute("data-open", "true");
+  });
+});
+
+describe("dialog 集成 - Trigger 守卫", () => {
+  it("已打开时点击触发器不再重复回调", () => {
+    const onOpenChange = vi.fn();
+    renderDialog({ defaultOpen: true, onOpenChange });
+
+    fireEvent.click(trigger());
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("禁用时点击触发器不打开", () => {
+    const onOpenChange = vi.fn();
+    render(() => (
+      <Dialog onOpenChange={onOpenChange}>
+        <DialogTrigger disabled>打开</DialogTrigger>
+        <DialogContent>内容</DialogContent>
+      </Dialog>
+    ));
+
+    fireEvent.click(trigger());
 
     expect(onOpenChange).not.toHaveBeenCalled();
   });
