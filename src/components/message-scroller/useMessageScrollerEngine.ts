@@ -10,12 +10,11 @@ import {
   firstUnhandledAnchor,
   hasMultipleAnchorsFrom,
 } from "./message-scroller.anchors";
-import { rowGap } from "./message-scroller.measure";
 import { createDomMeasure } from "./message-scroller.dom-measure";
+import { createScrollCommands } from "./message-scroller.commands";
 import { createScrollState } from "./message-scroller.scroll-state";
 import { createVisibility } from "./message-scroller.visibility";
 import { AT_EDGE_TOLERANCE } from "./message-scroller.utils";
-import { targetTopFor as computeTargetTopFor } from "./message-scroller.scroll-target";
 
 /** 会让界面「让位」的键盘滚动键 */
 const NAV_KEYS = new Set([
@@ -46,7 +45,7 @@ export function useMessageScrollerEngine(
 ): MessageScrollerContextValue {
   const [viewport, setViewport] = createSignal<HTMLElement>();
   const [content, setContent] = createSignal<HTMLElement>();
-  const [spacer, setSpacer] = createSignal<HTMLElement>();
+  const [spacer, setSpacerSignal] = createSignal<HTMLElement>();
   const [preserveScrollOnPrepend, setPreserveScrollOnPrepend] =
     createSignal(true);
   const [pendingScroll, setPendingScroll] = createSignal(
@@ -66,18 +65,10 @@ export function useMessageScrollerEngine(
   } | null = null;
   let prependAnchor: { element: HTMLElement; viewportTop: number } | null =
     null;
-  let spacerHeight = 0;
-  let spacerGap = 0;
   let pendingFrame: number | null = null;
 
   const measure = createDomMeasure({ viewport, content, spacer });
-  const {
-    items,
-    itemOffsetTop,
-    itemTopInViewport,
-    contentBottom,
-    maxScrollTop,
-  } = measure;
+  const { items, itemOffsetTop, itemTopInViewport, contentBottom } = measure;
 
   const visibility = createVisibility({
     viewport,
@@ -99,81 +90,33 @@ export function useMessageScrollerEngine(
     autoscrolling,
     commit: commitScrollState,
     schedule: scheduleStateCommit,
-    beginAutoScroll,
     releaseFollow,
   } = scrollState;
 
-  /** 设置尾部 spacer：让目标行有空间滚到指定位置；0 时隐藏 */
-  const setSpacerHeight = (height: number) => {
-    const sp = spacer();
-    if (!sp) return;
-    const next = Math.max(0, Math.ceil(height));
-    if (spacerHeight === next) return;
-    spacerHeight = next;
-    sp.hidden = next === 0;
-    sp.style.height = `${next}px`;
-    sp.style.marginTop = next > 0 ? `${-spacerGap}px` : "";
-  };
-
-  const setScrollTop = (
-    top: number,
-    {
-      behavior = "auto" as ScrollBehavior,
-      auto = false,
-    }: { behavior?: ScrollBehavior; auto?: boolean } = {},
-  ) => {
-    const vp = viewport();
-    if (!vp) return;
-    const next = Math.max(0, top);
-    if (Math.abs(vp.scrollTop - next) <= AT_EDGE_TOLERANCE) {
-      vp.scrollTop = next;
-      commitScrollState();
-      return;
-    }
-    if (auto) beginAutoScroll();
-    vp.scrollTo({ top: next, behavior });
-    scheduleStateCommit();
-  };
+  const commands = createScrollCommands({
+    viewport,
+    content,
+    spacer,
+    options,
+    measure,
+    state: scrollState,
+    scheduleVisibility: scheduleVisibilitySync,
+  });
+  const {
+    setSpacerElement,
+    scrollToStart: runScrollToStart,
+    scrollToEnd: runScrollToEnd,
+    scrollToElement: runScrollToElement,
+  } = commands;
 
   const scrollToStart = (command?: MessageScrollerScrollOptions) => {
-    if (!viewport()) return false;
-    setSpacerHeight(0);
     streamingTurn = null;
-    scrollState.setFree();
-    setScrollTop(0, { behavior: command?.behavior ?? "auto" });
-    scheduleVisibilitySync();
-    return true;
+    return runScrollToStart(command);
   };
 
   const scrollToEnd = (command?: MessageScrollerScrollOptions) => {
-    if (!viewport()) return false;
-    setSpacerHeight(0);
     streamingTurn = null;
-    if (options().autoScroll) scrollState.setFollowing();
-    else scrollState.setFree();
-    setScrollTop(maxScrollTop(), {
-      behavior: command?.behavior ?? "auto",
-      auto: true,
-    });
-    scheduleVisibilitySync();
-    return true;
-  };
-
-  const targetTopFor = (
-    element: HTMLElement,
-    command: MessageScrollerScrollOptions | undefined,
-    margin: number,
-  ) => {
-    const vp = viewport();
-    if (!vp) return 0;
-    return computeTargetTopFor(
-      element,
-      command,
-      margin,
-      vp,
-      content(),
-      itemOffsetTop,
-    );
+    return runScrollToEnd(command);
   };
 
   const scrollToElement = (
@@ -181,20 +124,10 @@ export function useMessageScrollerEngine(
     command?: MessageScrollerScrollOptions,
     { keepPreviousPeek = false }: { keepPreviousPeek?: boolean } = {},
   ) => {
-    const vp = viewport();
-    const root = content();
-    if (!vp || !root?.contains(element)) return false;
-    const margin =
-      (command?.scrollMargin ?? options().scrollMargin) +
-      (keepPreviousPeek ? options().scrollPreviousItemPeek : 0);
-    const target = targetTopFor(element, command, margin);
-    setSpacerHeight(Math.max(0, target + vp.clientHeight - contentBottom()));
+    const ok = runScrollToElement(element, command, { keepPreviousPeek });
+    if (!ok) return false;
     prependAnchor = { element, viewportTop: itemTopInViewport(element) };
-    if (keepPreviousPeek) scrollState.anchorTo();
-    else scrollState.settleJump();
     streamingTurn = keepPreviousPeek ? element : null;
-    setScrollTop(target, { behavior: command?.behavior ?? "auto" });
-    scheduleVisibilitySync();
     return true;
   };
 
@@ -413,9 +346,9 @@ export function useMessageScrollerEngine(
       scrollToEnd({ behavior: "auto" });
       return;
     }
-    const before = spacerHeight;
+    const before = commands.spacerHeight();
     if (reanchorToAnchoredMessage()) {
-      if (options().autoScroll && before > 0 && spacerHeight === 0) {
+      if (options().autoScroll && before > 0 && commands.spacerHeight() === 0) {
         scrollToEnd({ behavior: "auto" });
       }
       return;
@@ -457,9 +390,10 @@ export function useMessageScrollerEngine(
     };
   };
 
-  const setSpacerElement = (element: HTMLElement | undefined) => {
-    setSpacer(element);
-    spacerGap = rowGap(element?.parentElement ?? null);
+  /** 公共入口：挂上尾部 spacer 元素，并让它记录行间距（用于负 margin 抵消） */
+  const attachSpacer = (element: HTMLElement | undefined) => {
+    setSpacerSignal(element);
+    setSpacerElement(element);
   };
 
   // 内容观察：初次定位 / prepend 保位 / 新回合锚定 / 跟随 / 尺寸
@@ -550,7 +484,7 @@ export function useMessageScrollerEngine(
     setViewport,
     content,
     setContent,
-    setSpacer: setSpacerElement,
+    setSpacer: attachSpacer,
     registerItem,
     preserveScrollOnPrepend,
     setPreserveScrollOnPrepend,
