@@ -1,20 +1,16 @@
 import { createSignal, type Accessor } from "solid-js";
-import { createStore, produce } from "solid-js/store";
 import type { ResizablePanelGroupContextValue } from "./resizable.context";
 import type {
   ResizableLayout,
   ResizableOrientation,
   ResizablePanelMeta,
 } from "./resizable.types";
-import { distributeInitialSizes, resolvePairSize } from "./resizable.resize";
-import {
-  constraintBounds,
-  isCollapsedSize,
-  pairConstraintsOf,
-} from "./resizable.constraints";
+import { distributeInitialSizes } from "./resizable.resize";
+import { constraintBounds, isCollapsedSize } from "./resizable.constraints";
 import { createCollapseMemory, nextCollapseAction } from "./resizable.collapse";
 import { createPanelRegistry } from "./resizable.registry";
 import { createLayoutReporting } from "./resizable.reporting";
+import { createPanelSizes } from "./resizable.sizes";
 import { normalizeSizes } from "./resizable.utils";
 
 interface Options {
@@ -40,8 +36,6 @@ export function useResizablePanelGroup(
 ): ResizablePanelGroupContextValue {
   const [groupElement, setGroupElement] = createSignal<HTMLElement>();
   const [dragging, setDragging] = createSignal(false);
-  const [store, setStore] = createStore<Record<string, number>>({});
-
   const registry = createPanelRegistry();
   // 注册表变化本身不是响应式的，但 resolveAdjacent 的消费方（Handle 的 aria 值）
   // 需要「面板挂载/卸载后重算」。这个版本号就是那条依赖边。
@@ -53,9 +47,17 @@ export function useResizablePanelGroup(
 
   const orderedMetas = (): ResizablePanelMeta[] => registry.ordered();
 
+  const sizes = createPanelSizes({
+    metas: orderedMetas,
+    registry,
+    reportSizeChange: (meta, oldSize, newSize) =>
+      reporting.reportSizeChange(meta, oldSize, newSize),
+  });
+  const { store, sizeOf, applyAll, applyPair, applyPanelTarget } = sizes;
+
   const reporting = createLayoutReporting({
     metas: orderedMetas,
-    sizeOf: (id) => store[id] ?? 0,
+    sizeOf,
     onLayoutChange: options.onLayoutChange,
     persist: () => ({
       autoSaveId: options.autoSaveId(),
@@ -65,27 +67,6 @@ export function useResizablePanelGroup(
   const { notify, commit, readSaved } = reporting;
 
   const bounds = () => constraintBounds(orderedMetas());
-
-  const applySizes = (values: number[], report = true) => {
-    const list = orderedMetas();
-    const before = list.map((meta) => store[meta.id] ?? 0);
-    setStore(
-      produce((draft) => {
-        list.forEach((meta, index) => {
-          const value = values[index];
-          if (value !== undefined) draft[meta.id] = value;
-        });
-      }),
-    );
-    if (report) {
-      list.forEach((meta, index) => {
-        const value = values[index];
-        if (value !== undefined) {
-          reporting.reportSizeChange(meta, before[index]!, value);
-        }
-      });
-    }
-  };
 
   const buildInitial = (): number[] => {
     const list = orderedMetas();
@@ -104,7 +85,7 @@ export function useResizablePanelGroup(
     const list = orderedMetas();
     if (list.length === 0) return;
     initialized = true;
-    applySizes(normalizeSizes(buildInitial(), bounds()), false);
+    applyAll(normalizeSizes(buildInitial(), bounds()), false);
     commit();
   };
 
@@ -128,47 +109,18 @@ export function useResizablePanelGroup(
           ? (item.defaultSize ?? 100 / list.length)
           : (store[item.id] ?? 0),
       );
-      applySizes(normalizeSizes(raw, bounds()));
+      applyAll(normalizeSizes(raw, bounds()));
       commit();
     }
     return () => {
       registry.remove(meta);
       bumpRegistryVersion();
-      setStore(
-        produce((draft) => {
-          delete draft[meta.id];
-        }),
-      );
+      sizes.remove(meta.id);
     };
   };
 
   const adjacentOf = (handleEl: HTMLElement) =>
-    registry.adjacent(handleEl, (id) => store[id] ?? 0);
-
-  /** 把一对相邻面板的尺寸更新进 store，并上报各自的 resize / collapse 变化 */
-  const applyPair = (
-    prev: ResizablePanelMeta,
-    next: ResizablePanelMeta,
-    targetPrev: number,
-    total: number,
-  ) => {
-    const size = resolvePairSize(
-      pairConstraintsOf(prev, next),
-      targetPrev,
-      total,
-    );
-
-    const prevOld = store[prev.id] ?? 0;
-    const nextOld = store[next.id] ?? 0;
-    setStore(
-      produce((draft) => {
-        draft[prev.id] = size;
-        draft[next.id] = total - size;
-      }),
-    );
-    reporting.reportSizeChange(prev, prevOld, size);
-    reporting.reportSizeChange(next, nextOld, total - size);
-  };
+    registry.adjacent(handleEl, sizeOf);
 
   const setAdjacentSize = (handleEl: HTMLElement, targetPrevSize: number) => {
     const adjacent = adjacentOf(handleEl);
@@ -210,20 +162,6 @@ export function useResizablePanelGroup(
     applyPanelTarget(meta, Math.max(remembered, meta.minSize()));
     commit();
     return true;
-  };
-
-  /** 命令式设置单个 panel,并把它与相邻 panel 之间重新分配 */
-  const applyPanelTarget = (meta: ResizablePanelMeta, targetSize: number) => {
-    const { prev: prevMeta, next: nextMeta } = registry.neighbors(meta);
-    if (nextMeta) {
-      const total = (store[meta.id] ?? 0) + (store[nextMeta.id] ?? 0);
-      applyPair(meta, nextMeta, targetSize, total);
-    } else if (prevMeta) {
-      const total = (store[prevMeta.id] ?? 0) + (store[meta.id] ?? 0);
-      applyPair(prevMeta, meta, total - targetSize, total);
-    } else {
-      setStore(meta.id, 100);
-    }
   };
 
   const setPanelSize = (id: string, size: number) => {
