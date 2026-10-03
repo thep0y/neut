@@ -1,6 +1,11 @@
 import { renderHook } from "@solidjs/testing-library";
+import { createComponent, type JSX } from "solid-js";
 import { vi } from "vitest";
-import type { MessageScrollerProviderProps } from "~/components/message-scroller/message-scroller.types";
+import { MessageScrollerContext } from "~/components/message-scroller/message-scroller.context";
+import type {
+  MessageScrollerContextValue,
+  MessageScrollerProviderProps,
+} from "~/components/message-scroller/message-scroller.types";
 import { useMessageScrollerEngine } from "~/components/message-scroller/useMessageScrollerEngine";
 
 /**
@@ -332,4 +337,62 @@ export function stubResizeObserver(): ResizeObserverStub {
     },
     disconnectCalls: () => disconnects,
   };
+}
+
+/**
+ * 假 Context：只填被测组件用到的字段，其余给安全默认值。
+ *
+ * 组件的渲染/ARIA/接线测试用它驱动确定性的输入（而不是依赖真实测量），
+ * 整机行为另由 `message-scroller.integration.test.tsx` 覆盖真实引擎。
+ */
+export function fakeContext(
+  overrides: Partial<MessageScrollerContextValue> = {},
+): MessageScrollerContextValue {
+  return {
+    viewport: () => undefined,
+    setViewport: () => {},
+    content: () => undefined,
+    setContent: () => {},
+    setSpacer: () => {},
+    registerItem: () => () => {},
+    preserveScrollOnPrepend: () => true,
+    setPreserveScrollOnPrepend: () => {},
+    scrollableStart: () => false,
+    scrollableEnd: () => false,
+    autoscrolling: () => false,
+    pendingScroll: () => false,
+    scrollToStart: () => true,
+    scrollToEnd: () => true,
+    scrollToMessage: () => true,
+    currentAnchorId: () => null,
+    visibleMessageIds: () => [],
+    subscribeVisibility: () => () => {},
+    options: (() => ({
+      autoScroll: false,
+      defaultScrollPosition: "end",
+      scrollEdgeThreshold: 8,
+      scrollMargin: 0,
+      scrollPreviousItemPeek: 64,
+    })) as MessageScrollerContextValue["options"],
+    ...overrides,
+  };
+}
+
+/** Provider 的 wrapper（用 createComponent 以免把 JSX 带进 .ts 文件） */
+export function contextWrapper(value: MessageScrollerContextValue) {
+  return (props: { children: JSX.Element }) =>
+    createComponent(MessageScrollerContext.Provider, {
+      value,
+      get children() {
+        return props.children;
+      },
+    });
+}
+
+/** 在假 Provider 内渲染一个 hook */
+export function renderInContext<T>(
+  useHook: () => T,
+  value: MessageScrollerContextValue,
+) {
+  return renderHook(useHook, { wrapper: contextWrapper(value) });
 }

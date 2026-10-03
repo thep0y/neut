@@ -1,12 +1,14 @@
 import { renderHook } from "@solidjs/testing-library";
 import { createSignal } from "solid-js";
 import { describe, expect, it, vi } from "vitest";
-import { MessageScrollerContext } from "~/components/message-scroller/message-scroller.context";
-import type { MessageScrollerContextValue } from "~/components/message-scroller/message-scroller.types";
 import { scrollableData } from "~/components/message-scroller/message-scroller.utils";
 import { useMessageScroller } from "~/components/message-scroller/useMessageScroller";
 import { useMessageScrollerScrollable } from "~/components/message-scroller/useMessageScrollerScrollable";
 import { useMessageScrollerVisibility } from "~/components/message-scroller/useMessageScrollerVisibility";
+import {
+  fakeContext,
+  renderInContext,
+} from "~tests/components/message-scroller/test-utils";
 
 describe("scrollableData", () => {
   it("都不可滚时返回 undefined（属性从 DOM 上消失）", () => {
@@ -64,54 +66,6 @@ describe("scrollableData", () => {
   });
 });
 
-/** 构造一个假的 Context 值，只填被测 hook 用到的字段 */
-function fakeContext(
-  overrides: Partial<MessageScrollerContextValue> = {},
-): MessageScrollerContextValue {
-  return {
-    viewport: () => undefined,
-    setViewport: () => {},
-    content: () => undefined,
-    setContent: () => {},
-    setSpacer: () => {},
-    registerItem: () => () => {},
-    preserveScrollOnPrepend: () => true,
-    setPreserveScrollOnPrepend: () => {},
-    scrollableStart: () => false,
-    scrollableEnd: () => false,
-    autoscrolling: () => false,
-    pendingScroll: () => false,
-    scrollToStart: () => true,
-    scrollToEnd: () => true,
-    scrollToMessage: () => true,
-    currentAnchorId: () => null,
-    visibleMessageIds: () => [],
-    subscribeVisibility: () => () => {},
-    options: (() => ({
-      autoScroll: false,
-      defaultScrollPosition: "end",
-      scrollEdgeThreshold: 8,
-      scrollMargin: 0,
-      scrollPreviousItemPeek: 64,
-    })) as MessageScrollerContextValue["options"],
-    ...overrides,
-  };
-}
-
-/** 在假 Provider 内渲染一个 hook */
-function renderInContext<T>(
-  useHook: () => T,
-  value: MessageScrollerContextValue,
-): { result: T } {
-  return renderHook(useHook, {
-    wrapper: (props) => (
-      <MessageScrollerContext.Provider value={value}>
-        {props.children}
-      </MessageScrollerContext.Provider>
-    ),
-  });
-}
-
 describe("useMessageScroller", () => {
   it("转发三个滚动命令", () => {
     const scrollToStart = vi.fn(() => true);
@@ -166,15 +120,10 @@ describe("useMessageScrollerVisibility", () => {
     const unsubscribe = vi.fn();
     const subscribeVisibility = vi.fn(() => unsubscribe);
 
-    const view = renderHook(useMessageScrollerVisibility, {
-      wrapper: (props) => (
-        <MessageScrollerContext.Provider
-          value={fakeContext({ subscribeVisibility })}
-        >
-          {props.children}
-        </MessageScrollerContext.Provider>
-      ),
-    });
+    const view = renderInContext(
+      useMessageScrollerVisibility,
+      fakeContext({ subscribeVisibility }),
+    );
 
     expect(subscribeVisibility).toHaveBeenCalledTimes(1);
     expect(unsubscribe).not.toHaveBeenCalled();
