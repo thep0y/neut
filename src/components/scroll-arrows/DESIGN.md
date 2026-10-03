@@ -1,7 +1,7 @@
 # ScrollArrows 设计说明
 
-> 状态:P1(装饰性默认 + 可选的悬停滚动)
-> 关联代码:`src/components/scroll-arrows/`、`src/hooks/useScrollEdges.ts`
+> 状态:P1(悬停滚动默认开启,但由**滚动容器**按指针位置驱动)
+> 关联代码:`src/components/scroll-arrows/`、`src/components/scroll-arrows/useHoverScroll.ts`、`src/hooks/useScrollEdges.ts`
 
 ## 1. 背景
 
@@ -25,20 +25,36 @@ Select / Combobox / ContextMenu / TimePicker 把原生滚动条隐藏后用上�
 
 ## 3. 现在的做法
 
-- **默认装饰性**:`interactive` 默认 `false`,箭头 `pointer-events-none`、`aria-hidden`,
-  只做视觉提示,不再抢指针、也不会与滚动互相触发。滚动交给滚轮/键盘/拖拽,
-  与 shadcn/Radix 的做法一致。
-- **可选交互**:显式传 `interactive` 时,保留悬停/按住滚动,但补上防护:
-  - 悬停后延时 150ms 才滚动,避免只是掠过或点击时误触发;
-  - rAF 每帧检查 `visible`,箭头不可见立即停止;
-  - 指针离开/抬起/取消都停止。
+上一版把悬停滚动关掉了(`interactive` 默认 `false`),于是库内**没有任何调用方**
+开启它——能力变成死代码,使用者看到的就是"箭头悬浮时不再滚动"。但直接恢复旧实现
+会把"抢点击"一起带回来。真正的解法是**把悬停检测从箭头搬到滚动容器上**:
+
+- **箭头永远是装饰层**:`pointer-events-none`(恒定,不再有开关)、`aria-hidden`,
+  只画视觉提示。它不再是滚动逻辑的一部分,于是**结构上**不存在
+  "箭头显隐 ↔ pointerenter 互相触发"的反馈循环。
+- **悬停滚动在容器上驱动**(`useHoverScroll.ts`):监听容器的 `pointermove`,
+  按指针坐标判断是否停在**上/下 24px 的边缘带**内(`h-6`,与箭头等高)。
+  因为箭头不参与命中,边缘的列表项照常收到点击——这正是旧实现做不到的。
+- **停留 150ms 才滚动**:带内移动会重置计时,掠过不会误触发。
+- **随时可被夺回控制权**:`pointerdown`(按下立刻停,避免按下期间选项还在动)、
+  `touchstart`、`wheel`、`keydown`、`pointerleave`、到边界(`scrollTop` 不再变化)
+  都会停止。已排队但"取消不及"的帧到达时会因方向已清空而直接返回。
+- **与箭头显隐同源**:带内是否可滚由 `useScrollEdges` 的 `canScrollUp/Down` 判定,
+  所以"箭头没显示"时那个方向也不会滚。
 - **迟滞阈值**:`useScrollEdges` 进入阈值 4px、退出阈值 1px,消除边界处每帧抖动。
+
+代价(需要知道的取舍):悬停滚动期间,列表内容会在静止的指针下方移动,因此
+**基于 hover 高亮的组件**(Select / Combobox 用 `mouseenter` 高亮)会看到高亮
+跟着指针下方的项走。这是"不抢指针"的必然结果——若某个调用方不接受,传
+`hoverScroll={false}` 即可。ContextMenu 不受影响:它的高亮挂的是 `pointermove`,
+内容移动不会触发。
 
 ## 4. 使用
 
 ```tsx
-<ScrollArrows target={listElement} />                 // 装饰性(推荐)
-<ScrollArrows target={listElement} interactive />     // 悬停/按住持续滚动(会覆盖边缘)
+<ScrollArrows target={listElement} />                  // 悬停滚动(默认)
+<ScrollArrows target={listElement} hoverScroll={false} /> // 纯装饰
 ```
 
-`interactive` 时箭头会参与指针命中,列表项不应依赖被覆盖的边缘区域做点击。
+> 迁移提示:旧版是 `interactive`(默认 `false`),已改名为 `hoverScroll`(默认 `true`);
+> 语义也变了——它不再让箭头参与指针命中,只控制容器上的悬停滚动。
