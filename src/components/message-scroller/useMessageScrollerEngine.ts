@@ -10,7 +10,8 @@ import {
   firstUnhandledAnchor,
   hasMultipleAnchorsFrom,
 } from "./message-scroller.anchors";
-import { paddingBox, rowGap } from "./message-scroller.measure";
+import { rowGap } from "./message-scroller.measure";
+import { createDomMeasure } from "./message-scroller.dom-measure";
 import { targetTopFor as computeTargetTopFor } from "./message-scroller.scroll-target";
 
 /** 滚动位置比较容差（0.5px），对应上游的 `J` */
@@ -96,56 +97,14 @@ export function useMessageScrollerEngine(
   let observer: IntersectionObserver | null = null;
   let visibilitySubscribers = 0;
 
-  /** content 的直接子元素，排除内部 spacer */
-  const items = (): HTMLElement[] => {
-    const root = content();
-    const sp = spacer();
-    if (!root) return [];
-    return Array.from(root.children).filter(
-      (child): child is HTMLElement =>
-        child instanceof HTMLElement && child !== sp,
-    );
-  };
-
-  /** 行相对滚动容器内容顶部的偏移（用测量，避免 offsetParent 不确定） */
-  const itemOffsetTop = (element: HTMLElement) => {
-    const vp = viewport();
-    if (!vp) return 0;
-    return (
-      element.getBoundingClientRect().top -
-      vp.getBoundingClientRect().top +
-      vp.scrollTop
-    );
-  };
-
-  const itemTopInViewport = (element: HTMLElement) => {
-    const vp = viewport();
-    if (!vp) return 0;
-    return element.getBoundingClientRect().top - vp.getBoundingClientRect().top;
-  };
-
-  /** 内容底部（不含 spacer），即内容真实滚动高度 */
-  const contentBottom = () => {
-    const vp = viewport();
-    const root = content();
-    if (!vp || !root) return 0;
-    const pad = paddingBox(root);
-    const vpRect = vp.getBoundingClientRect();
-    let bottom = pad.start + pad.end;
-    for (const item of items()) {
-      const rect = item.getBoundingClientRect();
-      bottom = Math.max(
-        bottom,
-        rect.bottom - vpRect.top + vp.scrollTop + pad.end,
-      );
-    }
-    return bottom;
-  };
-
-  const maxScrollTop = () => {
-    const vp = viewport();
-    return vp ? Math.max(0, vp.scrollHeight - vp.clientHeight) : 0;
-  };
+  const measure = createDomMeasure({ viewport, content, spacer });
+  const {
+    items,
+    itemOffsetTop,
+    itemTopInViewport,
+    contentBottom,
+    maxScrollTop,
+  } = measure;
 
   /** 设置尾部 spacer：让目标行有空间滚到指定位置；0 时隐藏 */
   const setSpacerHeight = (height: number) => {
