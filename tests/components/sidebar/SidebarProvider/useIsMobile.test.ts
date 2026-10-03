@@ -90,3 +90,24 @@ describe("useIsMobile", () => {
     expect(media.removeEventListener).toHaveBeenCalled();
   });
 });
+
+describe("useIsMobile - 能力缺失时的兜底", () => {
+  it("环境没有 matchMedia 时返回 false（不抛错）", () => {
+    // jsdom 的 setup 会补 matchMedia，这里显式抹掉模拟老环境/SSR 边界
+    vi.stubGlobal("matchMedia", undefined);
+    const { result } = renderHook(() => useIsMobile());
+
+    expect(result()).toBe(false);
+  });
+
+  it("没有 window 时返回 false（SSR 兜底）", () => {
+    const original = globalThis.window;
+    delete (globalThis as { window?: unknown }).window;
+    try {
+      const { result } = renderHook(() => useIsMobile());
+      expect(result()).toBe(false);
+    } finally {
+      vi.stubGlobal("window", original);
+    }
+  });
+});

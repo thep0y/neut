@@ -241,3 +241,58 @@ describe("Checkbox - 透传与样式", () => {
     expect(box()).toHaveTextContent("");
   });
 });
+
+describe("Checkbox - 隐藏 input 的 change（回归）", () => {
+  it("input 的 change 事件把状态回写（表单语义的落点）", () => {
+    // 隐藏 input 是表单语义与 `<label for>` 原生转发的落点；
+    // jsdom 的程序化 click() 不会自动派发 change，这里显式派发来验证回写链路
+    const onChange = vi.fn();
+    render(() => <Checkbox id="cb-change" onChange={onChange} />);
+    const input = document.querySelector(
+      "input[type='checkbox']",
+    ) as HTMLInputElement;
+
+    input.checked = true;
+    fireEvent.change(input);
+
+    expect(onChange).toHaveBeenCalledWith(true);
+    expect(
+      document
+        .querySelector('[data-slot="checkbox"]')
+        ?.getAttribute("aria-checked"),
+    ).toBe("true");
+  });
+
+  it("change 到相同值也如实同步状态", () => {
+    render(() => <Checkbox id="cb-same" defaultChecked />);
+    const input = document.querySelector(
+      "input[type='checkbox']",
+    ) as HTMLInputElement;
+
+    fireEvent.change(input);
+
+    expect(
+      document
+        .querySelector('[data-slot="checkbox"]')
+        ?.getAttribute("aria-checked"),
+    ).toBe("true");
+  });
+});
+
+describe("Checkbox - 隐藏 input 自身收到点击（回归）", () => {
+  it("直接点隐藏 input 只翻转一次，不被 span 再代理一遍", () => {
+    // span 的 onClick 会把点击"代理"给隐藏 input；而 `<label for>` 的原生转发
+    // 产生的点击 target 就是 input 本身，冒泡到 span 时若再代理一次，
+    // 同一个 input 会被点两遍、状态翻回原值（onChange 也会触发两次）
+    const onChange = vi.fn();
+    render(() => <Checkbox id="cb-direct" onChange={onChange} />);
+
+    fireEvent.click(document.querySelector("input[type='checkbox']")!);
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(
+      (document.querySelector("input[type='checkbox']") as HTMLInputElement)
+        .checked,
+    ).toBe(true);
+  });
+});

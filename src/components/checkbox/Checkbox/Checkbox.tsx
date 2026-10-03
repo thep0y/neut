@@ -41,10 +41,8 @@ export const Checkbox = (props: CheckboxProps) => {
    * 统一从 input 走一遍原生点击，这样用户点 span、点 label（原生转发到 input）
    * 两条路径完全一致，不会各改一次状态导致净变化为 0、onChange 触发两次。
    */
-  const handleClick = (event: MouseEvent) => {
+  const handleClick = () => {
     if (local.disabled) return;
-    // 只代理"真的点在可见控件上"的点击（label 转发来的那次 target 是隐藏 input）。
-    if (event.target !== event.currentTarget) return;
     // 若存在某个 <label> 的 control 正是我们的隐藏 input，浏览器已经会为
     // 每次 label 点击转发一次原生点击；此时 span 再代理就会把同一个 input
     // 点两遍（状态翻两次回到原值、onChange 也触发两次）。

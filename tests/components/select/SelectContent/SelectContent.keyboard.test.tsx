@@ -166,3 +166,28 @@ describe("SelectContent - 点击外部", () => {
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 });
+
+describe("SelectContent - 打开时的动画状态", () => {
+  it("data-state 比可见性晚一帧变 open（给选中项对齐留时间）", async () => {
+    // animationState 走 requestAnimationFrame：打开瞬间仍是 closed，
+    // 下一帧才变 open，避免"动画播到一半才跳到正确位置"
+    vi.useFakeTimers();
+    try {
+      render(() => (
+        <Select defaultOpen>
+          <SelectContent data-testid="animated">
+            <SelectItem value="apple">苹果</SelectItem>
+          </SelectContent>
+        </Select>
+      ));
+      await vi.advanceTimersByTimeAsync(0);
+      const content = () => document.querySelector('[data-testid="animated"]');
+      expect(content()?.getAttribute("data-state")).toBe("closed");
+
+      await vi.advanceTimersByTimeAsync(16);
+      expect(content()?.getAttribute("data-state")).toBe("open");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
