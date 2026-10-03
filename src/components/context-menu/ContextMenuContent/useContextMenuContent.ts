@@ -1,37 +1,24 @@
 import {
-  createEffect,
-  createMemo,
   createSignal,
   createUniqueId,
   onCleanup,
   type Accessor,
 } from "solid-js";
-import {
-  containingBlockOffset,
-  createPositioner,
-  flip,
-  hide,
-  offset,
-  shift,
-  size,
-  type Placement,
-  type Positioner,
-  type ReferenceElement,
-} from "~/lib";
+import type { Placement, Positioner, ReferenceElement } from "~/lib";
 import type {
   ContextMenuAlign,
   ContextMenuContextValue,
   ContextMenuOpenPopupState,
-  ContextMenuItemEntry,
   ContextMenuOrientation,
   ContextMenuPopupContextValue,
   ContextMenuSide,
   ContextMenuSubmenuContextValue,
 } from "../context-menu.types";
-import { toContextMenuPlacement } from "../context-menu.utils";
-
-/** 键盘字符导航的缓冲窗口(毫秒) */
-const TYPEAHEAD_TIMEOUT = 500;
+import { handleMenuKeyDown } from "../context-menu.keyboard";
+import { createHighlight } from "./context-menu.highlight";
+import { createPopupPositioner } from "./context-menu.positioner";
+import { createItemCollection } from "./context-menu.popup-items";
+import { createTypeahead } from "../context-menu.typeahead";
 
 export interface CreateContextMenuPopupOptions {
   root: ContextMenuContextValue;
@@ -94,210 +81,61 @@ export function createContextMenuPopupRuntime(
 
   const [popupEl, setPopupEl] = createSignal<HTMLElement>();
   const [positionerEl, setPositionerEl] = createSignal<HTMLElement>();
-  const [items, setItems] = createSignal<ContextMenuItemEntry[]>([]);
-  const [activeId, setActiveIdInternal] = createSignal<string | undefined>();
+  const { registerItem, orderedItems, enabledItems } = createItemCollection();
   const [openPopupState, setOpenPopupState] =
     createSignal<ContextMenuOpenPopupState>();
-  const [availableHeight, setAvailableHeight] = createSignal<number>();
-
   const menuId = `context-menu-popup-${createUniqueId()}`;
 
-  const pos = createPositioner(options.reference, positionerEl, {
-    placement: () =>
-      toContextMenuPlacement(options.side(), options.align(), options.dir()),
-    strategy: "fixed",
-    middleware: () => [
-      offset({
-        mainAxis: options.sideOffset(),
-        crossAxis: options.alignOffset(),
-      }),
-      flip(),
-      shift({ padding: options.collisionPadding() }),
-      size({
-        padding: options.collisionPadding(),
-        apply: ({ availableHeight }) => setAvailableHeight(availableHeight),
-      }),
-      hide(),
-      containingBlockOffset(),
-    ],
+  const { pos, availableHeight, placement } = createPopupPositioner({
+    reference: options.reference,
+    positionerElement: positionerEl,
+    side: options.side,
+    align: options.align,
+    dir: options.dir,
+    sideOffset: options.sideOffset,
+    alignOffset: options.alignOffset,
+    collisionPadding: options.collisionPadding,
   });
-
-  // 按 DOM 顺序排序,避免调用方用 <For> 动态生成菜单项时顺序错乱。
-  const orderedItems = createMemo(() => {
-    const list = items();
-    return [...list].sort((a, b) => {
-      if (a.element === b.element) return 0;
-      const relation = a.element.compareDocumentPosition(b.element);
-      return relation & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
-    });
-  });
-
-  const enabledItems = createMemo(() =>
-    orderedItems().filter((item) => !item.disabled()),
-  );
-
-  const activeEntry = () =>
-    orderedItems().find((item) => item.id === activeId());
-
-  const registerItem = (entry: ContextMenuItemEntry) => {
-    setItems((list) => [...list, entry]);
-    return () => setItems((list) => list.filter((it) => it.id !== entry.id));
-  };
 
   const closeOpenPopup = () => setOpenPopupState(undefined);
 
-  /** 高亮某项;若高亮切到了别的项,顺手关掉已展开的子菜单 */
-  const setActiveId = (id: string | undefined) => {
-    setActiveIdInternal(id);
-    const state = openPopupState();
-    if (state && state.id !== id) closeOpenPopup();
-  };
-
-  const moveActive = (delta: 1 | -1) => {
-    const list = enabledItems();
-    if (list.length === 0) return;
-    const currentIndex = list.findIndex((item) => item.id === activeId());
-    let nextIndex: number;
-    if (currentIndex === -1) {
-      nextIndex = delta > 0 ? 0 : list.length - 1;
-    } else {
-      nextIndex = currentIndex + delta;
-      if (nextIndex < 0) {
-        nextIndex = loopFocus() ? list.length - 1 : 0;
-      } else if (nextIndex >= list.length) {
-        nextIndex = loopFocus() ? 0 : list.length - 1;
-      }
-    }
-    setActiveId(list[nextIndex].id);
-  };
-
-  const focusFirst = () => {
-    const list = enabledItems();
-    setActiveId(list.length > 0 ? list[0].id : undefined);
-  };
-
-  const focusLast = () => {
-    const list = enabledItems();
-    setActiveId(list.length > 0 ? list[list.length - 1].id : undefined);
-  };
-
-  // 高亮项变化时滚动到可见区域
-  createEffect(() => {
-    const id = activeId();
-    if (!id) return;
-    orderedItems()
-      .find((item) => item.id === id)
-      ?.element.scrollIntoView({ block: "nearest" });
+  const highlight = createHighlight({
+    orderedItems,
+    enabledItems,
+    loopFocus,
+    openPopupId: () => openPopupState()?.id,
+    closeOpenPopup,
+    open: options.open,
   });
-
-  // 关闭时清空高亮与子菜单状态,保证下次打开重新从第一项开始。
-  createEffect(() => {
-    if (!options.open()) {
-      setActiveIdInternal(undefined);
-      setOpenPopupState(undefined);
-    }
-  });
+  const {
+    activeId,
+    activeEntry,
+    setActiveId,
+    moveActive,
+    focusFirst,
+    focusLast,
+  } = highlight;
 
   // --- 键盘字符导航 ---
-  let typeaheadBuffer = "";
-  let typeaheadTimer: number | undefined;
-
-  const runTypeahead = (char: string) => {
-    typeaheadBuffer += char.toLowerCase();
-    if (typeaheadTimer !== undefined) window.clearTimeout(typeaheadTimer);
-    typeaheadTimer = window.setTimeout(() => {
-      typeaheadBuffer = "";
-      typeaheadTimer = undefined;
-    }, TYPEAHEAD_TIMEOUT);
-
-    const match = enabledItems().find((item) =>
-      item.label().toLowerCase().startsWith(typeaheadBuffer),
-    );
-    if (match) setActiveId(match.id);
-  };
-
-  onCleanup(() => {
-    if (typeaheadTimer !== undefined) window.clearTimeout(typeaheadTimer);
+  const typeahead = createTypeahead({
+    candidates: () =>
+      enabledItems().map((item) => ({ id: item.id, label: item.label() })),
+    onMatch: (id) => setActiveId(id),
   });
 
-  const onKeyDown = (e: KeyboardEvent) => {
-    const submenu = options.submenu;
-    const horizontal = orientation() === "horizontal";
+  onCleanup(() => typeahead.dispose());
 
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        moveActive(1);
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        moveActive(-1);
-        break;
-      case "ArrowRight": {
-        if (horizontal) {
-          e.preventDefault();
-          moveActive(1);
-          break;
-        }
-        const entry = activeEntry();
-        if (entry?.hasPopup()) {
-          e.preventDefault();
-          entry.openPopup?.("list-navigation", e);
-        }
-        break;
-      }
-      case "ArrowLeft": {
-        if (horizontal) {
-          e.preventDefault();
-          moveActive(-1);
-          break;
-        }
-        if (submenu) {
-          e.preventDefault();
-          // 阻止冒泡,避免父级浮层也处理这次按键
-          e.stopPropagation();
-          submenu.closeSubmenu("list-navigation", e, true);
-        }
-        break;
-      }
-      case "Home":
-        e.preventDefault();
-        focusFirst();
-        break;
-      case "End":
-        e.preventDefault();
-        focusLast();
-        break;
-      case "Enter":
-      case " ": {
-        e.preventDefault();
-        const entry = activeEntry();
-        if (entry && !entry.disabled()) entry.activate();
-        break;
-      }
-      case "Escape": {
-        e.preventDefault();
-        e.stopPropagation();
-        if (submenu && !submenu.closeParentOnEsc()) {
-          submenu.closeSubmenu("escape-key", e, true);
-        } else {
-          root.closeAll("escape-key", e);
-        }
-        break;
-      }
-      case "Tab": {
-        // 关闭菜单并把焦点交还触发器,浏览器随后的 Tab 会从触发器之后继续
-        e.preventDefault();
-        root.closeAll("focus-out", e);
-        break;
-      }
-      default: {
-        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-          runTypeahead(e.key);
-        }
-      }
-    }
-  };
+  const onKeyDown = (event: KeyboardEvent) =>
+    handleMenuKeyDown(event, {
+      horizontal: orientation() === "horizontal",
+      activeEntry,
+      moveActive,
+      focusFirst,
+      focusLast,
+      typeahead: (char) => typeahead.handle(char),
+      submenu: options.submenu,
+      closeAll: (reason, e) => root.closeAll(reason, e),
+    });
 
   const popupCtx: ContextMenuPopupContextValue = {
     root,
@@ -340,7 +178,7 @@ export function createContextMenuPopupRuntime(
     positionerEl,
     setPositionerEl: (el) => setPositionerEl(el),
     availableHeight,
-    placement: pos.placement,
+    placement,
     onKeyDown,
     setupOnOpen,
   };

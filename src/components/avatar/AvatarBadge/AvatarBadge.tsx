@@ -16,6 +16,7 @@ export const AvatarBadge = (props: AvatarBadgeProps) => {
         "group-data-[size=lg]/avatar:size-3 group-data-[size=lg]/avatar:[&>svg]:size-2",
         local.class,
       )}
+      classList={local.classList}
       {...others}
     />
   );

@@ -28,6 +28,7 @@ export const BreadcrumbLink = <T extends ValidComponent = "a">(
       href={local.href}
       data-slot="breadcrumb-link"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

@@ -14,6 +14,7 @@ export const PaginationNext = (props: PaginationNextProps) => {
       aria-label="Go to next page"
       size="md"
       class={clsx("pr-1.5!", local.class)}
+      classList={local.classList}
       {...others}
     >
       <span class="hidden sm:block">{local.text}</span>

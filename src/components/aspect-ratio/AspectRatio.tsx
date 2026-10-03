@@ -11,6 +11,7 @@ export const AspectRatio = (props: AspectRatioProps) => {
       data-slot="aspect-ratio"
       style={{ "--ratio": props.ratio }}
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

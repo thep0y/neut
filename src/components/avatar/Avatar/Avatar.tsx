@@ -14,6 +14,7 @@ export const Avatar = (props: AvatarProps) => {
   ]);
 
   const [imageLoadFailed, setImageLoadFailed] = createSignal(false);
+  const [imagePresent, setImagePresent] = createSignal(false);
 
   return (
     <span
@@ -23,9 +24,17 @@ export const Avatar = (props: AvatarProps) => {
         "group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-neutral-200 dark:after:border-white/10 after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten",
         local.class,
       )}
+      classList={local.classList}
       {...others}
     >
-      <AvatarContext.Provider value={{ imageLoadFailed, setImageLoadFailed }}>
+      <AvatarContext.Provider
+        value={{
+          imageLoadFailed,
+          setImageLoadFailed,
+          imagePresent,
+          setImagePresent,
+        }}
+      >
         {local.children}
       </AvatarContext.Provider>
     </span>

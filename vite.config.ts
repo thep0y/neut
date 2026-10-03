@@ -46,7 +46,19 @@ export default defineConfig({
     devtools(),
     solidPlugin(),
     tailwindcss(),
-    dts({ entryRoot: "src" }),
+    dts({
+      entryRoot: "src",
+      // 测试用例在 tests/ 下。tsconfig 的 include 含 tests（为了让 tsc 检查测试），
+      // 而 unplugin-dts 会按 tsconfig 的文件列表生成声明，所以这里必须显式排除，
+      // 否则会把 tests/**/*.d.ts 一起发布出去（src/** 的排除保留为兜底）。
+      exclude: [
+        "tests/**",
+        "src/**/*.test.ts",
+        "src/**/*.test.tsx",
+        "src/**/*.spec.ts",
+        "src/**/*.spec.tsx",
+      ],
+    }),
   ],
   server: {
     port: 7789,

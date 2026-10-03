@@ -6,6 +6,9 @@ dist
 .vinxi
 app.config.timestamp_*.js
 
+# 测试覆盖率报告（vitest --coverage 生成物）
+coverage
+
 # Environment
 .env
 .env*.local

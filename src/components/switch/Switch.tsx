@@ -22,6 +22,8 @@ export const Switch = (props: SwitchProps) => {
   );
 
   const handleClick = () => {
+    if (local.disabled) return;
+
     if (local.checked !== undefined) {
       setInternalChecked(local.checked);
       local.onCheckedChange?.(!local.checked);
@@ -46,7 +48,9 @@ export const Switch = (props: SwitchProps) => {
       role="switch"
       tabIndex={0}
       aria-checked={checked()}
+      aria-disabled={local.disabled}
       class={clsx(classes.switch, local.class)}
+      classList={local.classList}
       onClick={handleClick}
       {...others}
     >

@@ -10,6 +10,7 @@ export const ProgressLabel = (props: ProgressLabelProps) => {
     <span
       data-slot="progress-label"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

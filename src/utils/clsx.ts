@@ -1,5 +1,1 @@
-import { twMerge } from "tailwind-merge";
-
-export const clsx = (...classes: (string | undefined | false)[]): string => {
-  return twMerge(classes.filter(Boolean));
-};
+export { cn as clsx } from "cn";

@@ -5,10 +5,14 @@ export function computeMetrics(
   scroll: number,
   scrollSize: number,
 ): ScrollMetrics {
-  const scrollable = scrollSize > client + 1; // +1 to absorb sub-pixel rounding
+  // +1 吸收亚像素舍入：仅超出 1px 以内视为不可滚动
+  const scrollable = scrollSize > client + 1;
   if (!scrollable) return { thumbRatio: 1, thumbOffset: 0, scrollable: false };
-  const thumbRatio = client / scrollSize;
+  // scrollable 蕴含 maxScroll >= 2，因此这里不需要再兜底除零
   const maxScroll = scrollSize - client;
-  const thumbOffset = maxScroll > 0 ? scroll / maxScroll : 0;
-  return { thumbRatio, thumbOffset, scrollable };
+  return {
+    thumbRatio: client / scrollSize,
+    thumbOffset: scroll / maxScroll,
+    scrollable,
+  };
 }

@@ -29,7 +29,6 @@ export function QuestionnaireItem(props: QuestionnaireItemProps) {
     multiple: () => local.multiple,
     disabled: () => local.disabled,
     invalid: () => local.invalid,
-    onStatusChange: (status) => local.onStatusChange?.(status),
   });
 
   let lastStatus: QuestionnaireItemStatus | undefined;

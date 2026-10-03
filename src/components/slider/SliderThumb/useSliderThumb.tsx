@@ -36,6 +36,13 @@ export const useSliderThumb = (index: number) => {
     } else if (decreaseKeys.includes(e.key)) {
       e.preventDefault();
       ctx.updateValue(index, value() - step);
+    } else if (e.key === "PageUp") {
+      // 与 Shift+方向键一致：一步 10 个 step
+      e.preventDefault();
+      ctx.updateValue(index, value() + ctx.step() * 10);
+    } else if (e.key === "PageDown") {
+      e.preventDefault();
+      ctx.updateValue(index, value() - ctx.step() * 10);
     } else if (e.key === "Home") {
       e.preventDefault();
       ctx.updateValue(index, ctx.min());
@@ -45,5 +52,5 @@ export const useSliderThumb = (index: number) => {
     }
   };
 
-  return { positionStyle, handleKeyDown };
+  return { positionStyle, handleKeyDown, value };
 };

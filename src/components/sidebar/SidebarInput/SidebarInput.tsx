@@ -11,6 +11,7 @@ export const SidebarInput = (props: SidebarInputProps) => {
       data-slot="sidebar-input"
       data-sidebar="input"
       class={clsx("h-8 w-full bg-background shadow-none", local.class)}
+      classList={local.classList}
       {...others}
     />
   );

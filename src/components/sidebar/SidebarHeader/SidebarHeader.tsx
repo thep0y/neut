@@ -10,6 +10,7 @@ export const SidebarHeader = (props: SidebarHeaderProps) => {
       data-slot="sidebar-header"
       data-sidebar="header"
       class={clsx("flex flex-col gap-2 p-2", local.class)}
+      classList={local.classList}
       {...others}
     />
   );

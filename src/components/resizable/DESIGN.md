@@ -26,12 +26,28 @@ Solid 做了「按 id 的细粒度更新」:尺寸存在 `createStore` 的 `{ [i
 | 关注点 | 文件 |
 | --- | --- |
 | 类型契约 | `resizable.types.ts` |
-| 尺寸解析 / 归一化数学 | `resizable.utils.ts`(`parseSize`/`clamp`/`roundPercent`/`normalizeSizes`) |
+| 尺寸解析 / 归一化数学 | `resizable.utils.ts`(`parseSize`/`roundPercent`/`normalizeSizes`) |
+| **相邻面板尺寸约束(纯)** | `resizable.resize.ts`(`resolvePairSize`/`pairBounds`/`distributeInitialSizes`) |
+| **约束代数(纯)** | `resizable.constraints.ts`(`effectiveMin`/`isCollapsedSize`/`constraintBounds`/`pairConstraintsOf`) |
+| **面板注册表** | `resizable.registry.ts`(`createPanelRegistry`:注册顺序、跳过非面板节点解析相邻、前后邻居) |
+| **布局持久化(纯)** | `resizable.storage.ts`(`storageKey`/`resolveStorage`/`persistLayout`/`readSavedLayout`) |
 | context | `resizable.context.ts` |
-| 布局引擎 | `useResizablePanelGroup.ts`(注册、约束、拖拽/键盘、命令式、持久化) |
+| 布局引擎 | `useResizablePanelGroup.ts`(注册副作用、尺寸分配、拖拽/键盘编排、命令式、调用上面的纯模块与注册表) |
 | 根部件 | `ResizablePanelGroup/`(Provider + 框架) |
 | 面板部件 | `ResizablePanel/`(注册 meta、映射 flex-grow、panelRef) |
 | 分隔条部件 | `ResizableHandle/`(`useResizableHandle.ts` 指针/键盘、`.styles.ts` 类名) |
+
+> 2026-09 重构:把原先内联在 `useResizablePanelGroup.ts`(403 行)里的
+> 「相邻面板约束 + 折叠吸附」「storage 持久化」两块抽成纯模块。
+> 前者是约束/吸附分支最密集、最容易出 bug 的地方,拆出来后
+> `min` / `max` / `collapsible` 的每种组合都能直接断言(现已三项 100% 覆盖);
+> 后者覆盖了隐私模式抛错、JSON 损坏、非对象取值等全部异常分支。
+>
+> 2026-09 二次重构:引擎里的「约束代数」与「面板注册表」再各拆一层——
+> `resizable.constraints.ts` 只做数字与结构换算(边界值可单独断言),
+> `resizable.registry.ts` 只维护「元素 → meta + 注册顺序」(尺寸经 `getSize` 注入)。
+> 引擎由 367 行降到 320 行;注册时的副作用(首次初始化 / 动态新增归一化 / 卸载清理)
+> 仍是引擎自己的职责。
 
 ## 3. 已实现行为
 
@@ -44,6 +60,9 @@ Solid 做了「按 id 的细粒度更新」:尺寸存在 `createStore` 的 `{ [i
   中较近的一端;`collapsedSize` 默认 0。
 - **键盘**:方向键按 `keyboardResizeBy`(默认 10px)调整;`Home`/`End` 到两端;
   `Enter`/`Space` 切换相邻可折叠面板;`role="separator"` + `aria-orientation`。
+  分隔条的 `aria-valuenow`(取整后的前一个面板尺寸)与 `aria-valuemax`(相邻两者之和)
+  会跟随尺寸变化,并且在面板挂载/卸载后重算——引擎在注册表变化时自增一个版本号,
+  `resolveAdjacent` 读取它建立响应式依赖(此前首屏只求值一次,值会停在 0)。
 - **光标与触摸**:handle 按方向设置双箭头光标(`cursor-ew-resize` / `cursor-ns-resize`,
   与 react-resizable-panels 在 Chrome/Firefox 下的选择一致)并加 `touch-none`(避免触摸拖动
   触发滚动);拖拽期间注入 `*, *:hover { cursor: … !important }` 全局样式并禁用文本选择,

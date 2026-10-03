@@ -77,7 +77,9 @@ export function NumberInput(props: NumberInputProps): JSX.Element {
   ) => {
     const clamped = clamp(roundToStep(next, step()), props.min, props.max);
     commit(clamped, reason, event);
-    setText(format(clamped));
+    // 受控模式下文本交给"外部值变化"的 effect 同步：调用方不回写时，
+    // 文本框就不该自作主张地显示一个并未被接受的值
+    if (!isControlled()) setText(format(clamped));
   };
 
   const stepBy = (
@@ -97,8 +99,12 @@ export function NumberInput(props: NumberInputProps): JSX.Element {
   };
 
   const handleBlur = () => {
+    // 必须先取用户敲进去的文本再改 focused：置为 false 会让"外部值变化则同步文本"
+    // 的 effect 同步跑起来，把 text 改写成 format(value())，于是这里就会解析
+    // 一个被覆盖过的字符串（自定义 format 时甚至直接解析失败、把输入清空）
+    const raw = text();
     setFocused(false);
-    const parsed = parse(text());
+    const parsed = parse(raw);
     if (parsed === null) {
       if (value() !== null) commit(null, "blur");
       setText(format(null));

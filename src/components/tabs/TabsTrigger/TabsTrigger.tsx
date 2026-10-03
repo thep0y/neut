@@ -2,7 +2,7 @@ import { createUniqueId, onCleanup, onMount, splitProps } from "solid-js";
 import { clsx } from "~/utils";
 import { useTabsContext } from "../Tabs/Tabs.context";
 import { useTabsListContext } from "../TabsList/TabsList.context";
-import { callEventHandler } from "../Tabs/call-event-handler";
+import { callEventHandler } from "~/utils";
 import { tabsTriggerStyles } from "./TabsTrigger.styles";
 import type { TabsTriggerProps } from "./TabsTrigger.types";
 

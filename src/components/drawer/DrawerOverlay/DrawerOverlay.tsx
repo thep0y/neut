@@ -29,13 +29,14 @@ export function DrawerOverlay(props: DrawerOverlayProps) {
           target: Element;
         },
       ) => {
+        // 只转发调用方的 onClick。
+        // 「点遮罩关闭」由 Drawer 根组件在 document 上的 pointerdown 捕获统一处理——
+        // 这里再关一次会让一次真实点击产生两次 onOpenChange（pointerdown + click），
+        // 而且第二次是在已经关闭之后重复回调。
         const userOnClick = local.onClick as
           | ((e: typeof event) => void)
           | undefined;
         userOnClick?.(event);
-        if (!ctx.disablePointerDismissal()) {
-          ctx.setOpen(false, "outside-press", event);
-        }
       }}
     />
   );

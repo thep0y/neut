@@ -1,7 +1,7 @@
 import { mergeProps, onCleanup, onMount, splitProps, type JSX } from "solid-js";
 import { clsx } from "~/utils";
 import { toggleVariants } from "~/components/toggle/Toggle/Toggle.styles";
-import { callEventHandler } from "../call-event-handler";
+import { callEventHandler } from "~/utils";
 import { useToggleGroupContext } from "../ToggleGroup/ToggleGroup.context";
 import type { ToggleGroupValue } from "../ToggleGroup/ToggleGroup.types";
 import { toggleGroupItemVariants } from "./ToggleGroupItem.styles";

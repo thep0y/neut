@@ -16,6 +16,7 @@ import {
 } from "./SidebarProvider.consts";
 import { SidebarContext } from "./SidebarProvider.context";
 import { clsx } from "~/utils";
+import { useIsMobile } from "./useIsMobile";
 
 export const SidebarProvider = (props: SidebarProviderProps) => {
   const merged = mergeProps({ defaultOpen: true } as const, props);
@@ -29,8 +30,7 @@ export const SidebarProvider = (props: SidebarProviderProps) => {
     "children",
   ]);
 
-  // FIXME: Remove hardcoded value and use a responsive breakpoint instead.
-  const isMobile = false;
+  const isMobile = useIsMobile();
 
   const [openMobile, setOpenMobile] = createSignal(false);
 
@@ -53,7 +53,7 @@ export const SidebarProvider = (props: SidebarProviderProps) => {
 
   // Helper to toggle the sidebar.
   const toggleSidebar = () =>
-    isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
+    isMobile() ? setOpenMobile((open) => !open) : setOpen((open) => !open);
 
   createEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -81,7 +81,7 @@ export const SidebarProvider = (props: SidebarProviderProps) => {
         state,
         open,
         setOpen,
-        isMobile,
+        isMobile: isMobile(),
         openMobile,
         setOpenMobile,
         toggleSidebar,

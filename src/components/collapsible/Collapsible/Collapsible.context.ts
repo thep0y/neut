@@ -16,9 +16,7 @@ export const CollapsibleContext = createContext<CollapsibleContextValue>();
 export const useCollapsibleContext = () => {
   const ctx = useContext(CollapsibleContext);
   if (!ctx) {
-    throw new Error(
-      "useCollapsibleContext must be used within a CollapsibleProvider",
-    );
+    throw new Error("useCollapsibleContext 必须用在 <Collapsible> 内部");
   }
   return ctx;
 };

@@ -1,3 +1,4 @@
+// classlist-opt-out: Dynamic 的 component 是 Button（子组件会自己处理 classList），实际不丢
 import type { ValidComponent } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { useSelectTrigger } from "./useSelectTrigger";

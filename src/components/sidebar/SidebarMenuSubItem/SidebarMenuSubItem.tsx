@@ -10,6 +10,7 @@ export const SidebarMenuSubItem = (props: SidebarMenuSubItemProps) => {
       data-slot="sidebar-menu-sub-item"
       data-sidebar="menu-sub-item"
       class={clsx("group/menu-sub-item relative", local.class)}
+      classList={local.classList}
       {...others}
     />
   );

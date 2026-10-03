@@ -11,6 +11,7 @@ export const SidebarSeparator = (props: SidebarSeparatorProps) => {
       data-slot="sidebar-separator"
       data-sidebar="separator"
       class={clsx("mx-2 w-auto bg-sidebar-border", local.class)}
+      classList={local.classList}
       {...others}
     />
   );

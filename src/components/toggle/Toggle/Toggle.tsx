@@ -50,7 +50,14 @@ export function Toggle(props: ToggleProps): JSX.Element {
         }),
       )}
       onClick={(e) => {
-        (local.onClick as any)?.(e);
+        // onClick 的类型是 JSX.EventHandlerUnion，含 Solid 的 [handler, data] 形式；
+        // 直接 `.?(e)` 会让数组形式的 handler 静默失效（不抛错、状态也不翻转）
+        const handler = local.onClick as
+          | ((e: MouseEvent) => void)
+          | [(data: unknown, e: MouseEvent) => void, unknown]
+          | undefined;
+        if (Array.isArray(handler)) handler[0](handler[1], e);
+        else handler?.(e);
         if (!e.defaultPrevented) setPressed(!pressed());
       }}
       {...rest}

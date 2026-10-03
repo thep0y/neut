@@ -56,8 +56,11 @@ export function Drawer(props: DrawerProps): JSX.Element {
   ) => {
     if (next === open() && next) return;
     const details = createDrawerChangeEventDetails(reason, event, trigger());
-    if (props.open === undefined) setInternalOpen(next);
+    // 先回调再落状态：调用方可以在 details.cancel() 里否决本次变更
+    // （对齐 Base UI 的 ChangeEventDetails 语义，与 ToggleGroup / TimePicker 一致）
     props.onOpenChange?.(next, details);
+    if (details.isCanceled) return;
+    if (props.open === undefined) setInternalOpen(next);
   };
 
   // Modal 打开时锁定页面滚动，浮层内部仍可滚动

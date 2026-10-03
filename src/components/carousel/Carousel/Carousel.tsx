@@ -1,4 +1,4 @@
-import { splitProps } from "solid-js";
+import { createSignal, splitProps } from "solid-js";
 import { clsx } from "~/utils";
 import { CarouselContext } from "./Carousel.context";
 import type { CarouselProps } from "./Carousel.types";
@@ -15,7 +15,9 @@ export const Carousel = (props: CarouselProps) => {
   );
 
   const state = useCarousel(options);
-  let rootRef: HTMLElement | undefined;
+  // 必须是 signal：ref 回调在挂载时才赋值，若按值传出去，
+  // 键盘监听会拿到 undefined 且永不补挂（键盘导航曾因此完全失效）
+  const [rootRef, setRootRef] = createSignal<HTMLElement | undefined>();
 
   useAutoPlay(
     options.autoPlay ?? false,
@@ -23,17 +25,19 @@ export const Carousel = (props: CarouselProps) => {
     state.scrollNext,
   );
 
-  useKeyboardNavigation(
-    rootRef,
-    state.orientation,
-    state.scrollPrev,
-    state.scrollNext,
-  );
+  useKeyboardNavigation({
+    ref: rootRef,
+    orientation: state.orientation,
+    scrollPrev: state.scrollPrev,
+    scrollNext: state.scrollNext,
+    scrollToStart: () => state.scrollTo(0),
+    scrollToEnd: () => state.scrollTo(Math.max(state.itemCount() - 1, 0)),
+  });
 
   return (
     <CarouselContext.Provider value={state}>
       <section
-        ref={rootRef}
+        ref={(el) => setRootRef(el)}
         data-slot="carousel"
         aria-label={local["aria-label"] ?? "Carousel"}
         aria-roledescription="carousel"

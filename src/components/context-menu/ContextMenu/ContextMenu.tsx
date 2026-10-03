@@ -82,11 +82,12 @@ export function ContextMenu(props: ContextMenuProps): JSX.Element {
     reason: ContextMenuChangeEventReason,
     event?: Event,
   ) => {
+    const details = createChangeEventDetails(reason, event, trigger());
+    // 先回调再落状态：调用方可以在 details.cancel() 里否决本次变更
+    // （与 ToggleGroup / TimePicker / Drawer 一致，对齐 Base UI 的语义）
+    props.onOpenChange?.(next, details);
+    if (details.isCanceled) return;
     if (props.open === undefined) setInternalOpen(next);
-    props.onOpenChange?.(
-      next,
-      createChangeEventDetails(reason, event, trigger()),
-    );
   };
 
   const openAt = (
@@ -104,8 +105,11 @@ export function ContextMenu(props: ContextMenuProps): JSX.Element {
   };
 
   const closeAll = (reason: ContextMenuChangeEventReason, event?: Event) => {
-    if (!open()) return;
+    const wasOpen = open();
+    if (!wasOpen) return;
     commit(false, reason, event);
+    // cancel() 之后菜单并没有真的关闭，因此也不该动焦点
+    if (open() === wasOpen) return;
     // 点击菜单外部时焦点应该留在用户刚点的目标上,不能把焦点抢回触发器。
     if (reason !== "outside-press" && finalFocus()) restoreFocus();
   };

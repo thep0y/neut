@@ -1,3 +1,6 @@
+import type { JSX } from "solid-js";
+import { clamp, toKebabCase } from "~/utils";
+
 /** 解析尺寸:number/`"25%"`/`"25"` 都按百分比处理(不支持 px,按需再扩展) */
 export function parseSize(
   value: number | string | undefined,
@@ -8,14 +11,8 @@ export function parseSize(
     return Number.isFinite(value) ? value : fallback;
   }
   const trimmed = value.trim();
-  const numeric = trimmed.endsWith("%")
-    ? Number.parseFloat(trimmed)
-    : Number.parseFloat(trimmed);
+  const numeric = Number.parseFloat(trimmed);
   return Number.isFinite(numeric) ? numeric : fallback;
-}
-
-export function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
 }
 
 /** 百分比保留 2 位小数,避免 onLayoutChange/layout 输出出现长尾浮点 */
@@ -75,8 +72,28 @@ export function normalizeSizes(
   return result;
 }
 
-/** camelCase -> kebab-case;CSS 自定义属性(--x)原样保留 */
-export function toKebabCase(key: string): string {
-  if (key.startsWith("--")) return key;
-  return key.replace(/[A-Z]/g, (char) => `-${char.toLowerCase()}`);
+/**
+ * 面板的 `style` 文本：`flex-grow` 承载百分比尺寸，配 `flex-shrink/basis`
+ * 保证面板只按权重分配主轴空间。
+ *
+ * 用字符串而非对象声明 style，是因为模板字面量会被 Solid 包进 effect，
+ * 尺寸变化时能可靠更新；对象形式里的 getter 不保证被编译器识别为动态。
+ * 调用方传入的 style 支持字符串原样拼接或对象（键转 kebab-case，空值跳过）。
+ */
+export function buildPanelStyleText(
+  size: number,
+  style?: string | JSX.CSSProperties,
+): string {
+  const parts = [`flex-grow:${size}`, "flex-shrink:1", "flex-basis:0%"];
+  if (typeof style === "string") {
+    parts.push(style);
+    return parts.join(";");
+  }
+  if (style && typeof style === "object") {
+    for (const [key, value] of Object.entries(style)) {
+      if (value === null || value === undefined) continue;
+      parts.push(`${toKebabCase(key)}:${value}`);
+    }
+  }
+  return parts.join(";");
 }

@@ -4,7 +4,7 @@ import { clsx } from "~/utils";
 import { tabsListVariants } from "./TabsList.styles";
 import { useTabsContext } from "../Tabs/Tabs.context";
 import { useTabsKeyboard } from "../Tabs/useTabsKeyboard";
-import { callEventHandler } from "../Tabs/call-event-handler";
+import { callEventHandler } from "~/utils";
 import { TabsListContext } from "./TabsList.context";
 
 export const TabsList = (props: TabsListProps) => {
@@ -36,8 +36,10 @@ export const TabsList = (props: TabsListProps) => {
         classList={local.classList}
         {...others}
         onKeyDown={(e) => {
-          handleKeyDown(e);
+          // 与 ToggleGroup / 菜单项保持一致:先跑用户处理器,
+          // 用户 preventDefault 表示"我自己处理",此时不再接管方向键。
           callEventHandler(events.onKeyDown, e);
+          if (!e.defaultPrevented) handleKeyDown(e);
         }}
       />
     </TabsListContext.Provider>

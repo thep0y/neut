@@ -12,7 +12,11 @@ on:
             - "bunfig.toml"
             - "tsconfig.json"
             - "vite.config.ts"
+            - "vitest.config.ts"
+            - "vitest.setup.ts"
             - "biome.json"
+            - "TESTING.md"
+            - ".github/scripts/**"
 
 env:
     CARGO_TERM_COLOR: always
@@ -22,8 +26,15 @@ jobs:
     frontend-check:
         name: "Frontend Code Check"
         runs-on: ubuntu-24.04
+        # 需要在 PR 上发/更新覆盖率评论（fork PR 只有只读 token，见下面的步骤说明）
+        permissions:
+            contents: read
+            pull-requests: write
         steps:
+            # fetch-depth: 0 让脚本能 `git diff <base>...HEAD` 列出本 PR 改动的文件
             - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
 
             - name: Setup Bun
               uses: oven-sh/setup-bun@v2
@@ -49,8 +60,55 @@ jobs:
             - name: Run check script
               run: bun run check
 
+            # 门禁：覆盖率四项指标必须 100%（见 TESTING.md §1/§9）
+            - name: Test with coverage
+              id: coverage
+              run: bun run test:coverage
+
+            # 反作弊检查：禁止 .only / .skip 与覆盖率屏蔽注释（见 TESTING.md §4.7/§9）
+            - name: Guard against test cheating
+              run: |
+                if grep -rnE '(it|describe|test)\.(only|skip|todo)\(' tests --include='*.test.ts' --include='*.test.tsx'; then
+                  echo "::error::检测到 .only / .skip / .todo，见 TESTING.md §4.7"
+                  exit 1
+                fi
+                if grep -rnE '(istanbul|v8|c8) ignore' tests --include='*.test.ts' --include='*.test.tsx'; then
+                  echo "::error::检测到覆盖率屏蔽注释，见 TESTING.md §9"
+                  exit 1
+                fi
+
+            # 组件约定守卫：splitProps 拿走了 classList 就必须真正应用（见 TESTING.md §9）
+            - name: Guard against dropped classList
+              run: node .github/scripts/check-classlist.mjs
+
             - name: Build frontend
               run: bun run build
+
+            # 把覆盖率结果作为 PR 评论（同一个 PR 上原地更新，不刷屏）。
+            # if: always() —— 正因为没达标才更需要看到报告；
+            # continue-on-error —— fork PR 的 token 是只读的，发不出去不该让门禁再多一条红。
+            - name: Post coverage comment
+              if: always() && github.event_name == 'pull_request'
+              continue-on-error: true
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_REPOSITORY: ${{ github.repository }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+                  BASE_SHA: ${{ github.event.pull_request.base.sha }}
+                  RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+                  COVERAGE_OUTCOME: ${{ steps.coverage.outcome }}
+              run: node .github/scripts/coverage-comment.mjs --post
+
+            # 覆盖率报告留档：评论里只放摘要，明细（lcov-report 的 HTML）在这里
+            - name: Upload coverage report
+              if: always()
+              continue-on-error: true
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-report
+                  path: coverage/
+                  retention-days: 7
+                  if-no-files-found: ignore
 
     # 自动合并PR
     auto-merge:

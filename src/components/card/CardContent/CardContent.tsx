@@ -10,6 +10,7 @@ export const CardContent = (props: CardContentProps) => {
     <div
       data-slot="card-content"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...rest}
     />
   );

@@ -10,6 +10,7 @@ export const AlertDialogMedia = (props: AlertDialogMediaProps) => {
     <div
       data-slot="alert-dialog-media"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

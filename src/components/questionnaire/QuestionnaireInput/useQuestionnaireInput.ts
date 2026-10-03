@@ -62,9 +62,11 @@ export function useQuestionnaireInput(options: Options) {
     if (!element) return;
     if (controlled()) {
       item.syncControlledAnswerSelection(id, hasText(value));
-    } else if (value !== undefined) {
-      element.defaultValue = String(value);
+      return;
     }
+    // 非受控：value 恒为 undefined（受控/非受控由同一个 accessor 判定），
+    // 因此这里没有"按 value 写 defaultValue"的分支——之前那句
+    // `else if (value !== undefined)` 永远不成立，已删除。
   });
 
   const handleChange = (event: Event) => {

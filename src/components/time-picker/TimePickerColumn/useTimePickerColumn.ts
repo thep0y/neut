@@ -11,6 +11,11 @@ import type {
   TimePickerUnitValue,
 } from "../TimePicker/TimePicker.types";
 import type { TimePickerColumnProps } from "./TimePickerColumn.types";
+import {
+  resolveColumnKeyAction,
+  resolveNextOptionIndex,
+  resolveNextUnit,
+} from "./time-picker.column-utils";
 
 /**
  * 单列 listbox 的交互算法:选项派生、选中值、跨列方向键、键盘提交、滚动入视。
@@ -51,25 +56,28 @@ export function useTimePickerColumn(props: () => TimePickerColumnProps) {
     });
   };
 
+  /** 提交列表两端的选项（Home / End） */
+  const commitBoundary = (boundary: "first" | "last", event: Event) => {
+    const list = options();
+    const option = boundary === "first" ? list[0] : list[list.length - 1];
+    if (option) commit(option.value, event);
+  };
+
   const move = (direction: 1 | -1, event: Event) => {
     const list = options();
-    if (list.length === 0) return;
     const index = list.findIndex((option) => option.value === selected());
-    const nextIndex =
-      index === -1
-        ? direction === 1
-          ? 0
-          : list.length - 1
-        : (index + direction + list.length) % list.length;
-    commit(list[nextIndex].value, event);
+    const nextIndex = resolveNextOptionIndex(index, direction, list.length);
+    if (nextIndex === -1) return;
+    commit(list[nextIndex]!.value, event);
   };
 
   const moveColumn = (direction: 1 | -1) => {
-    const units = ctx.units();
-    const index = units.indexOf(props().unit);
-    if (index === -1) return;
-    const step = ctx.dir() === "rtl" ? -direction : direction;
-    const next = units[(index + step + units.length) % units.length];
+    const next = resolveNextUnit(
+      ctx.units(),
+      props().unit,
+      direction,
+      ctx.dir() === "rtl",
+    );
     if (!next) return;
     ctx.setActiveUnit(next);
     ctx.getColumnElement(next)?.focus();
@@ -77,43 +85,15 @@ export function useTimePickerColumn(props: () => TimePickerColumnProps) {
 
   const onKeyDown = (event: KeyboardEvent) => {
     if (ctx.disabled() || ctx.readOnly()) return;
-    switch (event.key) {
-      case "ArrowDown":
-        event.preventDefault();
-        move(1, event);
-        break;
-      case "ArrowUp":
-        event.preventDefault();
-        move(-1, event);
-        break;
-      case "Home": {
-        event.preventDefault();
-        const first = options()[0];
-        if (first) commit(first.value, event);
-        break;
-      }
-      case "End": {
-        event.preventDefault();
-        const list = options();
-        const last = list[list.length - 1];
-        if (last) commit(last.value, event);
-        break;
-      }
-      case "ArrowRight":
-        event.preventDefault();
-        moveColumn(1);
-        break;
-      case "ArrowLeft":
-        event.preventDefault();
-        moveColumn(-1);
-        break;
-      case "Enter":
-      case " ":
-        // 移动即提交,这里只需阻止空格滚动页面
-        event.preventDefault();
-        break;
-      default:
-        break;
+
+    const action = resolveColumnKeyAction(event.key);
+    if (!action) return;
+    event.preventDefault();
+
+    if (action.type === "move") move(action.direction, event);
+    else if (action.type === "moveColumn") moveColumn(action.direction);
+    else if (action.type === "commitBoundary") {
+      commitBoundary(action.boundary, event);
     }
   };
 

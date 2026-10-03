@@ -114,6 +114,7 @@ const ImageElement: Component<ImageElementProps> = (rawProps) => {
       decoding={internal.decoding}
       data-nimg={internal.fill ? "fill" : "1"}
       class={internal.class}
+      classList={internal.classList}
       style={internal.style}
       sizes={internal.sizes}
       srcset={internal.srcSet}

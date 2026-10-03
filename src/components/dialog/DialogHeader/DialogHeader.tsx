@@ -10,6 +10,7 @@ export const DialogHeader = (props: DialogHeaderProps) => {
     <div
       data-slot="dialog-header"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

@@ -1,4 +1,5 @@
 import { createEffect, onCleanup, type Accessor } from "solid-js";
+import { isOverflowElement } from "~/lib";
 
 export interface UseScrollLockOptions {
   /**
@@ -15,15 +16,12 @@ let release: (() => void) | undefined;
 // 因此即使某个选择器在锁生效之后才加入,也能立即对它放行。
 const allowedSelectors = new Set<string>();
 
-/** 元素自身是否建立了滚动容器(与 positioner 里的判断口径一致) */
-function isOverflowElement(el: Element): boolean {
-  const { overflow, overflowX, overflowY } = getComputedStyle(el);
-  return /auto|scroll|overlay|hidden/.test(overflow + overflowX + overflowY);
-}
-
 /**
  * 页面的滚动容器:html 自己建立了滚动上下文时锁 html,否则锁 body
  * ——把 overflow 写在另一个元素上并不会锁住页面(Base UI 同样的判断)。
+ *
+ * `isOverflowElement` 复用 positioner 的实现,保证"锁哪个元素"与
+ * autoUpdate 监听哪些祖先 scroll 的口径完全一致。
  */
 function getViewportScroller(): HTMLElement {
   const html = document.documentElement;
