@@ -14,6 +14,7 @@
     "serve": "vite preview",
     "check": "tsc --noEmit && biome check --write src tests",
     "test": "vitest run",
+    "test:affected": "node .github/scripts/test-affected.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },

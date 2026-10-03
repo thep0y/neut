@@ -54,8 +54,17 @@ const GLOBAL_TRIGGERS = [
   "TESTING.md",
 ];
 
+/**
+ * 执行 git 并返回输出。
+ *
+ * **不要在这里对整体做 trim**：`git status --porcelain` 的第一行是
+ * ` M path`（状态码前导空格是有意义的），整体 trim 会把首行的前导空格吃掉，
+ * 于是按固定偏移切路径时整份列表都会错位一位
+ * （`.github/...` 会变成 `github/...`、`src/...` 会变成 `rc/...`）。
+ * 需要清理时由调用方逐行处理。
+ */
 function git(args) {
-  return execFileSync("git", args, { encoding: "utf8" }).trim();
+  return execFileSync("git", args, { encoding: "utf8" });
 }
 
 /** 解析参数：--base <ref> / --dry-run / --fallback-full */
@@ -85,9 +94,12 @@ function changedFiles(base) {
   const working = git(["status", "--porcelain"])
     .split("\n")
     .filter(Boolean)
+    // porcelain 格式固定是 `XY <path>`（两位状态码 + 一个空格），
+    // 因此路径从第 3 个字符开始
     .map((line) => line.slice(3).trim())
-    // 重命名行是 "old -> new"，取新路径
-    .map((p) => (p.includes(" -> ") ? p.split(" -> ")[1] : p));
+    // 重命名/复制行是 `old -> new`，取新路径
+    .map((p) => (p.includes(" -> ") ? p.split(" -> ")[1] : p))
+    .filter(Boolean);
   return [...new Set([...committed, ...working])];
 }
 
@@ -101,16 +113,26 @@ function touchesGlobal(files) {
 }
 
 /**
- * 找出「引用了改动过的测试脚手架」的测试文件。
+ * 找出「import 了被改动的测试脚手架」的测试文件。
  *
- * 只需要处理 `tests/` 下非 `*.test.*` 的文件（helper / fixture / 脚手架）；
- * 它们不会被 vitest 当成测试，但被别的测试 import。
+ * 只处理 `tests/` 下非 `*.test.*` 的文件（helper / fixture / 脚手架）：
+ * 它们不会被 vitest 当成测试，但被别的测试 import，改了必须让引用者重跑。
+ *
+ * 匹配的是**具体的 import 语句**而不是"出现过的子串"——
+ * 后者会把名字里恰好含 `test-utils` 的其它模块也一起拖进来
+ *（实测会从 1 个误扩到 100 个文件）。仓库里引用脚手架统一走 `~tests/` 别名
+ *（TESTING.md §3），因此按别名精确匹配即可，必要时再补相对路径。
  */
 function testsDependingOnHelpers(helperFiles) {
   if (helperFiles.length === 0) return [];
   const allTests = git(["ls-files", "tests"])
     .split("\n")
+    .map((f) => f.trim())
     .filter((f) => /\.(test|spec)\.(ts|tsx)$/.test(f));
+
+  // 去扩展名的别名形式：tests/a/b.ts -> ~tests/a/b
+  const aliases = helperFiles.map((f) => `~tests/${f.replace(/^tests\//, "").replace(/\.(ts|tsx)$/, "")}`);
+
   const hits = [];
   for (const test of allTests) {
     let source;
@@ -119,15 +141,7 @@ function testsDependingOnHelpers(helperFiles) {
     } catch {
       continue;
     }
-    for (const helper of helperFiles) {
-      // 测试通过 `~tests/...` 或相对路径引用脚手架，用去扩展名的基名匹配
-      const base = helper.replace(/\.(ts|tsx)$/, "");
-      const name = base.split("/").pop();
-      if (source.includes(`~tests/${base}`) || source.includes(`/${name}"`) || source.includes(`/${name}'`)) {
-        hits.push(test);
-        break;
-      }
-    }
+    if (aliases.some((alias) => source.includes(alias))) hits.push(test);
   }
   return hits;
 }
@@ -170,12 +184,16 @@ function main() {
 
   if (helperDependents.length > 0) {
     console.log(
-      `\n有 ${helperFiles.length} 个测试脚手架被改动，额外选中 ${helperDependents.length} 个引用它的测试文件。`,
+      `\n有 ${helperFiles.length} 个测试脚手架被改动，额外选中 ${helperDependents.length} 个引用它的测试文件：`,
     );
+    for (const f of helperDependents.slice(0, 10)) console.log(`  ${f}`);
+    if (helperDependents.length > 10) {
+      console.log(`  …（其余 ${helperDependents.length - 10} 个）`);
+    }
     // vitest 的 --changed 不认识"脚手架 → 引用者"，这里显式把它们加进过滤器
     const args = ["vitest", "run", ...helperDependents];
     if (dryRun) {
-      console.log("将运行：", args.join(" "));
+      console.log(`\n将运行：bunx vitest run <上述 ${helperDependents.length} 个文件>`);
       return;
     }
     const run = spawnSync("bunx", args, { stdio: "inherit" });

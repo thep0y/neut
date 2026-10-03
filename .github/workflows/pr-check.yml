@@ -60,6 +60,13 @@ jobs:
             - name: Run check script
               run: bun run check
 
+            # 快速反馈：只跑受本 PR 影响的测试（不校验覆盖率，见 TESTING.md §10）。
+            # 放在全量覆盖率之前，改一个组件时几十秒就能知道有没有跑挂，
+            # 不必等全量；真正的门禁仍是下面的 Test with coverage。
+            - name: Test affected files (fast feedback)
+              run: bun run test:affected -- --base ${{ github.event.pull_request.base.sha }}
+              continue-on-error: true
+
             # 门禁：覆盖率四项指标必须 100%（见 TESTING.md §1/§9）
             - name: Test with coverage
               id: coverage
