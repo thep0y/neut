@@ -1,6 +1,5 @@
 import {
   createEffect,
-  createMemo,
   createSignal,
   createUniqueId,
   onCleanup,
@@ -22,13 +21,13 @@ import type {
   ContextMenuAlign,
   ContextMenuContextValue,
   ContextMenuOpenPopupState,
-  ContextMenuItemEntry,
   ContextMenuOrientation,
   ContextMenuPopupContextValue,
   ContextMenuSide,
   ContextMenuSubmenuContextValue,
 } from "../context-menu.types";
 import { handleMenuKeyDown } from "../context-menu.keyboard";
+import { createItemCollection } from "./context-menu.popup-items";
 import { createTypeahead } from "../context-menu.typeahead";
 import { toContextMenuPlacement } from "../context-menu.utils";
 
@@ -93,7 +92,7 @@ export function createContextMenuPopupRuntime(
 
   const [popupEl, setPopupEl] = createSignal<HTMLElement>();
   const [positionerEl, setPositionerEl] = createSignal<HTMLElement>();
-  const [items, setItems] = createSignal<ContextMenuItemEntry[]>([]);
+  const { registerItem, orderedItems, enabledItems } = createItemCollection();
   const [activeId, setActiveIdInternal] = createSignal<string | undefined>();
   const [openPopupState, setOpenPopupState] =
     createSignal<ContextMenuOpenPopupState>();
@@ -121,27 +120,8 @@ export function createContextMenuPopupRuntime(
     ],
   });
 
-  // 按 DOM 顺序排序,避免调用方用 <For> 动态生成菜单项时顺序错乱。
-  const orderedItems = createMemo(() => {
-    const list = items();
-    return [...list].sort((a, b) => {
-      if (a.element === b.element) return 0;
-      const relation = a.element.compareDocumentPosition(b.element);
-      return relation & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
-    });
-  });
-
-  const enabledItems = createMemo(() =>
-    orderedItems().filter((item) => !item.disabled()),
-  );
-
   const activeEntry = () =>
     orderedItems().find((item) => item.id === activeId());
-
-  const registerItem = (entry: ContextMenuItemEntry) => {
-    setItems((list) => [...list, entry]);
-    return () => setItems((list) => list.filter((it) => it.id !== entry.id));
-  };
 
   const closeOpenPopup = () => setOpenPopupState(undefined);
 
