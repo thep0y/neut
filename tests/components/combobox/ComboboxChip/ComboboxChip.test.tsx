@@ -63,7 +63,7 @@ describe("ComboboxChip", () => {
     await user.click(bySlot("combobox-chip-remove") as HTMLElement);
 
     expect(onValueChange).toHaveBeenCalledTimes(1);
-    expect(onValueChange).toHaveBeenCalledWith(["banana"]);
+    expect(onValueChange).toHaveBeenCalledWith(["banana"], expect.anything());
   });
 
   it("删除按钮是无障碍按钮且有 data-slot", () => {

@@ -139,7 +139,7 @@ describe("ComboboxInput - 输入与开关", () => {
 
     await user.type(comboboxInput(), "a");
 
-    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
   });
 
   it("聚焦时请求打开面板", () => {
@@ -148,7 +148,7 @@ describe("ComboboxInput - 输入与开关", () => {
 
     fireEvent.focus(comboboxInput());
 
-    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
   });
 
   it("点击时请求打开面板", () => {
@@ -157,7 +157,7 @@ describe("ComboboxInput - 输入与开关", () => {
 
     fireEvent.click(comboboxInput());
 
-    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
   });
 
   it("非多选下清空输入会同时清掉已选值", async () => {
@@ -167,7 +167,7 @@ describe("ComboboxInput - 输入与开关", () => {
 
     await user.clear(comboboxInput());
 
-    expect(onValueChange).toHaveBeenCalledWith(null);
+    expect(onValueChange).toHaveBeenCalledWith(null, expect.anything());
     expect(comboboxInput().value).toBe("");
   });
 
@@ -203,7 +203,7 @@ describe("ComboboxInput - 键盘", () => {
     });
 
     expect(notCanceled).toBe(false);
-    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
   });
 
   it("ArrowDown 在打开状态下高亮第一项", () => {
@@ -214,7 +214,9 @@ describe("ComboboxInput - 键盘", () => {
     expect(comboboxOptions()[0]).toHaveAttribute("data-highlighted", "");
   });
 
-  it("[当前行为] ArrowUp 从无高亮出发落在索引 1（(-1-1+n)%n），并阻止默认行为", () => {
+  it("ArrowUp 从无高亮出发落在最后一项，并阻止默认行为（回归）", () => {
+    // 此前用 (activeIndex - 1 + n) % n，activeIndex 为 -1 时得到 n-2：
+    // 三项时会错误地停在第二项（banana）而不是末项（cherry）
     const onOpenChange = vi.fn();
     renderInput({
       open: true,
@@ -225,10 +227,27 @@ describe("ComboboxInput - 键盘", () => {
     const notCanceled = fireEvent.keyDown(comboboxInput(), { key: "ArrowUp" });
 
     expect(notCanceled).toBe(false);
-    expect(onOpenChange).toHaveBeenCalledWith(true);
-    // 当前算法对 activeIndex=-1 先减 1 再加 n，3 项时得到 1 而不是末项 2
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
+    expect(comboboxOptions()[2]).toHaveAttribute("data-highlighted", "");
+    expect(comboboxOptions()[1]).not.toHaveAttribute("data-highlighted");
+  });
+
+  it("Home / End 跳到第一项 / 最后一项（回归）", () => {
+    renderInput({ open: true, items: ["apple", "banana", "cherry"] });
+
+    fireEvent.keyDown(comboboxInput(), { key: "End" });
+    expect(comboboxOptions()[2]).toHaveAttribute("data-highlighted", "");
+
+    fireEvent.keyDown(comboboxInput(), { key: "Home" });
+    expect(comboboxOptions()[0]).toHaveAttribute("data-highlighted", "");
+  });
+
+  it("两项时 ArrowUp 从无高亮出发落在第 1 项（回归）", () => {
+    renderInput({ open: true, items: ["apple", "banana"] });
+
+    fireEvent.keyDown(comboboxInput(), { key: "ArrowUp" });
+
     expect(comboboxOptions()[1]).toHaveAttribute("data-highlighted", "");
-    expect(comboboxOptions()[2]).not.toHaveAttribute("data-highlighted");
   });
 
   it("选项为空时 ArrowDown 把 activeIndex 置为 -1", () => {
@@ -256,7 +275,7 @@ describe("ComboboxInput - 键盘", () => {
     fireEvent.keyDown(comboboxInput(), { key: "ArrowDown" });
     fireEvent.keyDown(comboboxInput(), { key: "Enter" });
 
-    expect(onValueChange).toHaveBeenCalledWith("apple");
+    expect(onValueChange).toHaveBeenCalledWith("apple", expect.anything());
   });
 
   it("Enter 在高亮为空时不选中任何项", () => {
@@ -284,7 +303,7 @@ describe("ComboboxInput - 键盘", () => {
     const notCanceled = fireEvent.keyDown(comboboxInput(), { key: "Escape" });
 
     expect(notCanceled).toBe(false);
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
   });
 
   it("Escape 在关闭状态下不回调", () => {
@@ -329,5 +348,56 @@ describe("ComboboxInput - Popup 模式自动聚焦", () => {
     await Promise.resolve();
 
     expect(document.activeElement).not.toBe(comboboxInput());
+  });
+});
+
+describe("ComboboxInput - 空列表与边界（回归新增分支）", () => {
+  it("列表为空时 Home / End / 方向键都不高亮任何项", () => {
+    renderInput({ open: true, items: [] });
+    const target = comboboxInput();
+
+    for (const key of ["Home", "End", "ArrowDown", "ArrowUp"]) {
+      fireEvent.keyDown(target, { key });
+      expect(target.getAttribute("aria-activedescendant"), key).toBeNull();
+    }
+  });
+
+  it("在末项上按 ArrowUp 回退一项，而不是环绕", () => {
+    renderInput({ open: true, items: ["apple", "banana", "cherry"] });
+
+    fireEvent.keyDown(comboboxInput(), { key: "End" });
+    fireEvent.keyDown(comboboxInput(), { key: "ArrowUp" });
+
+    expect(comboboxOptions()[1]).toHaveAttribute("data-highlighted", "");
+  });
+
+  it("在首项上按 ArrowUp 环绕到最后一项", () => {
+    renderInput({ open: true, items: ["apple", "banana", "cherry"] });
+
+    fireEvent.keyDown(comboboxInput(), { key: "Home" });
+    fireEvent.keyDown(comboboxInput(), { key: "ArrowUp" });
+
+    expect(comboboxOptions()[2]).toHaveAttribute("data-highlighted", "");
+  });
+
+  it("ArrowDown 在末项上环绕回第一项", () => {
+    renderInput({ open: true, items: ["apple", "banana", "cherry"] });
+
+    fireEvent.keyDown(comboboxInput(), { key: "End" });
+    fireEvent.keyDown(comboboxInput(), { key: "ArrowDown" });
+
+    expect(comboboxOptions()[0]).toHaveAttribute("data-highlighted", "");
+  });
+
+  it("禁用时键盘事件不改变高亮", () => {
+    renderInput({ open: true, items: ["apple", "banana"], disabled: true });
+
+    fireEvent.keyDown(comboboxInput(), { key: "ArrowDown" });
+
+    expect(
+      comboboxOptions().every(
+        (option) => !option.hasAttribute("data-highlighted"),
+      ),
+    ).toBe(true);
   });
 });

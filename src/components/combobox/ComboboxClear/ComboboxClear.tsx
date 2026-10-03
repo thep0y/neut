@@ -16,7 +16,7 @@ export function ComboboxClear(props: { disabled?: boolean; class?: string }) {
         ctx.setValue(null);
         ctx.setInputValue("");
         ctx.setFilterValue("");
-        ctx.setOpen(false);
+        ctx.setOpen(false, "clear-press");
       }}
       icon={<X class='"pointer-events-none' />}
     />

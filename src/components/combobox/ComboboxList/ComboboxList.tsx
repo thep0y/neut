@@ -16,6 +16,7 @@ export function ComboboxList(props: {
     <div class="relative">
       <div
         ref={setListElement}
+        id={ctx.listId}
         data-slot="combobox-list"
         class={clsx(
           "max-h-72 overflow-y-auto overscroll-contain p-1",

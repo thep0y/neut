@@ -18,6 +18,7 @@ export function ComboboxItem(props: {
 
   return (
     <div
+      id={ctx.optionId(props.value)}
       data-slot="combobox-item"
       role="option"
       tabIndex={props.disabled ? -1 : 0}
@@ -35,8 +36,8 @@ export function ComboboxItem(props: {
         if (index !== -1) ctx.setActiveIndex(index);
       }}
       onMouseLeave={() => setHovered(false)}
-      onClick={() => {
-        if (!props.disabled) ctx.selectItem(props.value);
+      onClick={(event) => {
+        if (!props.disabled) ctx.selectItem(props.value, event);
       }}
     >
       {props.children}

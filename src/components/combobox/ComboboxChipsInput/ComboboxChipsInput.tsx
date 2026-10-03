@@ -17,9 +17,18 @@ export function ComboboxChipsInput(props: {
         const next = e.currentTarget.value;
         ctx.setInputValue(next);
         ctx.setFilterValue(next);
-        ctx.setOpen(true);
+        ctx.setOpen(true, "input-change");
       }}
-      onFocus={() => ctx.setOpen(true)}
+      onFocus={() => ctx.setOpen(true, "input-focus")}
+      onKeyDown={(e) => {
+        // 输入框为空时按 Backspace 删除最后一颗 chip（chips 模式的常见约定）
+        if (e.key !== "Backspace") return;
+        if (ctx.inputValue() !== "") return;
+        const current = ctx.value();
+        if (!Array.isArray(current) || current.length === 0) return;
+        e.preventDefault();
+        ctx.setValue(current.slice(0, -1) as never);
+      }}
     />
   );
 }

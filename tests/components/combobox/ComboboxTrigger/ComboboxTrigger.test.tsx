@@ -49,7 +49,7 @@ describe("ComboboxTrigger", () => {
 
     await user.click(bySlot("combobox-trigger") as HTMLElement);
 
-    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
   });
 
   it("打开状态下点击请求关闭", async () => {
@@ -59,7 +59,7 @@ describe("ComboboxTrigger", () => {
 
     await user.click(bySlot("combobox-trigger") as HTMLElement);
 
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
   });
 
   it("非受控下点击真正打开面板", async () => {

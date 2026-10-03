@@ -1,10 +1,34 @@
 import type { Accessor, ParentProps } from "solid-js";
+import type { ChangeEventDetails } from "~/utils";
+
+/** 值变更的触发来源（对齐 Base UI 的 reason 取值风格） */
+export type ComboboxValueChangeReason =
+  | "item-press"
+  | "trigger-press"
+  | "clear-press"
+  | "input-change"
+  | "chip-remove"
+  | "none";
+
+/** 开合变更的触发来源 */
+export type ComboboxOpenChangeReason =
+  | "trigger-press"
+  | "input-focus"
+  | "input-change"
+  | "item-press"
+  | "clear-press"
+  | "escape-key"
+  | "outside-press"
+  | "none";
 
 export interface ComboboxProps<T = any> extends ParentProps {
   items: T[];
   value?: T | T[] | null;
   defaultValue?: T | T[];
-  onValueChange?: (value: T | T[] | null) => void;
+  onValueChange?: (
+    value: T | T[] | null,
+    details: ChangeEventDetails<ComboboxValueChangeReason>,
+  ) => void;
   multiple?: boolean;
   disabled?: boolean;
   /**
@@ -16,7 +40,10 @@ export interface ComboboxProps<T = any> extends ParentProps {
   itemToStringValue?: (item: T) => string;
   open?: boolean;
   defaultOpen?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  onOpenChange?: (
+    open: boolean,
+    details: ChangeEventDetails<ComboboxOpenChangeReason>,
+  ) => void;
 }
 
 export interface ComboboxContextValue<T = any> {
@@ -28,12 +55,20 @@ export interface ComboboxContextValue<T = any> {
   filterValue: Accessor<string>;
   setFilterValue: (value: string) => void;
   open: Accessor<boolean>;
-  setOpen: (open: boolean) => void;
+  setOpen: (
+    open: boolean,
+    reason?: ComboboxOpenChangeReason,
+    event?: Event,
+  ) => void;
   disabled: Accessor<boolean>;
   multiple: Accessor<boolean>;
   value: Accessor<T | T[] | null | undefined>;
-  setValue: (value: T | T[] | null) => void;
-  selectItem: (item: T) => void;
+  setValue: (
+    value: T | T[] | null,
+    reason?: ComboboxValueChangeReason,
+    event?: Event,
+  ) => void;
+  selectItem: (item: T, event?: Event) => void;
   isSelected: (item: T) => boolean;
   itemToStringValue: (item: T) => string;
   activeIndex: Accessor<number>;
@@ -43,5 +78,9 @@ export interface ComboboxContextValue<T = any> {
   floating: Accessor<HTMLElement | undefined>;
   setFloating: (el: HTMLElement | undefined) => void;
   contentId: string;
-  close: () => void;
+  /** listbox 元素的 id，供输入框的 aria-controls 指向 */
+  listId: string;
+  /** 某一项对应的 option 元素 id，供 aria-activedescendant 指向 */
+  optionId: (value: unknown) => string;
+  close: (reason?: ComboboxOpenChangeReason, event?: Event) => void;
 }

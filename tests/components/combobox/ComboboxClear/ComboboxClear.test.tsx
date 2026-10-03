@@ -54,8 +54,8 @@ describe("ComboboxClear", () => {
     await user.click(bySlot("combobox-clear") as HTMLElement);
 
     expect(onValueChange).toHaveBeenCalledTimes(1);
-    expect(onValueChange).toHaveBeenCalledWith(null);
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onValueChange).toHaveBeenCalledWith(null, expect.anything());
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
     expect(comboboxInput().value).toBe("");
   });
 

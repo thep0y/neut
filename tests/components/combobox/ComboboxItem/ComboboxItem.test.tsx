@@ -60,7 +60,7 @@ describe("ComboboxItem - 点击选中", () => {
 
     await user.click(comboboxOptions()[0]);
 
-    expect(onValueChange).toHaveBeenCalledWith("apple");
+    expect(onValueChange).toHaveBeenCalledWith("apple", expect.anything());
   });
 
   it("禁用项 tabIndex=-1 且点击不回调", async () => {

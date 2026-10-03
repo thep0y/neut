@@ -89,7 +89,7 @@ describe("ComboboxContent - 外点关闭", () => {
 
     fireEvent.pointerDown(document.body);
 
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
   });
 
   it("指针按下锚点（输入组）时不关闭", () => {
@@ -122,7 +122,7 @@ describe("ComboboxContent - 外点关闭", () => {
 
     fireEvent.pointerDown(document.body);
 
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
   });
 
   it("关闭后移除监听，不再响应外点", async () => {

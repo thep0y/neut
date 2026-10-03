@@ -196,8 +196,8 @@ describe("Combobox - 单选选中", () => {
 
     await user.click(options()[1]);
 
-    expect(onValueChange).toHaveBeenCalledWith("banana");
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onValueChange).toHaveBeenCalledWith("banana", expect.anything());
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
   });
 
   it("选中后输入框展示该项文本", async () => {
@@ -238,7 +238,10 @@ describe("Combobox - 多选", () => {
     await user.click(options()[0]);
     await user.click(options()[2]);
 
-    expect(onValueChange).toHaveBeenLastCalledWith(["apple", "cherry"]);
+    expect(onValueChange).toHaveBeenLastCalledWith(
+      ["apple", "cherry"],
+      expect.anything(),
+    );
   });
 
   it("多选下点击已选项会移除", async () => {
@@ -253,7 +256,7 @@ describe("Combobox - 多选", () => {
 
     await user.click(options()[0]);
 
-    expect(onValueChange).toHaveBeenCalledWith(["banana"]);
+    expect(onValueChange).toHaveBeenCalledWith(["banana"], expect.anything());
   });
 
   it("多选下点击后不关闭面板", async () => {
@@ -297,7 +300,7 @@ describe("Combobox - 键盘", () => {
     await user.keyboard("{ArrowDown}");
 
     // Combobox 的输入框没有 aria-expanded，用 onOpenChange 验证开关
-    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
   });
 
   it("ArrowDown 后选项渲染出来", async () => {
@@ -333,7 +336,7 @@ describe("Combobox - 键盘", () => {
     await user.keyboard("{ArrowDown}");
     await user.keyboard("{Enter}");
 
-    expect(onValueChange).toHaveBeenCalledWith("apple");
+    expect(onValueChange).toHaveBeenCalledWith("apple", expect.anything());
   });
 
   it("连按两次 ArrowDown 再 Enter 选中第二项", async () => {
@@ -346,7 +349,7 @@ describe("Combobox - 键盘", () => {
     await user.keyboard("{ArrowDown}");
     await user.keyboard("{Enter}");
 
-    expect(onValueChange).toHaveBeenCalledWith("banana");
+    expect(onValueChange).toHaveBeenCalledWith("banana", expect.anything());
   });
 
   it("ArrowUp 环绕到最后一个选项", async () => {
@@ -355,11 +358,11 @@ describe("Combobox - 键盘", () => {
     const user = userEvent.setup();
 
     input().focus();
-    // -1 - 1 + 3 = 1 → banana
+    // 无高亮时 ArrowUp 应环绕到**最后一项**（此前错误地落在第 2 项）
     await user.keyboard("{ArrowUp}");
     await user.keyboard("{Enter}");
 
-    expect(onValueChange).toHaveBeenCalledWith("banana");
+    expect(onValueChange).toHaveBeenCalledWith("cherry", expect.anything());
   });
 
   it("Escape 关闭面板", async () => {
@@ -370,7 +373,7 @@ describe("Combobox - 键盘", () => {
     input().focus();
     await user.keyboard("{Escape}");
 
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
   });
 
   it("未打开时 Enter 不选中任何项", async () => {
@@ -410,7 +413,7 @@ describe("Combobox - 受控模式", () => {
 
     await user.click(options()[1]);
 
-    expect(onValueChange).toHaveBeenCalledWith("banana");
+    expect(onValueChange).toHaveBeenCalledWith("banana", expect.anything());
     // 注意：`inputValue` 是根组件里的**独立本地信号**，不会随 props.value 同步
     // （对比 Select：display 直接由 value 推导）。因此在受控模式下输入框展示
     // 会暂时与外部 value 脱节。这里锁定现状；若要修，需要让 inputValue

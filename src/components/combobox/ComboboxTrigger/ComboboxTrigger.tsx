@@ -15,12 +15,18 @@ export function ComboboxTrigger(props: {
       ref={ctx.setReference}
       variant="outline"
       data-slot="combobox-trigger"
+      // 触发器是弹出 listbox 的按钮
+      aria-haspopup="listbox"
+      aria-expanded={ctx.open()}
+      aria-controls={ctx.open() ? ctx.listId : undefined}
       class={clsx(
         "h-8 [&_svg:not([class*='size-'])]:size-4 active:not-aria-[haspopup]:translate-y-0",
         props.class,
       )}
       disabled={ctx.disabled() || props.disabled}
-      onClick={() => ctx.setOpen(!ctx.open())}
+      onClick={(event) =>
+        ctx.setOpen(!ctx.open(), "trigger-press", event as unknown as Event)
+      }
     >
       {props.children}
       <ChevronDown

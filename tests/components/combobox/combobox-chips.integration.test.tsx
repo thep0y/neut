@@ -55,7 +55,10 @@ describe("combobox chips 集成 - 增删", () => {
 
     await user.click(comboboxOptions()[0]);
 
-    expect(onValueChange).toHaveBeenCalledWith(["apple", "banana"]);
+    expect(onValueChange).toHaveBeenCalledWith(
+      ["apple", "banana"],
+      expect.anything(),
+    );
     expect(allBySlot("combobox-chip").map((c) => c.textContent)).toEqual([
       "apple",
       "banana",
@@ -82,7 +85,7 @@ describe("combobox chips 集成 - 增删", () => {
 
     await user.click(removeButtons[0]);
 
-    expect(onValueChange).toHaveBeenCalledWith(["banana"]);
+    expect(onValueChange).toHaveBeenCalledWith(["banana"], expect.anything());
     expect(allBySlot("combobox-chip").map((c) => c.textContent)).toEqual([
       "banana",
     ]);
@@ -109,7 +112,10 @@ describe("combobox chips 集成 - 增删", () => {
 
     await user.click(comboboxOptions()[1]);
 
-    expect(onValueChange).toHaveBeenCalledWith(["apple", "banana"]);
+    expect(onValueChange).toHaveBeenCalledWith(
+      ["apple", "banana"],
+      expect.anything(),
+    );
     // 受控：内部不写状态，chips 仍只有外部给的 apple
     expect(allBySlot("combobox-chip").map((c) => c.textContent)).toEqual([
       "apple",

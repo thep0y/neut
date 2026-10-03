@@ -79,7 +79,7 @@ describe("ComboboxChipsInput", () => {
 
     await user.type(comboboxInput(), "a");
 
-    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
   });
 
   it("聚焦时请求打开面板", () => {
@@ -88,12 +88,79 @@ describe("ComboboxChipsInput", () => {
 
     fireEvent.focus(comboboxInput());
 
-    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
   });
 
   it("根组件 disabled 时输入框禁用", () => {
     renderChipsInput({ disabled: true });
 
     expect(comboboxInput()).toBeDisabled();
+  });
+});
+
+describe("ComboboxChipsInput - Backspace 删除 chip（回归）", () => {
+  it("输入框为空时按 Backspace 删除最后一颗 chip", () => {
+    const onValueChange = vi.fn();
+    renderChipsInput({
+      multiple: true,
+      defaultValue: ["apple", "banana"],
+      onValueChange,
+    });
+    const target = bySlot("combobox-chip-input") as HTMLInputElement;
+
+    fireEvent.keyDown(target, { key: "Backspace" });
+
+    expect(onValueChange).toHaveBeenCalledWith(["apple"], expect.anything());
+  });
+
+  it("输入框有内容时不删 chip（让浏览器正常删字符）", () => {
+    const onValueChange = vi.fn();
+    renderChipsInput({
+      multiple: true,
+      defaultValue: ["apple", "banana"],
+      onValueChange,
+    });
+    const target = bySlot("combobox-chip-input") as HTMLInputElement;
+    fireEvent.input(target, { target: { value: "ap" } });
+
+    const notCanceled = fireEvent.keyDown(target, { key: "Backspace" });
+
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(notCanceled).toBe(true);
+  });
+
+  it("没有可删的 chip 时不阻止默认行为", () => {
+    const onValueChange = vi.fn();
+    renderChipsInput({ multiple: true, defaultValue: [], onValueChange });
+    const target = bySlot("combobox-chip-input") as HTMLInputElement;
+
+    const notCanceled = fireEvent.keyDown(target, { key: "Backspace" });
+
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(notCanceled).toBe(true);
+  });
+
+  it("单值（非数组）时 Backspace 不删值", () => {
+    const onValueChange = vi.fn();
+    renderChipsInput({ defaultValue: "apple", onValueChange });
+    const target = bySlot("combobox-chip-input") as HTMLInputElement;
+
+    fireEvent.keyDown(target, { key: "Backspace" });
+
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
+
+  it("Backspace 之外的按键不受影响", () => {
+    const onValueChange = vi.fn();
+    renderChipsInput({
+      multiple: true,
+      defaultValue: ["apple", "banana"],
+      onValueChange,
+    });
+    const target = bySlot("combobox-chip-input") as HTMLInputElement;
+
+    fireEvent.keyDown(target, { key: "a" });
+
+    expect(onValueChange).not.toHaveBeenCalled();
   });
 });
