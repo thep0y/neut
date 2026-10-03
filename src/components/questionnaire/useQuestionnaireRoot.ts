@@ -2,18 +2,16 @@ import {
   createEffect,
   createMemo,
   createSignal,
-  onCleanup,
   type Accessor,
 } from "solid-js";
-import type {
-  QuestionnaireItemHandle,
-  QuestionnaireRootContextValue,
-} from "./questionnaire.context";
+import type { QuestionnaireRootContextValue } from "./questionnaire.context";
 import type {
   QuestionnaireItemDefinition,
   QuestionnaireShortcutMode,
 } from "./questionnaire.types";
+import { createDomVersionWatcher } from "./questionnaire.dom-watch";
 import { handleQuestionnaireKeyDown } from "./questionnaire.keys";
+import { createItemRegistry } from "./questionnaire.registry";
 import { compareDocumentOrder } from "./questionnaire.utils";
 
 interface Options {
@@ -43,16 +41,14 @@ export function useQuestionnaireRoot(options: Options): {
     onReset: (event: Event) => void;
   };
 } {
-  const [registered, setRegistered] = createSignal<QuestionnaireItemHandle[]>(
-    [],
-  );
-  const [domVersion, setDomVersion] = createSignal(0);
+  const registry = createItemRegistry();
+  const domVersion = createDomVersionWatcher(options.formRef);
   const [internalName, setInternalName] = createSignal<string | null>(null);
   let pendingFocus: { name: string; target: "item" | "invalid" } | null = null;
 
   const ordered = createMemo(() => {
     domVersion();
-    return [...registered()].sort((a, b) =>
+    return [...registry.items()].sort((a, b) =>
       compareDocumentOrder(a.element, b.element),
     );
   });
@@ -96,17 +92,7 @@ export function useQuestionnaireRoot(options: Options): {
     if (next !== name) setInternalName(next);
   });
 
-  const registerItem = (handle: QuestionnaireItemHandle) => {
-    setRegistered((prev) => {
-      const exists = prev.some((item) => item.element === handle.element);
-      return exists
-        ? prev.map((item) => (item.element === handle.element ? handle : item))
-        : [...prev, handle];
-    });
-    return () => {
-      setRegistered((prev) => prev.filter((item) => item !== handle));
-    };
-  };
+  const registerItem = registry.register;
 
   const navigate = (
     name: string | null,
@@ -205,15 +191,6 @@ export function useQuestionnaireRoot(options: Options): {
       if (target === "invalid") handle.focusInvalid();
       else handle.focus();
     });
-  });
-
-  // 观察 DOM 变化(动态增删 Item)以便重新排序
-  createEffect(() => {
-    const form = options.formRef();
-    if (!form || typeof MutationObserver === "undefined") return;
-    const observer = new MutationObserver(() => setDomVersion((v) => v + 1));
-    observer.observe(form, { childList: true, subtree: true });
-    onCleanup(() => observer.disconnect());
   });
 
   const context: QuestionnaireRootContextValue = {

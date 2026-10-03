@@ -53,14 +53,21 @@ describe("resolveChoiceChecked", () => {
 describe("isChoiceRequired", () => {
   it("必填、单选、没有文本框作答时才需要原生 required", () => {
     expect(
-      isChoiceRequired({ required: true, multiple: false, hasInputAnswer: false }),
+      isChoiceRequired({
+        required: true,
+        multiple: false,
+        hasInputAnswer: false,
+      }),
     ).toBe(true);
   });
 
   it.each([
     ["整题非必填", { required: false, multiple: false, hasInputAnswer: false }],
     ["多选", { required: true, multiple: true, hasInputAnswer: false }],
-    ["本题有文本框作答", { required: true, multiple: false, hasInputAnswer: true }],
+    [
+      "本题有文本框作答",
+      { required: true, multiple: false, hasInputAnswer: true },
+    ],
   ])("%s 时不需要", (_name, options) => {
     expect(isChoiceRequired(options)).toBe(false);
   });
