@@ -1,18 +1,13 @@
-import {
-  createEffect,
-  createMemo,
-  createSignal,
-  type Accessor,
-} from "solid-js";
+import { createEffect, createSignal, type Accessor } from "solid-js";
 import type { QuestionnaireRootContextValue } from "./questionnaire.context";
 import type {
   QuestionnaireItemDefinition,
   QuestionnaireShortcutMode,
 } from "./questionnaire.types";
 import { createDomVersionWatcher } from "./questionnaire.dom-watch";
+import { createItemView, resolveActiveName } from "./questionnaire.item-view";
 import { handleQuestionnaireKeyDown } from "./questionnaire.keys";
 import { createItemRegistry } from "./questionnaire.registry";
-import { compareDocumentOrder } from "./questionnaire.utils";
 
 interface Options {
   item: Accessor<string | undefined>;
@@ -46,41 +41,22 @@ export function useQuestionnaireRoot(options: Options): {
   const [internalName, setInternalName] = createSignal<string | null>(null);
   let pendingFocus: { name: string; target: "item" | "invalid" } | null = null;
 
-  const ordered = createMemo(() => {
-    domVersion();
-    return [...registry.items()].sort((a, b) =>
-      compareDocumentOrder(a.element, b.element),
-    );
+  const view = createItemView({
+    registered: registry.items,
+    domVersion,
+    controlledItem: options.item,
+    internalName,
+    definitions: options.items,
   });
-  const enabled = createMemo(() =>
-    ordered().filter((item) => !item.disabled()),
-  );
-  const activeName = createMemo(() => options.item() ?? internalName());
-  const activeItem = createMemo(
-    () => enabled().find((item) => item.name === activeName()) ?? null,
-  );
-  const total = createMemo(() => enabled().length);
-  const index = createMemo(() =>
-    enabled().findIndex((item) => item.name === activeName()),
-  );
-  const current = createMemo(() => (index() < 0 ? 0 : index() + 1));
-  const first = createMemo(() => total() > 0 && index() === 0);
-  const last = createMemo(() => total() > 0 && index() === total() - 1);
+  const { enabled, activeName, activeItem, total, index, first, last } = view;
+  const { current, itemDefinitions } = view;
 
-  const itemDefinitions = createMemo(() => {
-    const list = options.items();
-    if (!list) return null;
-    return new Map(list.map((definition) => [definition.name, definition]));
-  });
-
-  const resolveName = () => {
-    const list = enabled();
-    const candidate = options.item() ?? options.defaultItem();
-    if (candidate && list.some((entry) => entry.name === candidate)) {
-      return candidate;
-    }
-    return list[0]?.name ?? null;
-  };
+  const resolveName = () =>
+    resolveActiveName({
+      enabled: enabled(),
+      controlledItem: options.item(),
+      defaultItem: options.defaultItem(),
+    });
 
   // 激活项不可用时回退到定义/第一个可用项
   createEffect(() => {
