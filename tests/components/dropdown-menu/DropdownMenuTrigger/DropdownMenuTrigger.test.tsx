@@ -124,3 +124,44 @@ describe("DropdownMenuTrigger - 自身的 disabled（回归）", () => {
     expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
   });
 });
+
+describe("DropdownMenuTrigger - 禁用守卫的默认与组合", () => {
+  it("未传 ownDisabled 且根未禁用时，键盘可打开（默认参数生效）", () => {
+    // useDropdownMenuTrigger 的 ownDisabled 参数有默认值；
+    // 这里通过"根未禁用 + 没有 triggers 自己的 disabled"确认默认路径正常
+    const onOpenChange = vi.fn();
+    render(() => (
+      <DropdownMenu onOpenChange={onOpenChange}>
+        <DropdownMenuTrigger component="div">打开</DropdownMenuTrigger>
+        <DropdownMenuContent>内容</DropdownMenuContent>
+      </DropdownMenu>
+    ));
+
+    fireEvent.keyDown(
+      document.querySelector('[data-slot="dropdown-menu-trigger"]') as HTMLElement,
+      { key: "ArrowDown" },
+    );
+
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
+  });
+
+  it("根 disabled 与触发器 disabled 都为真时同样拦下", () => {
+    const onOpenChange = vi.fn();
+    const triggerProps = {
+      component: "div" as const,
+      disabled: true,
+    } as unknown as Record<string, unknown>;
+    render(() => (
+      <DropdownMenu disabled onOpenChange={onOpenChange}>
+        <DropdownMenuTrigger {...triggerProps}>打开</DropdownMenuTrigger>
+        <DropdownMenuContent>内容</DropdownMenuContent>
+      </DropdownMenu>
+    ));
+
+    fireEvent.click(
+      document.querySelector('[data-slot="dropdown-menu-trigger"]') as HTMLElement,
+    );
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+});

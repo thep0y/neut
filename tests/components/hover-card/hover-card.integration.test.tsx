@@ -49,12 +49,54 @@ function content(): HTMLElement | null {
   return document.querySelector('[role="dialog"]');
 }
 
+/**
+ * jsdom 没有布局引擎：`getBoundingClientRect()` 恒为 0、`documentElement.clientWidth`
+ * 恒为 0。HoverCardContent 的可见性由 `hide()` 中间件决定——参照矩形完全落在
+ * 视口边界外（0 宽的边界把任何矩形都判成"在边界外"）时 `referenceHidden` 为 true，
+ * 组件会走退场兜底把浮层卸载，"下一帧切 data-state=open"这条真实分支因此走不到。
+ * 按 TESTING.md §8「布局相关」的做法显式 stub 这两个布局量（只 stub 系统边界）。
+ */
+function stubViewport(width = 1024, height = 768) {
+  Object.defineProperty(document.documentElement, "clientWidth", {
+    configurable: true,
+    value: width,
+  });
+  Object.defineProperty(document.documentElement, "clientHeight", {
+    configurable: true,
+    value: height,
+  });
+}
+
+function restoreViewport() {
+  delete (document.documentElement as unknown as Record<string, unknown>)
+    .clientWidth;
+  delete (document.documentElement as unknown as Record<string, unknown>)
+    .clientHeight;
+}
+
+/** 让参照元素报告一个视口内的矩形（message-scroller 的 stubRect 宽度为 0，会仍被判隐藏） */
+function stubTriggerRect(el: Element) {
+  el.getBoundingClientRect = () =>
+    ({
+      top: 100,
+      bottom: 120,
+      left: 100,
+      right: 150,
+      width: 50,
+      height: 20,
+      x: 100,
+      y: 100,
+      toJSON: () => ({}),
+    }) as DOMRect;
+}
+
 beforeEach(() => {
   vi.useFakeTimers();
 });
 
 afterEach(() => {
   vi.useRealTimers();
+  restoreViewport();
   document.body.innerHTML = "";
   vi.restoreAllMocks();
 });
@@ -182,6 +224,17 @@ describe("HoverCard - 延时开关", () => {
 
     expect(content()).toBeNull();
   });
+
+  it("已打开时再次 pointerenter 不重复排程、不重复回调", async () => {
+    const onOpenChange = vi.fn();
+    renderCard({ defaultOpen: true, onOpenChange });
+
+    fireEvent.pointerEnter(trigger());
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(trigger()).toHaveAttribute("data-state", "open");
+  });
 });
 
 describe("HoverCard - 键盘与焦点（跳过延时）", () => {
@@ -264,6 +317,111 @@ describe("HoverCard - 键盘与焦点（跳过延时）", () => {
 
     // HoverCard 的 mousedown 只设标记，不主动关闭
     expect(trigger()).toHaveAttribute("data-state", "open");
+  });
+});
+
+describe("HoverCard - 内容可交互（keepOpen）", () => {
+  it("鼠标移入内容会取消待关闭计时", async () => {
+    stubViewport();
+    render(() => (
+      <HoverCard defaultOpen>
+        <HoverCardTrigger ref={stubTriggerRect}>悬停我</HoverCardTrigger>
+        <HoverCardContent>卡片内容</HoverCardContent>
+      </HoverCard>
+    ));
+    const surface = content()!;
+
+    // 移出 trigger：按默认 300ms 排入关闭计时
+    fireEvent.pointerLeave(trigger());
+    await vi.advanceTimersByTimeAsync(100);
+    // 还没到 300ms，此时移入内容 → keepOpen 取消关闭
+    fireEvent.mouseEnter(surface);
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(trigger()).toHaveAttribute("data-state", "open");
+    expect(content()).toBe(surface);
+  });
+
+  it("鼠标移出内容后按 closeDelay 关闭", async () => {
+    renderCard({ defaultOpen: true, closeDelay: 50 });
+    const surface = content()!;
+
+    fireEvent.mouseLeave(surface);
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(trigger()).toHaveAttribute("data-state", "closed");
+  });
+
+  it("没有待关闭计时时移入内容不受影响", async () => {
+    stubViewport();
+    render(() => (
+      <HoverCard defaultOpen>
+        <HoverCardTrigger ref={stubTriggerRect}>悬停我</HoverCardTrigger>
+        <HoverCardContent>卡片内容</HoverCardContent>
+      </HoverCard>
+    ));
+    const surface = content()!;
+
+    fireEvent.mouseEnter(surface);
+    await vi.advanceTimersByTimeAsync(500);
+
+    expect(trigger()).toHaveAttribute("data-state", "open");
+    expect(content()).toBe(surface);
+  });
+
+  it("通过 style 传入对象时合并到浮层", () => {
+    render(() => (
+      <HoverCard defaultOpen>
+        <HoverCardTrigger>悬停我</HoverCardTrigger>
+        <HoverCardContent style={{ color: "red" }}>卡片内容</HoverCardContent>
+      </HoverCard>
+    ));
+
+    expect(content()!.style.color).toBe("red");
+  });
+});
+
+describe("HoverCard - 退场动画", () => {
+  it("打开后下一帧把 data-state 切到 open（等 placement 算好）", async () => {
+    stubViewport();
+    // rAF 不被 vitest 的假计时器接管，这里用真实帧驱动
+    vi.useRealTimers();
+    render(() => (
+      <HoverCard defaultOpen>
+        <HoverCardTrigger ref={stubTriggerRect}>悬停我</HoverCardTrigger>
+        <HoverCardContent>卡片内容</HoverCardContent>
+      </HoverCard>
+    ));
+    const surface = content()!;
+
+    expect(surface).toHaveAttribute("data-state", "closed");
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+
+    expect(surface).toHaveAttribute("data-state", "open");
+  });
+
+  it("关闭后只有 content 自身的 animationend 才卸载，子元素冒泡的不算", async () => {
+    render(() => (
+      <HoverCard defaultOpen closeDelay={50}>
+        <HoverCardTrigger>悬停我</HoverCardTrigger>
+        <HoverCardContent>
+          <span data-testid="inner">卡片内容</span>
+        </HoverCardContent>
+      </HoverCard>
+    ));
+    const surface = content()!;
+
+    fireEvent.pointerLeave(trigger());
+    await vi.advanceTimersByTimeAsync(100);
+    // 仍在挂载，等待退场动画
+    expect(content()).toBe(surface);
+
+    // 子元素冒泡上来的 animationend：target 不是 content 自身，应被忽略
+    fireEvent.animationEnd(document.querySelector('[data-testid="inner"]')!);
+    expect(content()).toBe(surface);
+
+    fireEvent.animationEnd(surface);
+    expect(content()).toBeNull();
   });
 });
 

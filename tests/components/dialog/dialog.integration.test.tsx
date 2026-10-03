@@ -12,6 +12,7 @@ import { DialogFooter } from "~/components/dialog/DialogFooter/DialogFooter";
 import { DialogHeader } from "~/components/dialog/DialogHeader/DialogHeader";
 import { DialogTitle } from "~/components/dialog/DialogTitle/DialogTitle";
 import { DialogTrigger } from "~/components/dialog/DialogTrigger/DialogTrigger";
+import { DialogSurface } from "~/components/dialog/DialogSurface/DialogSurface";
 
 /**
  * Dialog 集成测试。
@@ -439,5 +440,81 @@ describe("dialog 集成 - Trigger 守卫", () => {
     fireEvent.click(trigger());
 
     expect(onOpenChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("dialog 集成 - Overlay 的退场卸载", () => {
+  it("关闭后 overlay 的 animationend 也会卸载浮层", () => {
+    renderDialog({ defaultOpen: true });
+
+    fireEvent.click(document.querySelector('[data-slot="dialog-overlay"]')!);
+    // 关闭后浮层仍在（等动画），overlay 的 animationend 负责收尾
+    const overlay = document.querySelector(
+      '[data-slot="dialog-overlay"]',
+    ) as HTMLElement;
+    fireEvent.animationEnd(overlay);
+
+    expect(content()).toBeNull();
+  });
+});
+
+describe("dialog 集成 - DialogSurface 的 role", () => {
+  it("未指定 role 时回退为 dialog", () => {
+    render(() => (
+      <Dialog defaultOpen>
+        <DialogSurface>正文</DialogSurface>
+      </Dialog>
+    ));
+
+    expect(document.querySelector("[data-dialog-surface]")).toHaveAttribute(
+      "role",
+      "dialog",
+    );
+  });
+
+  it("显式传入 role 时原样使用", () => {
+    render(() => (
+      <Dialog defaultOpen>
+        <DialogSurface role="alertdialog">正文</DialogSurface>
+      </Dialog>
+    ));
+
+    expect(document.querySelector("[data-dialog-surface]")).toHaveAttribute(
+      "role",
+      "alertdialog",
+    );
+  });
+});
+
+describe("dialog 集成 - Trigger 多态与 ARIA", () => {
+  it("aria-expanded 跟随开关状态", async () => {
+    renderDialog();
+    const user = userEvent.setup();
+
+    expect(trigger()).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(trigger());
+
+    expect(trigger()).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("component 换成 a 后仍打开，且用户自己的 onClick 不被覆盖", async () => {
+    const onClick = vi.fn();
+    render(() => (
+      <Dialog>
+        <DialogTrigger component="a" onClick={onClick}>
+          打开
+        </DialogTrigger>
+        <DialogContent>正文</DialogContent>
+      </Dialog>
+    ));
+    const user = userEvent.setup();
+
+    expect(trigger().tagName).toBe("A");
+
+    await user.click(trigger());
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(content()).toBeInTheDocument();
   });
 });
