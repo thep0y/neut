@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { imageConfigDefault } from "~/components/image/Image.config";
-import { getImgProps } from "~/components/image/Image.utils";
+import { getImgProps, normalizeConfig } from "~/components/image/Image.utils";
 import type {
   ImageConfigComplete,
   ImageProps,
@@ -596,5 +596,64 @@ describe("getImgProps - 用户 style 不覆盖 layout", () => {
       // 非冲突键保留用户值
       color: "red",
     });
+  });
+});
+
+describe("normalizeConfig", () => {
+  it("已有 allSizes 时原样返回（避免重复整理）", () => {
+    const normalized = normalizeConfig({
+      ...conf(),
+      allSizes: [1, 2],
+      deviceSizes: [2, 1],
+    });
+
+    expect(normalized.allSizes).toEqual([1, 2]);
+    expect(normalized.deviceSizes).toEqual([2, 1]);
+  });
+
+  it("没有 allSizes 时合并并升序整理，且不改动入参", () => {
+    const input = {
+      ...conf(),
+      deviceSizes: [1080, 640],
+      imageSizes: [64, 16],
+    };
+    const normalized = normalizeConfig(input);
+
+    expect(normalized.allSizes).toEqual([16, 64, 640, 1080]);
+    expect(normalized.deviceSizes).toEqual([640, 1080]);
+    // 入参保持原样
+    expect(input.deviceSizes).toEqual([1080, 640]);
+  });
+
+  it("qualities 存在时升序排序", () => {
+    const normalized = normalizeConfig({ ...conf(), qualities: [90, 50] });
+
+    expect(normalized.qualities).toEqual([50, 90]);
+  });
+});
+
+describe("computeUnoptimized - SVG 分支", () => {
+  it("未显式允许 SVG 时，.svg 走原图（不经过优化服务）", () => {
+    const props = getProps({
+      src: "https://example.com/icon.svg",
+      alt: "",
+      width: 10,
+      height: 10,
+    });
+
+    expect(props.meta.unoptimized).toBe(true);
+  });
+
+  it("dangerouslyAllowSVG 时 .svg 仍走优化服务", () => {
+    const props = getImgProps(
+      { alt: "", src: "https://example.com/icon.svg", width: 10, height: 10 },
+      {
+        imgConf: conf({ dangerouslyAllowSVG: true }),
+        blurComplete: false,
+        showAltText: false,
+      },
+    );
+
+    expect(props.meta.unoptimized).toBe(false);
   });
 });
