@@ -80,7 +80,6 @@ export function useMessageScrollerEngine(
     state: scrollState,
     scheduleVisibility: scheduleVisibilitySync,
   });
-  const { setSpacerElement } = commands;
 
   const anchoring = createAnchoring({
     viewport,
@@ -132,10 +131,9 @@ export function useMessageScrollerEngine(
     };
   };
 
-  /** 公共入口：挂上尾部 spacer 元素，并让它记录行间距（用于负 margin 抵消） */
+  /** 公共入口：挂上尾部 spacer 元素（行间距在真正写高度时才惰性读取） */
   const attachSpacer = (element: HTMLElement | undefined) => {
     setSpacerSignal(element);
-    setSpacerElement(element);
   };
 
   // 内容观察：初次定位 / prepend 保位 / 新回合锚定 / 跟随 / 尺寸

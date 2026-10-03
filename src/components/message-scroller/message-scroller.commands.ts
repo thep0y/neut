@@ -35,8 +35,6 @@ export interface ScrollCommandsOptions {
 }
 
 export interface ScrollCommands {
-  /** 设置尾部 spacer 元素并记录它的行间距（用于负 margin 抵消） */
-  setSpacerElement: (element: HTMLElement | undefined) => void;
   spacerHeight: () => number;
   setScrollTop: (
     top: number,
@@ -61,7 +59,13 @@ export function createScrollCommands(
   options: ScrollCommandsOptions,
 ): ScrollCommands {
   let spacerHeightValue = 0;
-  let spacerGap = 0;
+
+  /**
+   * 行间距在**用到时**才读：ref 回调可能早于元素插入文档，
+   * 而游离节点在部分环境（jsdom）读计算样式会抛错；
+   * 真正要写 spacer 高度时树一定已经挂好，此时读到的才是有效值。
+   */
+  const spacerGap = () => rowGap(options.spacer()?.parentElement ?? null);
 
   /** 设置尾部 spacer：让目标行有空间滚到指定位置；0 时隐藏 */
   const setSpacerHeight = (height: number) => {
@@ -75,7 +79,7 @@ export function createScrollCommands(
     spacer.hidden = next === 0;
     spacer.style.height = `${next}px`;
     // 用负 margin 抵消内容的行间距，否则 spacer 会多出一段空隙
-    spacer.style.marginTop = next > 0 ? `${-spacerGap}px` : "";
+    spacer.style.marginTop = next > 0 ? `${-spacerGap()}px` : "";
   };
 
   const setScrollTop: ScrollCommands["setScrollTop"] = (
@@ -115,9 +119,6 @@ export function createScrollCommands(
   };
 
   return {
-    setSpacerElement(element) {
-      spacerGap = rowGap(element?.parentElement ?? null);
-    },
     spacerHeight: () => spacerHeightValue,
     setScrollTop,
     targetTopFor,

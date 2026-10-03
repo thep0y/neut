@@ -199,7 +199,6 @@ describe("createScrollCommands spacer", () => {
         }) as unknown as CSSStyleDeclaration,
     );
     setSpacer(spacer);
-    result.commands.setSpacerElement(spacer);
 
     result.commands.scrollToElement(last, { align: "start" });
 
@@ -217,7 +216,6 @@ describe("createScrollCommands spacer", () => {
     const spacer = document.createElement("div");
     content.appendChild(spacer);
     setSpacer(spacer);
-    result.commands.setSpacerElement(spacer);
     result.commands.scrollToElement(last, { align: "start" });
     const height = spacer.style.height;
 
@@ -229,15 +227,13 @@ describe("createScrollCommands spacer", () => {
     expect(height).toBe("200px");
   });
 
-  it("传入 undefined 时行间距按 0 处理", () => {
+  it("spacer 的父元素缺失行间距时按 0 处理", () => {
     const { result, content, setSpacer } = setup({ contentBottom: 1100 });
     const last = row(content, { top: 900, bottom: 1100 });
+    // spacer 不挂进 content：读不到父元素的行间距
     const spacer = document.createElement("div");
-    content.appendChild(spacer);
     setSpacer(spacer);
 
-    // 没有元素可读行间距 → gap 归零
-    result.commands.setSpacerElement(undefined);
     result.commands.scrollToElement(last, { align: "start" });
 
     expect(result.commands.spacerHeight()).toBe(200);
@@ -293,7 +289,6 @@ describe("createScrollCommands scrollToStart / scrollToEnd", () => {
     const spacer = document.createElement("div");
     content.appendChild(spacer);
     setSpacer(spacer);
-    result.commands.setSpacerElement(spacer);
     result.commands.scrollToElement(last, { align: "start" });
     expect(spacer.hidden).toBe(false);
 
