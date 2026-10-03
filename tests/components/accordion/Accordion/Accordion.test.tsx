@@ -1,5 +1,5 @@
 import { fireEvent, render } from "@solidjs/testing-library";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { Accordion } from "~/components/accordion/Accordion/Accordion";
 import { useAccordionContext } from "~/components/accordion/Accordion/Accordion.context";
 
@@ -30,9 +30,9 @@ describe("Accordion - 结构与属性", () => {
     expect(root.tagName).toBe("SECTION");
     expect(root.getAttribute("data-orientation")).toBe("vertical");
     expect(root.getAttribute("dir")).toBe("ltr");
-    expect(container.querySelector('[data-testid="orientation"]')?.textContent).toBe(
-      "vertical",
-    );
+    expect(
+      container.querySelector('[data-testid="orientation"]')?.textContent,
+    ).toBe("vertical");
   });
 
   it("orientation / dir / class / classList / 其余属性都可覆盖", () => {
@@ -56,9 +56,9 @@ describe("Accordion - 结构与属性", () => {
     expect(root.className).toContain("is-compact");
     expect(root.id).toBe("acc");
     expect(root.getAttribute("aria-label")).toBe("常见问题");
-    expect(container.querySelector('[data-testid="orientation"]')?.textContent).toBe(
-      "horizontal",
-    );
+    expect(
+      container.querySelector('[data-testid="orientation"]')?.textContent,
+    ).toBe("horizontal");
   });
 
   it("defaultValue 让对应项一开始就是打开的", () => {
@@ -143,10 +143,14 @@ describe("Accordion - 键盘导航", () => {
         </button>
       </Accordion>
     ));
-    const plain = container.querySelector('[data-testid="plain"]') as HTMLElement;
+    const plain = container.querySelector(
+      '[data-testid="plain"]',
+    ) as HTMLElement;
     plain.focus();
 
-    expect(fireEvent.keyDown(rootOf(container)!, { key: "ArrowDown" })).toBe(true);
+    expect(fireEvent.keyDown(rootOf(container)!, { key: "ArrowDown" })).toBe(
+      true,
+    );
   });
 
   it("其它按键不处理", () => {
@@ -178,7 +182,9 @@ describe("Accordion - 键盘导航", () => {
     outside.focus();
 
     // preventDefault 在索引校验之前调用，因此这里返回 false（事件已被阻止）
-    expect(fireEvent.keyDown(rootOf(container)!, { key: "ArrowDown" })).toBe(false);
+    expect(fireEvent.keyDown(rootOf(container)!, { key: "ArrowDown" })).toBe(
+      false,
+    );
     expect(document.activeElement).toBe(outside);
     outside.remove();
   });

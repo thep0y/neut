@@ -21,7 +21,9 @@ function renderTrigger(
     </Accordion>
   ));
   const button = () =>
-    view.container.querySelector<HTMLButtonElement>("[data-accordion-trigger]")!;
+    view.container.querySelector<HTMLButtonElement>(
+      "[data-accordion-trigger]",
+    )!;
   const heading = () => button().closest("h3")!;
   return { ...view, button, heading };
 }
@@ -52,7 +54,9 @@ describe("AccordionTrigger - 结构与 ARIA", () => {
     const { button, heading, container } = renderTrigger();
 
     expect(button().id).toMatch(/^accordion-trigger-/);
-    expect(button().getAttribute("aria-controls")).toMatch(/^accordion-content-/);
+    expect(button().getAttribute("aria-controls")).toMatch(
+      /^accordion-content-/,
+    );
     expect(heading().getAttribute("data-open")).toBe("false");
     expect(
       container.querySelector('[data-slot="accordion-trigger-icon"]'),
@@ -153,10 +157,13 @@ describe("AccordionTrigger - 交互", () => {
 
   it("受控模式：只通知外部，自身状态由 value 决定", () => {
     const onValueChange = vi.fn();
-    const { button } = renderTrigger({ value: "a" }, {
-      value: ["a"],
-      onValueChange,
-    });
+    const { button } = renderTrigger(
+      { value: "a" },
+      {
+        value: ["a"],
+        onValueChange,
+      },
+    );
 
     fireEvent.click(button());
 

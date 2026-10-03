@@ -7,7 +7,6 @@ import type {
   Column,
   ColumnDef,
   Row,
-  SortingFn,
 } from "~/components/data-table/data-table.types";
 
 interface Person {

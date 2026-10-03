@@ -1,5 +1,4 @@
 import { render } from "@solidjs/testing-library";
-import { createSignal } from "solid-js";
 import { describe, expect, it, vi } from "vitest";
 import { RadioGroup } from "~/components/radio-group/RadioGroup/RadioGroup";
 import { useRadioGroupContext } from "~/components/radio-group/RadioGroup/RadioGroup.context";

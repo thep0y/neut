@@ -103,7 +103,9 @@ describe("AccordionItem - context", () => {
 
     expect(triggerId).toMatch(/^accordion-trigger-/);
     expect(contentId).toMatch(/^accordion-content-/);
-    expect(triggerId.replace("trigger", "")).toBe(contentId.replace("content", ""));
+    expect(triggerId.replace("trigger", "")).toBe(
+      contentId.replace("content", ""),
+    );
   });
 
   it("open 跟随根组件的选中值，disabled 传下去", () => {

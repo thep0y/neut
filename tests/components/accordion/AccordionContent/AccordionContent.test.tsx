@@ -10,7 +10,10 @@ import { AccordionTrigger } from "~/components/accordion/AccordionTrigger/Accord
  * AccordionContent：关闭时**卸载**（`Show`），展开后测量真实高度写入
  * `--accordion-panel-height`，并在收起动画结束后把挂载态复位。
  */
-function renderContent(itemProps: Parameters<typeof AccordionItem>[0] = { value: "a" }, rootProps: Parameters<typeof Accordion>[0] = {}) {
+function renderContent(
+  itemProps: Parameters<typeof AccordionItem>[0] = { value: "a" },
+  rootProps: Parameters<typeof Accordion>[0] = {},
+) {
   const view = render(() => (
     <Accordion {...rootProps}>
       <AccordionItem {...itemProps}>
@@ -22,7 +25,9 @@ function renderContent(itemProps: Parameters<typeof AccordionItem>[0] = { value:
     </Accordion>
   ));
   const panel = () =>
-    view.container.querySelector<HTMLElement>('[data-slot="accordion-content"]');
+    view.container.querySelector<HTMLElement>(
+      '[data-slot="accordion-content"]',
+    );
   return { ...view, panel };
 }
 
@@ -41,10 +46,7 @@ describe("AccordionContent - 挂载与卸载", () => {
   });
 
   it("defaultValue 打开时渲染，并带上 ARIA 关联与状态", () => {
-    const { panel } = renderContent(
-      { value: "a" },
-      { defaultValue: ["a"] },
-    );
+    const { panel } = renderContent({ value: "a" }, { defaultValue: ["a"] });
     const element = panel()!;
 
     expect(element).not.toBeNull();
@@ -102,9 +104,9 @@ describe("AccordionContent - 挂载与卸载", () => {
     endCollapseAnimation(panel()!);
     fireEvent.click(trigger);
 
-    expect(panel()!.style.getPropertyValue("--accordion-panel-height")).not.toBe(
-      "",
-    );
+    expect(
+      panel()!.style.getPropertyValue("--accordion-panel-height"),
+    ).not.toBe("");
     expect(first).toBe(
       panel()!.style.getPropertyValue("--accordion-panel-height"),
     );
@@ -162,7 +164,9 @@ describe("AccordionContent - 高度与样式", () => {
       </Accordion>
     ));
     const panel = () =>
-      view.container.querySelector<HTMLElement>('[data-slot="accordion-content"]');
+      view.container.querySelector<HTMLElement>(
+        '[data-slot="accordion-content"]',
+      );
 
     expect(panel()).not.toBeNull();
 

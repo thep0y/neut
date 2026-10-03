@@ -90,6 +90,48 @@ describe("ContextMenu - 打开状态", () => {
     expect(ctx.anchor()?.getBoundingClientRect().y).toBe(90);
   });
 
+  it("onOpenChange 里 cancel() 会阻止关闭（回归）", () => {
+    // 此前 commit 先写状态再回调、且从不检查 isCanceled，
+    // 于是类型文档承诺的 details.cancel() 拦不住关闭
+    const onOpenChange = vi.fn(
+      (_next: boolean, details: { cancel: () => void }) => details.cancel(),
+    );
+    const ctx = setup({ defaultOpen: true, onOpenChange });
+
+    ctx.closeAll("escape-key");
+
+    expect(onOpenChange).toHaveBeenCalledTimes(1);
+    expect(ctx.open()).toBe(true);
+  });
+
+  it("cancel() 后不归还焦点（菜单并没有真的关闭）", () => {
+    const trigger = document.createElement("button");
+    document.body.appendChild(trigger);
+    const focusSpy = vi.spyOn(trigger, "focus");
+    const onOpenChange = vi.fn(
+      (_next: boolean, details: { cancel: () => void }) => details.cancel(),
+    );
+    const ctx = setup({ defaultOpen: true, onOpenChange });
+    ctx.setTrigger(trigger);
+
+    ctx.closeAll("escape-key");
+
+    expect(focusSpy).not.toHaveBeenCalled();
+    expect(ctx.open()).toBe(true);
+  });
+
+  it("受控模式下 cancel() 同样阻止回调后的默认行为", () => {
+    const onOpenChange = vi.fn(
+      (_next: boolean, details: { cancel: () => void }) => details.cancel(),
+    );
+    const ctx = setup({ open: true, onOpenChange });
+
+    ctx.closeAll("escape-key");
+
+    expect(onOpenChange).toHaveBeenCalledTimes(1);
+    expect(ctx.open()).toBe(true);
+  });
+
   it("已关闭时 closeAll 直接返回，不回调", () => {
     const onOpenChange = vi.fn();
     const ctx = setup({ onOpenChange });
