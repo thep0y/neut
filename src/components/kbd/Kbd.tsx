@@ -25,6 +25,7 @@ export const KbdGroup = (props: KbdGroupProps) => {
     <kbd
       data-slot="kbd-group"
       class={clsx("inline-flex items-center gap-1", local.class)}
+      classList={local.classList}
       {...others}
     />
   );

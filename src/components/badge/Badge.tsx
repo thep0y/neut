@@ -8,6 +8,7 @@ export const Badge = (props: BadgeProps) => {
 
   return (
     <span
+      data-slot="badge"
       class={clsx(badgeVariants({ variant: local.variant }), local.class)}
       classList={local.classList}
       {...others}

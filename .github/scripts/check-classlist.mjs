@@ -6,8 +6,9 @@
  * 会把它从 `others` 里摘掉——如果之后不显式传给元素，这个 prop 就被**静默丢弃**。
  * 仓库里曾一次性存在 119 个这样的文件（详见 PR 记录），因此加这道机械检查防回归。
  *
- * 判定规则（两条，命中任一即违规）：
- * 1. 文件里出现「splitProps 的 props 数组包含 "classList"」，但没有 `classList={`；
+ * 判定规则（按**单个组件函数**判定，避免一个文件里多个组件互相掩盖）：
+ * 1. 某个组件函数里出现「splitProps 的 props 数组包含 "classList"」，
+ *    但该函数体内没有 `classList={`；
  * 2. 文件里直接把 props 展开到一个**原生 DOM 元素**上（`<div {...props} … class={…}>`
  *    或 `<Dynamic {...props} … class={…}>`），此时 Solid 用
  *    `node.className = value` 覆盖，spread 里的 classList 会被静默丢弃
@@ -65,24 +66,51 @@ function splitPropsArrays(source) {
   return arrays;
 }
 
+/**
+ * 把文件切成若干「组件函数」片段（`export const X = ...` / `export function X(...)`）。
+ * 一个文件常含多个组件（如 Kbd.tsx 的 Kbd + KbdGroup），全局判断会互相掩盖：
+ * Kbd 用了 classList 就会让漏掉它的 KbdGroup 逃过检查。
+ */
+function componentChunks(source) {
+  const starts = [];
+  const pattern = /(^|\n)(?:export\s+)?(?:const|function)\s+[A-Z][A-Za-z0-9]*/g;
+  let match = pattern.exec(source);
+  while (match !== null) {
+    starts.push(match.index + (match[1] ? 1 : 0));
+    match = pattern.exec(source);
+  }
+  if (starts.length === 0) return [source];
+  return starts.map((start, index) =>
+    source.slice(
+      start,
+      index + 1 < starts.length ? starts[index + 1] : undefined,
+    ),
+  );
+}
+
 function offenders() {
   const list = [];
   for (const file of collectTsx(ROOT)) {
     const source = readFileSync(file, "utf8");
     if (source.includes(OPT_OUT)) continue;
-    const appliesClassList = source.includes("classList={");
+    const chunks = componentChunks(source);
 
-    // 规则 1：摘掉了 classList 却没应用
-    const takesClassList = splitPropsArrays(source).some((call) =>
-      call.includes('"classList"'),
+    // 规则 1（逐组件）：某个组件把 classList 从 splitProps 里摘掉，却没在
+    // 自己的 JSX 里应用。必须逐组件判断——同一文件里另一个组件用了 classList
+    // 会让漏掉它的兄弟组件逃过文件级检查（KbdGroup 就是这么漏过去的）。
+    const rule1 = chunks.some(
+      (chunk) =>
+        !chunk.includes("classList={") &&
+        splitPropsArrays(chunk).some((call) => call.includes('"classList"')),
     );
-    if (takesClassList && !appliesClassList) {
+    if (rule1) {
       list.push({ file, rule: 1 });
       continue;
     }
 
     // 规则 2：把 props 展开到原生元素 / Dynamic 之后又写显式 class，
     // 会覆盖 spread 带进来的 classList
+    const appliesClassList = source.includes("classList={");
     const spreadsIntoRawElement =
       /<Dynamic\s*\n?\s*\{\.\.\.(props|merged)\}/.test(source) ||
       /<(div|span|button|a|li|ul|ol|section|nav|p|img|input|label|form|header|footer|aside|main|article|table|tr|td|th)\s*\n?\s*\{\.\.\.(props|merged)\}/.test(
