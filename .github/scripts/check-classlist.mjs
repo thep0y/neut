@@ -108,16 +108,23 @@ function offenders() {
       continue;
     }
 
-    // 规则 2：把 props 展开到原生元素 / Dynamic 之后又写显式 class，
-    // 会覆盖 spread 带进来的 classList
+    // 规则 2：把 props 展开到原生元素 / Dynamic 的同时又写显式 class。
+    // 无论 class 写在 spread 之前还是之后，Solid 最终都会用 node.className
+    // 重设类名（spread 里带 classList 时更会覆盖内置样式），
+    // 因此这类写法必须显式 splitProps 出 class/classList 并分别传递。
     const appliesClassList = source.includes("classList={");
-    const spreadsIntoRawElement =
-      /<Dynamic\s*\n?\s*\{\.\.\.(props|merged)\}/.test(source) ||
-      /<(div|span|button|a|li|ul|ol|section|nav|p|img|input|label|form|header|footer|aside|main|article|table|tr|td|th)\s*\n?\s*\{\.\.\.(props|merged)\}/.test(
-        source,
-      );
+    if (appliesClassList) continue;
+
+    const rawTags =
+      "div|span|button|a|li|ul|ol|section|nav|p|img|input|label|form|header|footer|aside|main|article|table|tr|td|th";
+    const spreadIntoRaw =
+      /<Dynamic\b[^>]*\{\.\.\.(props|merged)\}/s.test(source) ||
+      new RegExp(
+        `<(${rawTags})\\b[^>]*\\{\\.\\.\\.(props|merged)\\}`,
+        "s",
+      ).test(source);
     const writesClass = /\bclass=\{/.test(source);
-    if (spreadsIntoRawElement && writesClass && !appliesClassList) {
+    if (spreadIntoRaw && writesClass) {
       list.push({ file, rule: 2 });
     }
   }
