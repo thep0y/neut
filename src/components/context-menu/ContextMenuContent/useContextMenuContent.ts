@@ -4,18 +4,7 @@ import {
   onCleanup,
   type Accessor,
 } from "solid-js";
-import {
-  containingBlockOffset,
-  createPositioner,
-  flip,
-  hide,
-  offset,
-  shift,
-  size,
-  type Placement,
-  type Positioner,
-  type ReferenceElement,
-} from "~/lib";
+import type { Placement, Positioner, ReferenceElement } from "~/lib";
 import type {
   ContextMenuAlign,
   ContextMenuContextValue,
@@ -27,9 +16,9 @@ import type {
 } from "../context-menu.types";
 import { handleMenuKeyDown } from "../context-menu.keyboard";
 import { createHighlight } from "./context-menu.highlight";
+import { createPopupPositioner } from "./context-menu.positioner";
 import { createItemCollection } from "./context-menu.popup-items";
 import { createTypeahead } from "../context-menu.typeahead";
-import { toContextMenuPlacement } from "../context-menu.utils";
 
 export interface CreateContextMenuPopupOptions {
   root: ContextMenuContextValue;
@@ -95,28 +84,17 @@ export function createContextMenuPopupRuntime(
   const { registerItem, orderedItems, enabledItems } = createItemCollection();
   const [openPopupState, setOpenPopupState] =
     createSignal<ContextMenuOpenPopupState>();
-  const [availableHeight, setAvailableHeight] = createSignal<number>();
-
   const menuId = `context-menu-popup-${createUniqueId()}`;
 
-  const pos = createPositioner(options.reference, positionerEl, {
-    placement: () =>
-      toContextMenuPlacement(options.side(), options.align(), options.dir()),
-    strategy: "fixed",
-    middleware: () => [
-      offset({
-        mainAxis: options.sideOffset(),
-        crossAxis: options.alignOffset(),
-      }),
-      flip(),
-      shift({ padding: options.collisionPadding() }),
-      size({
-        padding: options.collisionPadding(),
-        apply: ({ availableHeight }) => setAvailableHeight(availableHeight),
-      }),
-      hide(),
-      containingBlockOffset(),
-    ],
+  const { pos, availableHeight, placement } = createPopupPositioner({
+    reference: options.reference,
+    positionerElement: positionerEl,
+    side: options.side,
+    align: options.align,
+    dir: options.dir,
+    sideOffset: options.sideOffset,
+    alignOffset: options.alignOffset,
+    collisionPadding: options.collisionPadding,
   });
 
   const closeOpenPopup = () => setOpenPopupState(undefined);
@@ -200,7 +178,7 @@ export function createContextMenuPopupRuntime(
     positionerEl,
     setPositionerEl: (el) => setPositionerEl(el),
     availableHeight,
-    placement: pos.placement,
+    placement,
     onKeyDown,
     setupOnOpen,
   };
