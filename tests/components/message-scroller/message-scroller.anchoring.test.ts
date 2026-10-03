@@ -135,11 +135,10 @@ function setup(
 
 describe("createAnchoring handleContentChange 守卫", () => {
   it("没有 content 时是空操作", () => {
-    const { result, setContent, registered } = setup();
+    const { result, setContent } = setup();
+    setContent(undefined);
 
     expect(() => result.anchoring.handleContentChange()).not.toThrow();
-    void setContent;
-    expect(registered.size).toBe(0);
   });
 
   it("有内容但没有视口时：只提交状态，不报错", () => {
@@ -183,6 +182,20 @@ describe("createAnchoring handleContentChange 守卫", () => {
   });
 });
 
+describe("createAnchoring 无 id 子节点", () => {
+  it("内容里没有 data-message-id 的子节点会被跳过", () => {
+    const { result, content } = setup();
+    const stray = document.createElement("div");
+    stubRect(stray, { top: 0, bottom: 50 });
+    content.appendChild(stray);
+    addRowAtOffset(content, "m1", { offset: 50, height: 200, scrollTop: 0 });
+    // 把无 id 的子节点挪到最前面，保证 find 的回调先访问到它
+    content.insertBefore(stray, content.firstElementChild);
+
+    expect(() => result.anchoring.handleContentChange()).not.toThrow();
+  });
+});
+
 describe("createAnchoring prepend 保位守卫", () => {
   it("锚点元素已断开时不做补偿", () => {
     const { result, content, viewport } = setup();
@@ -205,6 +218,43 @@ describe("createAnchoring prepend 保位守卫", () => {
 
     expect(() => result.anchoring.handleContentChange()).not.toThrow();
     expect(viewport.scrollTop).toBe(0);
+  });
+
+  it("没有记录到锚点时不做补偿", () => {
+    const { result, content, viewport } = setup();
+    // 第一遍没有任何可见行（全部在视口下方）→ prependAnchor 为 null
+    const hidden = addRowAtOffset(content, "m1", {
+      offset: 800,
+      height: 200,
+      scrollTop: 0,
+    });
+    result.anchoring.handleContentChange();
+
+    const history = document.createElement("div");
+    history.setAttribute("data-message-id", "m0");
+    history.setAttribute("data-scroll-anchor", "false");
+    stubRect(history, { top: 0, bottom: 0 });
+    content.insertBefore(history, hidden);
+    syncRow(hidden, { offset: 800, height: 200, scrollTop: 0 });
+
+    expect(() => result.anchoring.handleContentChange()).not.toThrow();
+    expect(viewport.scrollTop).toBe(0);
+  });
+
+  it("视口缺失时不做补偿", () => {
+    const { result, content, setViewport } = setup();
+    addRowAtOffset(content, "m2", { offset: 0, height: 200, scrollTop: 0 });
+    addRowAtOffset(content, "m3", { offset: 200, height: 200, scrollTop: 0 });
+    result.anchoring.handleContentChange();
+    setViewport(undefined);
+
+    const history = document.createElement("div");
+    history.setAttribute("data-message-id", "m1");
+    history.setAttribute("data-scroll-anchor", "false");
+    stubRect(history, { top: 0, bottom: 200 });
+    content.insertBefore(history, content.firstElementChild);
+
+    expect(() => result.anchoring.handleContentChange()).not.toThrow();
   });
 
   it("位移在容差内时不做补偿", () => {

@@ -511,6 +511,24 @@ describe("useMessageScrollerEngine - resize 处理", () => {
     fixture.cleanup();
   });
 
+  it("注册时没有 id 的行会被忽略", async () => {
+    const fixture = await mountWithContent({
+      overrides: { defaultScrollPosition: "start" },
+      rows: (content) => {
+        addRowAtOffset(content, "m1", { offset: 0, height: 900, scrollTop: 0 });
+      },
+    });
+    const row = fixture.content.children[0] as HTMLElement;
+
+    const unregister = fixture.result.registerItem({ element: row });
+    expect(() => unregister()).not.toThrow();
+    await flushFrames();
+
+    // 没有 id → 不会被当作任何消息注册
+    expect(fixture.result.scrollToMessage("m1")).toBe(false);
+    fixture.cleanup();
+  });
+
   it("重复注销同一行是安全的", async () => {
     const fixture = await mountWithContent({
       overrides: { defaultScrollPosition: "start" },
