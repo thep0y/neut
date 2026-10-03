@@ -3,18 +3,12 @@ import type {
   MessageScrollerContextValue,
   MessageScrollerItemEntry,
   MessageScrollerProviderProps,
-  MessageScrollerScrollOptions,
 } from "./message-scroller.types";
-import {
-  firstAnchorFrom,
-  firstUnhandledAnchor,
-  hasMultipleAnchorsFrom,
-} from "./message-scroller.anchors";
 import { createDomMeasure } from "./message-scroller.dom-measure";
+import { createAnchoring } from "./message-scroller.anchoring";
 import { createScrollCommands } from "./message-scroller.commands";
 import { createScrollState } from "./message-scroller.scroll-state";
 import { createVisibility } from "./message-scroller.visibility";
-import { AT_EDGE_TOLERANCE } from "./message-scroller.utils";
 
 /** 会让界面「让位」的键盘滚动键 */
 const NAV_KEYS = new Set([
@@ -48,27 +42,11 @@ export function useMessageScrollerEngine(
   const [spacer, setSpacerSignal] = createSignal<HTMLElement>();
   const [preserveScrollOnPrepend, setPreserveScrollOnPrepend] =
     createSignal(true);
-  const [pendingScroll, setPendingScroll] = createSignal(
-    options().defaultScrollPosition !== "start",
-  );
 
   const messageElements = new Map<string, HTMLElement>();
-  const handledScrollAnchors = new WeakSet<HTMLElement>();
-
-  let itemCount = 0;
-  let firstItem: HTMLElement | null = null;
-  let defaultApplied = false;
-  let streamingTurn: HTMLElement | null = null;
-  let pendingMessage: {
-    id: string;
-    options?: MessageScrollerScrollOptions;
-  } | null = null;
-  let prependAnchor: { element: HTMLElement; viewportTop: number } | null =
-    null;
-  let pendingFrame: number | null = null;
 
   const measure = createDomMeasure({ viewport, content, spacer });
-  const { items, itemOffsetTop, itemTopInViewport, contentBottom } = measure;
+  const { items, contentBottom } = measure;
 
   const visibility = createVisibility({
     viewport,
@@ -102,266 +80,30 @@ export function useMessageScrollerEngine(
     state: scrollState,
     scheduleVisibility: scheduleVisibilitySync,
   });
+  const { setSpacerElement } = commands;
+
+  const anchoring = createAnchoring({
+    viewport,
+    content,
+    options,
+    measure,
+    commands,
+    state: scrollState,
+    scheduleState: scheduleStateCommit,
+    commitState: commitScrollState,
+    scheduleVisibility: scheduleVisibilitySync,
+    preserveScrollOnPrepend,
+    getMessageElement: (id) => messageElements.get(id),
+  });
   const {
-    setSpacerElement,
-    scrollToStart: runScrollToStart,
-    scrollToEnd: runScrollToEnd,
-    scrollToElement: runScrollToElement,
-  } = commands;
-
-  const scrollToStart = (command?: MessageScrollerScrollOptions) => {
-    streamingTurn = null;
-    return runScrollToStart(command);
-  };
-
-  const scrollToEnd = (command?: MessageScrollerScrollOptions) => {
-    streamingTurn = null;
-    return runScrollToEnd(command);
-  };
-
-  const scrollToElement = (
-    element: HTMLElement,
-    command?: MessageScrollerScrollOptions,
-    { keepPreviousPeek = false }: { keepPreviousPeek?: boolean } = {},
-  ) => {
-    const ok = runScrollToElement(element, command, { keepPreviousPeek });
-    if (!ok) return false;
-    prependAnchor = { element, viewportTop: itemTopInViewport(element) };
-    streamingTurn = keepPreviousPeek ? element : null;
-    return true;
-  };
-
-  const reanchorToAnchoredMessage = () => {
-    const el = streamingTurn;
-    if (!el?.isConnected || !scrollState.isAnchored()) return false;
-    return scrollToElement(el, { align: "start" }, { keepPreviousPeek: true });
-  };
-
-  const applyDefaultScrollPosition = () => {
-    const vp = viewport();
-    if (!vp || defaultApplied || itemCount === 0) return false;
-    const position = options().defaultScrollPosition;
-    let applied = false;
-    if (position === "last-anchor") {
-      const list = items();
-      const lastAnchor =
-        [...list].reverse().find((el) => el.dataset.scrollAnchor === "true") ??
-        null;
-      if (!lastAnchor) {
-        applied = scrollToEnd({ behavior: "auto" });
-      } else if (
-        contentBottom() - itemOffsetTop(lastAnchor) <=
-        vp.clientHeight
-      ) {
-        // 该回合完全放得下 → 直接到底
-        applied = scrollToEnd({ behavior: "auto" });
-      } else {
-        applied = scrollToElement(
-          lastAnchor,
-          { align: "start" },
-          { keepPreviousPeek: true },
-        );
-      }
-    } else if (position === "end") {
-      applied = scrollToEnd({ behavior: "auto" });
-    } else {
-      applied = scrollToStart({ behavior: "auto" });
-    }
-    if (applied) {
-      defaultApplied = true;
-      setPendingScroll(false);
-    }
-    return applied;
-  };
-
-  const flushPendingScrollToMessage = () => {
-    const pending = pendingMessage;
-    if (!pending) return false;
-    const element = messageElements.get(pending.id);
-    if (!element || !scrollToElement(element, pending.options)) return false;
-    pendingMessage = null;
-    defaultApplied = true;
-    setPendingScroll(false);
-    return true;
-  };
-
-  const schedulePendingFlush = () => {
-    if (pendingFrame !== null) return;
-    pendingFrame = window.requestAnimationFrame(() => {
-      pendingFrame = null;
-      if (flushPendingScrollToMessage()) capturePrependAnchor();
-    });
-  };
-
-  const scrollToMessage = (
-    messageId: string,
-    command?: MessageScrollerScrollOptions,
-  ) => {
-    const element = messageElements.get(messageId);
-    if (element) {
-      if (scrollToElement(element, command)) {
-        pendingMessage = null;
-        return true;
-      }
-      pendingMessage = { id: messageId, options: command };
-      return true;
-    }
-    // 会话尚未挂载任何行时可排队（客户端解析永久链接）；已挂载但缺失则返回 false
-    if (itemCount === 0) {
-      pendingMessage = { id: messageId, options: command };
-      setPendingScroll(false);
-      return true;
-    }
-    return false;
-  };
-
-  const capturePrependAnchor = () => {
-    const vp = viewport();
-    if (!vp) {
-      prependAnchor = null;
-      return;
-    }
-    const vpRect = vp.getBoundingClientRect();
-    const firstVisible =
-      items().find((el) => {
-        if (!el.dataset.messageId) return false;
-        const rect = el.getBoundingClientRect();
-        return rect.bottom > vpRect.top && rect.top < vpRect.bottom;
-      }) ?? null;
-    prependAnchor = firstVisible
-      ? { element: firstVisible, viewportTop: itemTopInViewport(firstVisible) }
-      : null;
-  };
-
-  const restorePrependAnchor = () => {
-    const anchor = prependAnchor;
-    const vp = viewport();
-    if (!anchor || !vp || !anchor.element.isConnected) return false;
-    const delta = itemTopInViewport(anchor.element) - anchor.viewportTop;
-    if (Math.abs(delta) <= AT_EDGE_TOLERANCE) return false;
-    vp.scrollTop += delta;
-    anchor.viewportTop = itemTopInViewport(anchor.element);
-    scheduleStateCommit();
-    scheduleVisibilitySync();
-    return true;
-  };
-
-  const handleContentChange = () => {
-    const root = content();
-    if (!root) return;
-    const list = items();
-    const previousCount = itemCount;
-    const previousFirst = firstItem;
-    itemCount = list.length;
-    firstItem = list[0] ?? null;
-
-    // 空会话不隐藏视口（data-pending-scroll 跳过）
-    if (list.length === 0) setPendingScroll(false);
-
-    if (flushPendingScrollToMessage()) {
-      capturePrependAnchor();
-      return;
-    }
-
-    if (previousCount === 0) {
-      // 初次定位时把已存在的锚点标记为已处理，避免后续 resize/属性变化误触发重锚定
-      for (const el of list) {
-        if (el.dataset.scrollAnchor === "true") handledScrollAnchors.add(el);
-      }
-      if (applyDefaultScrollPosition()) {
-        capturePrependAnchor();
-        return;
-      }
-      if (
-        list.length > 0 &&
-        options().autoScroll &&
-        scrollToEnd({ behavior: "auto" })
-      ) {
-        capturePrependAnchor();
-        return;
-      }
-      commitScrollState();
-      scheduleVisibilitySync();
-      capturePrependAnchor();
-      return;
-    }
-
-    const previousFirstIndex = previousFirst ? list.indexOf(previousFirst) : -1;
-    if (preserveScrollOnPrepend() && previousFirstIndex > 0) {
-      restorePrependAnchor();
-      capturePrependAnchor();
-      return;
-    }
-
-    if (list.length > previousCount) {
-      const firstNewAnchor = firstAnchorFrom(list, previousCount);
-      if (firstNewAnchor) {
-        // 同批新增多个锚点：跟随底部，避免在多个锚点间跳来跳去
-        if (
-          options().autoScroll &&
-          scrollState.isFollowing() &&
-          hasMultipleAnchorsFrom(list, previousCount)
-        ) {
-          scrollToEnd({ behavior: "auto" });
-          capturePrependAnchor();
-          return;
-        }
-        scrollToElement(
-          firstNewAnchor,
-          { align: "start" },
-          { keepPreviousPeek: true },
-        );
-        handledScrollAnchors.add(firstNewAnchor);
-        capturePrependAnchor();
-        return;
-      }
-    }
-
-    // 行数没变但出现了未处理的新锚点（例如给已有行打开 scrollAnchor）
-    if (list.length === previousCount) {
-      const unhandled = firstUnhandledAnchor(list, handledScrollAnchors);
-      if (unhandled) {
-        scrollToElement(
-          unhandled,
-          { align: "start" },
-          { keepPreviousPeek: true },
-        );
-        handledScrollAnchors.add(unhandled);
-        capturePrependAnchor();
-        return;
-      }
-    }
-
-    if (scrollState.isFollowing() && options().autoScroll) {
-      scrollToEnd({ behavior: "auto" });
-    } else {
-      commitScrollState();
-      scheduleVisibilitySync();
-    }
-    capturePrependAnchor();
-  };
-
-  const handleResize = () => {
-    if (scrollState.isFollowing() && options().autoScroll) {
-      scrollToEnd({ behavior: "auto" });
-      return;
-    }
-    const before = commands.spacerHeight();
-    if (reanchorToAnchoredMessage()) {
-      if (options().autoScroll && before > 0 && commands.spacerHeight() === 0) {
-        scrollToEnd({ behavior: "auto" });
-      }
-      return;
-    }
-    scheduleStateCommit();
-    scheduleVisibilitySync();
-  };
-
-  const syncAfterScroll = () => {
-    commitScrollState();
-    scheduleVisibilitySync();
-    capturePrependAnchor();
-  };
+    pendingScroll,
+    scrollToStart,
+    scrollToEnd,
+    scrollToMessage,
+    handleContentChange,
+    handleResize,
+    syncAfterScroll,
+  } = anchoring;
 
   const registerMessage = (
     id: string,
@@ -372,7 +114,7 @@ export function useMessageScrollerEngine(
       messageElements.set(id, element);
       visibility.observe(element);
       scheduleVisibilitySync();
-      if (pendingMessage?.id === id) schedulePendingFlush();
+      anchoring.notifyMessageRegistered(id);
       return;
     }
     if (previous && messageElements.get(id) === previous) {
@@ -474,7 +216,7 @@ export function useMessageScrollerEngine(
   });
 
   onCleanup(() => {
-    if (pendingFrame !== null) window.cancelAnimationFrame(pendingFrame);
+    anchoring.dispose();
     scrollState.dispose();
     visibility.dispose();
   });

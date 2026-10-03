@@ -124,6 +124,29 @@ describe("useMessageScrollerEngine - 初次定位", () => {
     fixture.cleanup();
   });
 
+  it("会话清空后又出现内容且开着 autoScroll 时回到底部", async () => {
+    const fixture = await mountWithContent({
+      overrides: { autoScroll: true, defaultScrollPosition: "start" },
+      dom: { scrollHeight: 2000, clientHeight: 400 },
+      rows: (content) => {
+        addRowAtOffset(content, "m1", { offset: 0, height: 900, scrollTop: 0 });
+      },
+    });
+    // 清空会话：默认定位已经应用过，再出现内容时不会再走默认定位
+    fixture.content.innerHTML = "";
+    await flushFrames();
+
+    addRowAtOffset(fixture.content, "m2", {
+      offset: 0,
+      height: 900,
+      scrollTop: 0,
+    });
+    await flushFrames();
+
+    expect(fixture.viewport.scrollTop).toBe(1600);
+    fixture.cleanup();
+  });
+
   it("只有 content 没有 viewport 时只提交状态、不报错", async () => {
     const content = document.createElement("div");
     document.body.appendChild(content);
@@ -553,6 +576,36 @@ describe("useMessageScrollerEngine - 排队后的补滚", () => {
 
     expect(dom.viewport.scrollTop).toBe(600);
     expect(hook.result.pendingScroll()).toBe(false);
+    hook.cleanup();
+  });
+
+  it("元素先出现在内容里、之后才注册：补滚落在下一帧的 rAF 上", async () => {
+    const dom = setupDom({ scrollHeight: 2000, clientHeight: 400 });
+    const hook = renderEngine({ defaultScrollPosition: "end" });
+    hook.result.setViewport(dom.viewport);
+    hook.result.setContent(dom.content);
+    await flushState();
+    expect(hook.result.scrollToMessage("later", { align: "start" })).toBe(true);
+
+    // 先有内容、但还没注册：这次内容变化里的同步 flush 会失败
+    const row = addRowAtOffset(dom.content, "later", {
+      offset: 600,
+      height: 300,
+      scrollTop: 0,
+    });
+    await flushFrames();
+    // 默认定位把视口拉到了底部：让行矩形与当前滚动量自洽
+    syncRow(row, {
+      offset: 600,
+      height: 300,
+      scrollTop: dom.viewport.scrollTop,
+    });
+
+    // 注册之后由 notifyMessageRegistered 排的那一帧完成补滚
+    hook.result.registerItem({ id: "later", element: row });
+    await flushFrames();
+
+    expect(dom.viewport.scrollTop).toBe(600);
     hook.cleanup();
   });
 
