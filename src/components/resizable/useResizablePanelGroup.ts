@@ -5,9 +5,8 @@ import type {
   ResizableOrientation,
   ResizablePanelMeta,
 } from "./resizable.types";
-import { isCollapsedSize } from "./resizable.constraints";
+import { createPanelCommands } from "./resizable.commands";
 import { createPanelLifecycle } from "./resizable.lifecycle";
-import { createCollapseMemory, nextCollapseAction } from "./resizable.collapse";
 import { createPanelRegistry } from "./resizable.registry";
 import { createLayoutReporting } from "./resizable.reporting";
 import { createPanelSizes } from "./resizable.sizes";
@@ -39,7 +38,6 @@ export function useResizablePanelGroup(
   // 注册表变化本身不是响应式的，但 resolveAdjacent 的消费方（Handle 的 aria 值）
   // 需要「面板挂载/卸载后重算」。这个版本号就是那条依赖边。
   const [registryVersion, setRegistryVersion] = createSignal(0);
-  const collapsedMemory = createCollapseMemory();
 
   const orderedMetas = (): ResizablePanelMeta[] => registry.ordered();
 
@@ -49,7 +47,7 @@ export function useResizablePanelGroup(
     reportSizeChange: (meta, oldSize, newSize) =>
       reporting.reportSizeChange(meta, oldSize, newSize),
   });
-  const { store, sizeOf, applyPair, applyPanelTarget } = sizes;
+  const { store, sizeOf, applyPair } = sizes;
 
   const reporting = createLayoutReporting({
     metas: orderedMetas,
@@ -96,45 +94,19 @@ export function useResizablePanelGroup(
     commit();
   };
 
-  const collapsePanel = (id: string) => {
-    const meta = orderedMetas().find((item) => item.id === id);
-    if (!meta?.collapsible()) return false;
-    const current = store[id] ?? 0;
-    if (isCollapsedSize(meta, current)) return false;
-    collapsedMemory.remember(id, current);
-    applyPanelTarget(meta, meta.collapsedSize());
-    commit();
-    return true;
-  };
-
-  const expandPanel = (id: string) => {
-    const meta = orderedMetas().find((item) => item.id === id);
-    if (!meta?.collapsible()) return false;
-    const current = store[id] ?? 0;
-    if (!isCollapsedSize(meta, current)) return false;
-    const remembered = collapsedMemory.recall(id, meta.minSize());
-    applyPanelTarget(meta, Math.max(remembered, meta.minSize()));
-    commit();
-    return true;
-  };
-
-  const setPanelSize = (id: string, size: number) => {
-    const meta = orderedMetas().find((item) => item.id === id);
-    if (!meta) return;
-    applyPanelTarget(meta, size);
-    commit();
-  };
-
-  const toggleHandleCollapse = (handleEl: HTMLElement) => {
-    const adjacent = adjacentOf(handleEl);
-    if (!adjacent) return;
-
-    const decision = nextCollapseAction(adjacent, (id) => store[id] ?? 0);
-    if (!decision) return;
-
-    if (decision.action === "expand") expandPanel(decision.id);
-    else collapsePanel(decision.id);
-  };
+  const commands = createPanelCommands({
+    metas: orderedMetas,
+    registry,
+    sizes,
+    commit,
+  });
+  const {
+    collapsePanel,
+    expandPanel,
+    setPanelSize,
+    isPanelCollapsed,
+    toggleHandleCollapse,
+  } = commands;
 
   const groupSizePx = () => {
     const element = groupElement();
@@ -174,10 +146,7 @@ export function useResizablePanelGroup(
     setPanelSize,
     collapsePanel,
     expandPanel,
-    isPanelCollapsed: (id) => {
-      const meta = orderedMetas().find((item) => item.id === id);
-      return meta ? isCollapsedSize(meta, store[id] ?? 0) : false;
-    },
-    getPanelSize: (id) => store[id] ?? 0,
+    isPanelCollapsed,
+    getPanelSize: sizeOf,
   };
 }
