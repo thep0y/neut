@@ -14,6 +14,7 @@ export const Avatar = (props: AvatarProps) => {
   ]);
 
   const [imageLoadFailed, setImageLoadFailed] = createSignal(false);
+  const [imagePresent, setImagePresent] = createSignal(false);
 
   return (
     <span
@@ -26,7 +27,14 @@ export const Avatar = (props: AvatarProps) => {
       classList={local.classList}
       {...others}
     >
-      <AvatarContext.Provider value={{ imageLoadFailed, setImageLoadFailed }}>
+      <AvatarContext.Provider
+        value={{
+          imageLoadFailed,
+          setImageLoadFailed,
+          imagePresent,
+          setImagePresent,
+        }}
+      >
         {local.children}
       </AvatarContext.Provider>
     </span>

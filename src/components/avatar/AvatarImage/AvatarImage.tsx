@@ -1,10 +1,17 @@
-import { Show, splitProps } from "solid-js";
+import { Show, createEffect, onCleanup, splitProps } from "solid-js";
 import { clsx } from "~/utils";
 import type { AvatarImageProps } from "./AvatarImage.types";
 import { useAvatarContext } from "../Avatar/Avatar.context";
 
 export const AvatarImage = (props: AvatarImageProps) => {
-  const { imageLoadFailed, setImageLoadFailed } = useAvatarContext();
+  const { imageLoadFailed, setImageLoadFailed, setImagePresent } =
+    useAvatarContext();
+
+  // 图片存在期间登记给 Avatar：这样"没有图片"时 AvatarFallback 才知道该顶上
+  createEffect(() => {
+    setImagePresent(true);
+    onCleanup(() => setImagePresent(false));
+  });
 
   const [local, others] = splitProps(props, ["alt", "class", "classList"]);
 

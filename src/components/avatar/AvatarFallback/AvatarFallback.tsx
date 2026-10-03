@@ -4,12 +4,12 @@ import type { AvatarFallbackProps } from "./AvatarFallback.types";
 import { useAvatarContext } from "../Avatar/Avatar.context";
 
 export const AvatarFallback = (props: AvatarFallbackProps) => {
-  const { imageLoadFailed } = useAvatarContext();
+  const { imageLoadFailed, imagePresent } = useAvatarContext();
 
   const [local, others] = splitProps(props, ["class", "classList"]);
 
   return (
-    <Show when={imageLoadFailed()}>
+    <Show when={!imagePresent() || imageLoadFailed()}>
       <span
         data-slot="avatar-fallback"
         class={clsx(
