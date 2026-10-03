@@ -1,10 +1,15 @@
 import { createMemo, createSignal, type Accessor } from "solid-js";
 import {
   useQuestionnaireRootContext,
-  type QuestionnaireAnswerEntry,
   type QuestionnaireItemContextValue,
   type QuestionnaireItemHandle,
 } from "./questionnaire.context";
+import {
+  buildDescribedBy,
+  buildItemKeyshortcuts,
+  createIdRegistry,
+} from "./questionnaire.aria";
+import { createAnswerBookkeeping } from "./questionnaire.answers";
 import type { QuestionnaireItemStatus } from "./questionnaire.types";
 import {
   focusItem,
@@ -15,7 +20,11 @@ import {
   buildShortcutByChoiceValue,
   findAnswerByShortcut,
 } from "./questionnaire.shortcuts";
-import { isAnswerDisabled, isAnswerFilled } from "./questionnaire.utils";
+import {
+  findNativeInvalidAnswer,
+  isItemSatisfied,
+  resolveItemInvalid,
+} from "./questionnaire.validation";
 
 interface Options {
   name: string;
@@ -55,147 +64,62 @@ export function useQuestionnaireItem(
   const root = useQuestionnaireRootContext("QuestionnaireItem");
 
   const [element, setElement] = createSignal<HTMLElement>();
-  const [answers, setAnswers] = createSignal<QuestionnaireAnswerEntry[]>([]);
-  const [selections, setSelections] = createSignal<string[]>([]);
-  const [defaults, setDefaults] = createSignal<string[]>([]);
-  const [skipped, setSkipped] = createSignal(false);
-  const [touched, setTouched] = createSignal(false);
-  const [resetVersion, setResetVersion] = createSignal(0);
-  const [descriptionIds, setDescriptionIds] = createSignal<string[]>([]);
-  const [errorIds, setErrorIds] = createSignal<string[]>([]);
+
+  const book = createAnswerBookkeeping({
+    multiple: options.multiple,
+    required: options.required,
+  });
+  const {
+    answers,
+    selections,
+    touched,
+    resetVersion,
+    status,
+    skippable,
+    answeredOk,
+    hasInputAnswer,
+    registerAnswerControl,
+    registerAnswerSelection,
+    setAnswerDefault,
+    setAnswerSelectionFromInteraction,
+    syncControlledAnswerSelection,
+    getAnswerByElement,
+  } = book;
+
+  const descriptions = createIdRegistry();
+  const errors = createIdRegistry();
 
   const active = createMemo(() => root.activeItemName() === options.name);
 
-  const registerAnswerControl = (entry: QuestionnaireAnswerEntry) => {
-    setAnswers((prev) => [
-      ...prev.filter(
-        (item) => item.id !== entry.id && item.element !== entry.element,
-      ),
-      entry,
-    ]);
-    return () => setAnswers((prev) => prev.filter((item) => item !== entry));
-  };
-
-  const applySelection = (id: string, selected: boolean) => {
-    setSelections((prev) => {
-      if (selected) {
-        return options.multiple()
-          ? prev.includes(id)
-            ? prev
-            : [...prev, id]
-          : [id];
-      }
-      return prev.filter((value) => value !== id);
-    });
-  };
-
-  const registerAnswerSelection = (id: string, initialSelected: boolean) => {
-    if (initialSelected) {
-      setSelections((prev) =>
-        options.multiple()
-          ? prev.includes(id)
-            ? prev
-            : [...prev, id]
-          : prev.length
-            ? prev
-            : [id],
-      );
-    }
-    return () => {
-      setSelections((prev) => prev.filter((value) => value !== id));
-      setDefaults((prev) => prev.filter((value) => value !== id));
-    };
-  };
-
-  const setAnswerDefault = (id: string, selected: boolean) => {
-    setDefaults((prev) => {
-      if (selected) return prev.includes(id) ? prev : [...prev, id];
-      return prev.filter((value) => value !== id);
-    });
-  };
-
-  const setAnswerSelectionFromInteraction = (id: string, selected: boolean) => {
-    setSkipped(false);
-    applySelection(id, selected);
-  };
-
-  const syncControlledAnswerSelection = (id: string, selected: boolean) => {
-    applySelection(id, selected);
-  };
-
-  const hasInputAnswer = createMemo(() =>
-    answers().some(
-      (entry) =>
-        entry.type === "input" &&
-        !["button", "checkbox", "radio", "reset", "submit"].includes(
-          entry.element.type,
-        ),
-    ),
-  );
-
-  const status = createMemo<QuestionnaireItemStatus>(() => {
-    if (skipped()) return "skipped";
-    const selected = selections();
-    const answered = answers().some(
-      (entry) => selected.includes(entry.id) && !isAnswerDisabled(entry),
-    );
-    return answered ? "answered" : "unanswered";
-  });
-
-  const skippable = createMemo(
-    () => status() === "skipped" && !options.required(),
-  );
-  const answeredOk = createMemo(() => status() === "answered");
-
-  const invalid = createMemo(
-    () =>
-      !options.disabled() &&
-      !skippable() &&
-      (options.invalid() ||
-        (touched() && !(skippable() || (!options.invalid() && answeredOk())))),
+  const invalid = createMemo(() =>
+    resolveItemInvalid({
+      disabled: options.disabled(),
+      invalid: options.invalid(),
+      skippable: skippable(),
+      touched: touched(),
+      answeredOk: answeredOk(),
+    }),
   );
 
   const focus = () => focusItem(element());
 
   const validate = () => {
-    setTouched(true);
-    const satisfied =
-      options.disabled() ||
-      (status() === "skipped" && !options.required()) ||
-      (!options.invalid() && status() === "answered");
+    book.markTouched();
+    const satisfied = isItemSatisfied({
+      disabled: options.disabled(),
+      status: status(),
+      required: options.required(),
+      invalid: options.invalid(),
+    });
     if (!satisfied) return false;
     if (!root.nativeValidation()) return true;
-    const answer = answers().find(
-      (entry) =>
-        isAnswerFilled(entry) &&
-        entry.element.willValidate &&
-        !entry.element.validity.valid,
-    );
-    if (answer) {
-      answer.element.focus();
-      answer.element.reportValidity();
-      return false;
-    }
-    return true;
-  };
 
-  const skip = () => {
-    if (options.required()) return;
-    setSelections([]);
-    setSkipped(true);
+    const answer = findNativeInvalidAnswer(answers());
+    if (!answer) return true;
+    answer.element.focus();
+    answer.element.reportValidity();
+    return false;
   };
-
-  const reset = () => {
-    setTouched(false);
-    setSkipped(false);
-    setSelections(
-      options.multiple() ? [...defaults()] : defaults().slice(0, 1),
-    );
-    setResetVersion((value) => value + 1);
-  };
-
-  const getAnswerByElement = (target: Element) =>
-    answers().find((entry) => entry.element === target) ?? null;
 
   const shortcutByChoiceValue = createMemo(() =>
     buildShortcutByChoiceValue(
@@ -227,36 +151,17 @@ export function useQuestionnaireItem(
       answers: answers(),
     });
 
-  const describedBy = () => {
-    const ids = [...descriptionIds(), ...(invalid() ? errorIds() : [])];
-    return [...new Set(ids)].join(" ") || undefined;
-  };
+  const describedBy = () =>
+    buildDescribedBy(descriptions.ids(), errors.ids(), invalid());
 
-  const keyshortcuts = () => {
-    if (!active()) return undefined;
-    const state = root.state();
-    return (
-      [
-        "Meta+Enter Control+Enter",
-        answers().length ? "ArrowUp ArrowDown" : null,
-        !state.first ? "ArrowLeft" : null,
-        !state.last && status() !== "unanswered" ? "ArrowRight" : null,
-      ]
-        .filter(Boolean)
-        .join(" ") || undefined
-    );
-  };
-
-  const registerDescription = (id: string) => {
-    setDescriptionIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
-    return () =>
-      setDescriptionIds((prev) => prev.filter((value) => value !== id));
-  };
-
-  const registerError = (id: string) => {
-    setErrorIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
-    return () => setErrorIds((prev) => prev.filter((value) => value !== id));
-  };
+  const keyshortcuts = () =>
+    buildItemKeyshortcuts({
+      active: active(),
+      hasAnswers: answers().length > 0,
+      first: root.state().first,
+      last: root.state().last,
+      status: status(),
+    });
 
   const context: QuestionnaireItemContextValue = {
     name: options.name,
@@ -274,8 +179,8 @@ export function useQuestionnaireItem(
     shortcuts: root.shortcuts,
     registerAnswerControl,
     registerAnswerSelection,
-    registerDescription,
-    registerError,
+    registerDescription: descriptions.register,
+    registerError: errors.register,
     setAnswerDefault,
     setAnswerSelectionFromInteraction,
     syncControlledAnswerSelection,
@@ -292,8 +197,8 @@ export function useQuestionnaireItem(
       validate,
       focus,
       focusInvalid: focus,
-      skip,
-      reset,
+      skip: book.skip,
+      reset: book.reset,
       getAnswerByElement,
       getAnswerByShortcut,
       moveAnswerFocus,
