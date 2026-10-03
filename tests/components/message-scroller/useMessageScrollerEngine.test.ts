@@ -1,133 +1,14 @@
-import { renderHook } from "@solidjs/testing-library";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useMessageScrollerEngine } from "~/components/message-scroller/useMessageScrollerEngine";
-import type { MessageScrollerProviderProps } from "~/components/message-scroller/message-scroller.types";
-
-/**
- * jsdom 不做布局：所有 `getBoundingClientRect()` 恒为 0、`scrollHeight`/`clientHeight`
- * 恒为 0。滚动引擎的核心算法都建立在真实测量之上，因此这里显式 stub 这些 API，
- * 用一个"可控的坐标系"来驱动引擎（TESTING.md §4.5：只 mock 系统边界）。
- */
-
-type EngineOptions = Required<Omit<MessageScrollerProviderProps, "children">>;
-
-/**
- * 与 `MessageScrollerProvider` 的 `mergeProps` 默认值保持一致。
- * 默认值定义在 Provider 里（引擎本身要求调用方给全），因此测试侧显式复刻一份；
- * 若哪天 Provider 改了默认值，这里的断言会提醒同步（TESTING.md §7 文档联动）。
- */
-const ENGINE_DEFAULTS: EngineOptions = {
-  autoScroll: false,
-  defaultScrollPosition: "end",
-  scrollEdgeThreshold: 8,
-  scrollMargin: 0,
-  scrollPreviousItemPeek: 64,
-};
-
-/** 让元素报告指定矩形，并把它挂到 body */
-function measured(
-  el: HTMLElement,
-  rect: { top: number; bottom: number; height?: number },
-): HTMLElement {
-  el.getBoundingClientRect = () =>
-    ({
-      top: rect.top,
-      bottom: rect.bottom,
-      height: rect.height ?? rect.bottom - rect.top,
-      left: 0,
-      right: 0,
-      width: 0,
-      x: 0,
-      y: rect.top,
-      toJSON: () => ({}),
-    }) as DOMRect;
-  document.body.appendChild(el);
-  return el;
-}
-
-/** 设置滚动容器的可滚动尺寸 */
-function setScrollMetrics(
-  el: HTMLElement,
-  {
-    scrollHeight,
-    clientHeight,
-  }: { scrollHeight: number; clientHeight: number },
-) {
-  Object.defineProperty(el, "scrollHeight", {
-    configurable: true,
-    value: scrollHeight,
-  });
-  Object.defineProperty(el, "clientHeight", {
-    configurable: true,
-    value: clientHeight,
-  });
-}
-
-/** 构造一个可控的 viewport + content */
-function setupDom(options: { scrollTop?: number } = {}) {
-  const viewport = document.createElement("div");
-  const content = document.createElement("div");
-  setScrollMetrics(viewport, { scrollHeight: 1000, clientHeight: 400 });
-  Object.defineProperty(viewport, "scrollTop", {
-    configurable: true,
-    writable: true,
-    value: options.scrollTop ?? 0,
-  });
-  measured(viewport, { top: 0, bottom: 400 });
-
-  const scrollToCalls: Array<{ top: number; behavior?: string }> = [];
-  viewport.scrollTo = ((arg: ScrollToOptions | number) => {
-    const top = typeof arg === "number" ? arg : (arg.top ?? 0);
-    scrollToCalls.push({
-      top,
-      behavior: typeof arg === "number" ? undefined : arg.behavior,
-    });
-    viewport.scrollTop = top;
-  }) as typeof viewport.scrollTo;
-
-  viewport.appendChild(content);
-  document.body.appendChild(viewport);
-
-  return { viewport, content, scrollToCalls };
-}
-
-/** 往 content 里加一个"行" */
-function addRow(
-  content: HTMLElement,
-  id: string,
-  rect: { top: number; bottom: number },
-  anchor = false,
-): HTMLElement {
-  const row = document.createElement("div");
-  row.setAttribute("data-message-id", id);
-  if (anchor) row.setAttribute("data-scroll-anchor", "");
-  measured(row, rect);
-  content.appendChild(row);
-  return row;
-}
-
-/**
- * 加一行，并让它的视口矩形与 `scrollTop` **自洽**。
- *
- * 引擎里 `itemOffsetTop = rect.top - vpRect.top + vp.scrollTop`，
- * 其中 `vpRect.top` 固定为 0。因此一个「内容偏移 offset、高 height」的行
- * 在视口中的 top 应为 `offset - scrollTop`。手写 rect 很容易和 scrollTop 对不上，
- * 导致算出的可滚动状态与预期不符；这个 helper 把换算固定下来。
- */
-function addRowAtOffset(
-  content: HTMLElement,
-  id: string,
-  opts: { offset: number; height: number; scrollTop: number },
-): HTMLElement {
-  const top = opts.offset - opts.scrollTop;
-  return addRow(content, id, { top, bottom: top + opts.height });
-}
-
-function renderEngine(overrides: Partial<EngineOptions> = {}) {
-  return renderHook(() =>
-    useMessageScrollerEngine(() => ({ ...ENGINE_DEFAULTS, ...overrides })),
-  );
-}
+import {
+  type EngineOptions,
+  addRow,
+  addRowAtOffset,
+  flushState,
+  measured,
+  renderEngine,
+  setScrollMetrics,
+  setupDom,
+} from "~tests/components/message-scroller/test-utils";
 
 describe("useMessageScrollerEngine - 基础接线", () => {
   beforeEach(() => {
@@ -254,11 +135,6 @@ describe("useMessageScrollerEngine - 可滚动状态", () => {
     document.body.innerHTML = "";
     vi.restoreAllMocks();
   });
-
-  /** 让引擎完成一次状态提交（内部走 requestAnimationFrame） */
-  async function flushState() {
-    await vi.advanceTimersByTimeAsync(0);
-  }
 
   /**
    * 通用脚手架：内容一行（offset 0、高 900），容器 400 高。
@@ -414,10 +290,6 @@ describe("useMessageScrollerEngine - 滚动方法", () => {
     document.body.innerHTML = "";
     vi.restoreAllMocks();
   });
-
-  async function flushState() {
-    await vi.advanceTimersByTimeAsync(0);
-  }
 
   /** 建立 viewport + 一行内容并完成首次定位 */
   async function mount(options: Partial<EngineOptions> = {}) {
