@@ -657,3 +657,84 @@ describe("computeUnoptimized - SVG 分支", () => {
     expect(props.meta.unoptimized).toBe(false);
   });
 });
+
+describe("getImgProps - 可选配置与分支覆盖（回归）", () => {
+  it("显式传 fill 时按 fill 处理，不传时默认 false", () => {
+    const withoutFill = getProps({
+      src: "https://example.com/a.png",
+      width: 100,
+      height: 100,
+    });
+    const withFill = getProps({
+      src: "https://example.com/a.png",
+      fill: true,
+    });
+
+    expect(withoutFill.meta.fill).toBe(false);
+    expect(withFill.meta.fill).toBe(true);
+  });
+
+  it("config.unoptimized 为 true 时不走优化服务", () => {
+    const props = getImgProps(
+      {
+        alt: "",
+        src: "https://example.com/a.png",
+        width: 100,
+        height: 100,
+      } as ImageProps,
+      {
+        imgConf: conf({ unoptimized: true }),
+        blurComplete: false,
+        showAltText: false,
+      },
+    );
+
+    expect(props.meta.unoptimized).toBe(true);
+  });
+
+  it("loading=eager 时取消懒加载：不生成 sizes，且 loading 原样输出", () => {
+    // computeIsLazy 的 `local.loading === "eager"` 分支：它让 isLazy 为 false，
+    // 于是不推导 sizes；而 loading 属性本身如实透传 "eager"
+    // 不显式给 sizes：eager 时不会被推导出来（lazy 才需要 sizes 边界）
+    const props = getProps({
+      src: "https://example.com/a.png",
+      width: 100,
+      height: 100,
+      loading: "eager",
+    });
+
+    expect(props.props.loading).toBe("eager");
+    expect(props.props.sizes).toBeUndefined();
+
+    // 对照：显式传入的 sizes 仍如实透传
+    const withSizes = getProps({
+      src: "https://example.com/a.png",
+      width: 100,
+      height: 100,
+      loading: "eager",
+      sizes: "100vw",
+    });
+    expect(withSizes.props.sizes).toBe("100vw");
+  });
+
+  it("placeholder=blur 时把 blurDataURL 包进 SVG 作为背景图写入 style", () => {
+    // 实现不直接写原始 data URL，而是套一层 feGaussianBlur 的 SVG，
+    // 这样不仅"显示一张小图"，还真的做了高斯模糊
+    const props = getProps({
+      src: "https://example.com/a.png",
+      width: 100,
+      height: 100,
+      placeholder: "blur",
+      blurDataURL: "data:image/png;base64,AAAA",
+    });
+
+    // 注意 style 用的是 CSS 的 kebab-case 键名
+    const style = (props.props.style ?? {}) as Record<string, string>;
+    expect(style["background-image"]).toContain("data:image/svg+xml");
+    expect(style["background-image"]).toContain("feGaussianBlur");
+    // 原始 data URL 被嵌在 SVG 的 <image href> 里
+    expect(style["background-image"]).toContain("data:image/png;base64,AAAA");
+    expect(style["background-size"]).toBe("cover");
+    expect(style.color).toBe("transparent");
+  });
+});
