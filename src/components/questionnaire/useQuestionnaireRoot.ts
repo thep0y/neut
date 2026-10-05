@@ -116,7 +116,9 @@ export function useQuestionnaireRoot(options: Options): {
     }
     const list = enabled();
     const position = list.indexOf(item);
-    navigate(list[position + 1]?.name ?? null);
+    // 走到这里说明 last() 为 false，即 position 必然小于末位；
+    // 且 position 与 item-view 的 index() 同源于 enabled()，因此下一项一定存在
+    navigate(list[position + 1].name);
   };
 
   const submitOrNext = () => {

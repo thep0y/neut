@@ -20,7 +20,8 @@ interface BlurSvgOptions {
   heightInt?: number;
   blurWidth?: number;
   blurHeight?: number;
-  blurDataURL: string;
+  /** 省略时按空串处理（生产构建跳过开发期校验时可能出现没有 blurDataURL 的情况） */
+  blurDataURL?: string;
   objectFit?: string;
 }
 
@@ -35,7 +36,7 @@ export function getImageBlurSvg({
   heightInt,
   blurWidth,
   blurHeight,
-  blurDataURL,
+  blurDataURL = "",
   objectFit,
 }: BlurSvgOptions): string {
   const std = 20;

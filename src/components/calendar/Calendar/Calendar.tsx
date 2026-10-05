@@ -104,7 +104,8 @@ export function Calendar(props: CalendarProps): JSX.Element {
   const canNext = () => canMoveNext(currentMonth(), merged.max);
 
   const monthList = createMemo(() => {
-    const count = Math.max(1, merged.numberOfMonths ?? 1);
+    // mergeProps 已把 numberOfMonths 默认成 1，这里只负责夹取下界
+    const count = Math.max(1, merged.numberOfMonths);
     return Array.from({ length: count }, (_, i) =>
       addMonths(currentMonth(), i),
     );

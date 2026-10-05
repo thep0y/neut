@@ -38,7 +38,8 @@ export { handleLoading } from "./lib/handle-loading";
 export { VALID_LOADING_VALUES } from "./lib/dev-checks";
 
 export interface GetImgPropsOptions {
-  imgConf: ImageConfigComplete;
+  /** 省略时使用内置默认配置（与 ImageConfigProvider 的默认值一致） */
+  imgConf?: ImageConfigComplete;
   blurComplete: boolean;
   showAltText: boolean;
 }
@@ -53,13 +54,16 @@ export function getImgProps(
   props: ImageProps,
   { imgConf, blurComplete, showAltText }: GetImgPropsOptions,
 ): ImgPropsResult {
+  // 先解析配置：下面合并 props 默认值时要读 config.unoptimized
+  const config = normalizeConfig(imgConf ?? imageConfigDefault);
+
   const merged = mergeProps(
     {
       fill: false,
       priority: false,
       preload: false,
       placeholder: "empty",
-      unoptimized: imgConf.unoptimized,
+      unoptimized: config.unoptimized,
       decoding: "async",
     } as const,
     props,
@@ -93,7 +97,6 @@ export function getImgProps(
     "decoding",
   ]);
 
-  const config = normalizeConfig(imgConf || imageConfigDefault);
   const loader: ImageLoaderWithConfig = local.loader || defaultLoader;
   const { style, sizes, fill } = resolveLayout(local);
 
@@ -221,11 +224,12 @@ function resolveLayout(local: {
   layout?: ImageProps["layout"];
   style?: ImageProps["style"];
   sizes?: string;
-  fill?: boolean;
+  /** 调用方（getImgProps）已通过 mergeProps 保证默认值为 false，故此处必填 */
+  fill: boolean;
 }): LayoutResult {
   let style = local.style;
   let sizes = local.sizes;
-  let fill = local.fill ?? false;
+  let fill = local.fill;
 
   const layout = local.layout;
   if (!layout) return { style, sizes, fill };
@@ -432,7 +436,7 @@ function computePlaceholderStyle({
           heightInt,
           blurWidth: stat.blurWidth,
           blurHeight: stat.blurHeight,
-          blurDataURL: blurDataURL || "", // 调用方已保证 blur 时有值
+          blurDataURL,
           objectFit,
         })}")`
       : `url("${placeholder}")`; // 形如 data:image/...

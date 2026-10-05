@@ -153,3 +153,21 @@ describe("getPlaceholderStyle", () => {
     expect(style["background-repeat"]).toBe("no-repeat");
   });
 });
+
+describe("getImageBlurSvg - blurDataURL 省略（回归）", () => {
+  it("省略 blurDataURL 时按空串处理，href 为空但不抛错", () => {
+    // `BlurSvgOptions.blurDataURL` 现在是可选的（默认空串）：
+    // 生产构建会跳过开发期校验，那时 placeholder="blur" 也可能没有 blurDataURL。
+    // 默认值下沉到声明它可选的这个函数里，因此这条路径可以在不经 dev-checks 的情况下直接覆盖。
+    const svg = getImageBlurSvg({ widthInt: 100, heightInt: 100 });
+
+    expect(svg).toContain("href=''");
+    expect(svg).toContain("feGaussianBlur");
+  });
+
+  it("显式传空串与省略等价", () => {
+    expect(
+      getImageBlurSvg({ widthInt: 8, heightInt: 8, blurDataURL: "" }),
+    ).toBe(getImageBlurSvg({ widthInt: 8, heightInt: 8 }));
+  });
+});

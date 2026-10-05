@@ -738,3 +738,41 @@ describe("getImgProps - 可选配置与分支覆盖（回归）", () => {
     expect(style.color).toBe("transparent");
   });
 });
+
+describe("getImgProps - 配置省略（回归）", () => {
+  it("省略 imgConf 时使用内置默认配置，与显式传入 imageConfigDefault 等价", () => {
+    // GetImgPropsOptions.imgConf 现在真正可选（原先类型必填、代码却写了
+    // `imgConf || imageConfigDefault` 的兜底，属于自相矛盾）。这里断言
+    // 兜底路径的结果与显式传默认配置**完全一致**，而不是只断言"没抛错"。
+    const props = {
+      alt: "图",
+      src: "https://example.com/a.png",
+      width: 100,
+      height: 100,
+    } as ImageProps;
+    const base = { blurComplete: false, showAltText: false };
+
+    const implicit = getImgProps(props, base);
+    const explicit = getImgProps(props, {
+      ...base,
+      imgConf: imageConfigDefault,
+    });
+
+    expect(implicit.props).toEqual(explicit.props);
+    expect(implicit.meta).toEqual(explicit.meta);
+  });
+
+  it("省略 imgConf 时 unoptimized 取自默认配置", () => {
+    const result = getImgProps(
+      {
+        alt: "",
+        src: "https://example.com/a.png",
+        width: 100,
+        height: 100,
+      } as ImageProps,
+      { blurComplete: false, showAltText: false },
+    );
+
+    expect(result.meta.unoptimized).toBe(imageConfigDefault.unoptimized);
+  });
+});
