@@ -834,3 +834,86 @@ describe("ResizableHandle 指针拖拽", () => {
     expect(panels()[0]).toHaveAttribute("data-panel-size", "50");
   });
 });
+
+describe("ResizableHandle - 没有相邻面板（回归）", () => {
+  it("孤立分隔条上按方向键安全早退，不抛错也不触发布局变更", async () => {
+    // `registry.adjacent` 会沿 previousElementSibling / nextElementSibling
+    // 找已注册面板；分隔条放在所有面板之前时两侧都找不到，
+    // 于是 nudgeAdjacent / setAdjacentSize 里的 `if (!adjacent) return;`
+    // 这一侧才可达（此前无用例）。
+    const onLayoutChange = vi.fn();
+    const result = render(() => (
+      <ResizablePanelGroup onLayoutChange={onLayoutChange}>
+        <ResizableHandle aria-label="孤立分隔条" />
+        <ResizablePanel id="a" defaultSize={50}>
+          面板 A
+        </ResizablePanel>
+        <ResizablePanel id="b" defaultSize={50}>
+          面板 B
+        </ResizablePanel>
+      </ResizablePanelGroup>
+    ));
+
+    const group = result.container.querySelector(
+      '[data-slot="resizable-panel-group"]',
+    ) as HTMLElement;
+    Object.defineProperty(group, "clientWidth", {
+      value: 400,
+      configurable: true,
+    });
+    Object.defineProperty(group, "clientHeight", {
+      value: 0,
+      configurable: true,
+    });
+
+    const handle = result.container.querySelector(
+      '[data-slot="resizable-handle"]',
+    ) as HTMLElement;
+    await flushInit();
+    onLayoutChange.mockClear();
+
+    expect(() => {
+      fireEvent.keyDown(handle, { key: "ArrowRight" });
+      fireEvent.keyDown(handle, { key: "ArrowLeft" });
+    }).not.toThrow();
+
+    expect(onLayoutChange).not.toHaveBeenCalled();
+  });
+
+  it("孤立分隔条上的拖拽也不改布局", async () => {
+    const onLayoutChange = vi.fn();
+    const result = render(() => (
+      <ResizablePanelGroup onLayoutChange={onLayoutChange}>
+        <ResizableHandle aria-label="孤立分隔条" />
+        <ResizablePanel id="a" defaultSize={50}>
+          面板 A
+        </ResizablePanel>
+      </ResizablePanelGroup>
+    ));
+
+    const group = result.container.querySelector(
+      '[data-slot="resizable-panel-group"]',
+    ) as HTMLElement;
+    Object.defineProperty(group, "clientWidth", {
+      value: 400,
+      configurable: true,
+    });
+    Object.defineProperty(group, "clientHeight", {
+      value: 0,
+      configurable: true,
+    });
+
+    const handle = result.container.querySelector(
+      '[data-slot="resizable-handle"]',
+    ) as HTMLElement;
+    await flushInit();
+    onLayoutChange.mockClear();
+
+    pointerDown(handle);
+    pointerMove(handle, { clientX: 260 });
+    flushFrames();
+    pointerUp(handle);
+
+    expect(onLayoutChange).not.toHaveBeenCalled();
+  });
+});

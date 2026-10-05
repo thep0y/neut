@@ -296,3 +296,44 @@ describe("ContextMenu 集成 - 子菜单", () => {
     expect(subContents()).toHaveLength(1);
   });
 });
+
+describe("ContextMenu 集成 - 子菜单 onOpenChange 取消", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("onOpenChange 里调用 details.cancel() 时不落状态，子菜单保持关闭", async () => {
+    // Base UI 语义：先回调、detail.cancel() 时不写内部状态。
+    // ContextMenuSub 的 `if (details.isCanceled) return;` 这一侧此前没有用例。
+    const onOpenA = vi.fn((_open: boolean, details: { cancel: () => void }) => {
+      details.cancel();
+    });
+    render(() => (
+      <ContextMenu defaultOpen>
+        <ContextMenuTrigger>区域</ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuSub
+            onOpenChange={onOpenA as unknown as (open: boolean) => void}
+          >
+            <ContextMenuSubTrigger>A 更多</ContextMenuSubTrigger>
+            <ContextMenuSubContent>
+              <ContextMenuItem>A-1</ContextMenuItem>
+            </ContextMenuSubContent>
+          </ContextMenuSub>
+        </ContextMenuContent>
+      </ContextMenu>
+    ));
+    await waitForMount();
+
+    const [subTrigger] = slots("context-menu-sub-trigger");
+    fireEvent.pointerEnter(subTrigger!);
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(onOpenA).toHaveBeenCalled();
+    expect(slots("context-menu-sub-content")).toHaveLength(0);
+  });
+});
