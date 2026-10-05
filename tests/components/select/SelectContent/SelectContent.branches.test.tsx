@@ -23,7 +23,7 @@ const listbox = () =>
 describe("SelectContent - 边界分支（回归）", () => {
   it("没有任何可选项时方向键不抛错、也不设置高亮", async () => {
     render(() => (
-      <Select defaultOpen items={[]}>
+      <Select<string> defaultOpen items={[]}>
         <SelectContent>{null}</SelectContent>
       </Select>
     ));
