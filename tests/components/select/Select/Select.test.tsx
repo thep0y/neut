@@ -1,25 +1,15 @@
 import { fireEvent, render } from "@solidjs/testing-library";
-import { describe, expect, it, vi } from "vitest";
+import { createSignal } from "solid-js";
+import { describe, expect, it } from "vitest";
 import { Select } from "~/components/select/Select/Select";
 import { SelectContent } from "~/components/select/SelectContent/SelectContent";
 import { SelectItem } from "~/components/select/SelectItem/SelectItem";
 
 /**
  * `Select` 根组件的注册表管理：item 挂载时登记、卸载时按 value 注销。
- * 注销时走的 `idx !== -1` 分支此前没有用例——item 被移除后
- * 注册表要真的少一条，否则 `SelectValue` 还能读到已经不存在的 label。
+ * 注销时走的 `idx !== -1` 分支此前没有用例——item 被移除后注册表要真的少一条，
+ * 否则 `SelectValue` 还能读到已经不存在的 label。
  */
-async function mount(showSecond: () => boolean) {
-  return render(() => (
-    <Select defaultOpen>
-      <SelectContent>
-        <SelectItem value="apple">苹果</SelectItem>
-        {showSecond() ? <SelectItem value="banana">香蕉</SelectItem> : null}
-      </SelectContent>
-    </Select>
-  ));
-}
-
 const optionTexts = () =>
   Array.from(document.querySelectorAll('[role="option"]')).map(
     (el) => el.textContent,
@@ -27,7 +17,7 @@ const optionTexts = () =>
 
 describe("Select - item 注册与注销", () => {
   it("item 被移除后从注册表注销（按 value 找到并删除）", async () => {
-    const [show, setShow] = (await import("solid-js")).createSignal(true);
+    const [show, setShow] = createSignal(true);
     render(() => (
       <Select defaultOpen>
         <SelectContent>
