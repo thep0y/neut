@@ -411,3 +411,28 @@ describe("Popover - 上下文约束", () => {
     );
   });
 });
+
+describe("popover - 事件目标不是元素时按外部处理（回归）", () => {
+  it("在 document 上派发 pointerdown（target 不是 Element）也会关闭", () => {
+    // `target instanceof Element ? target : target?.parentElement` 的 false 侧：
+    // 事件 target 可能是 document / 文本节点，此时要回退到 parentElement
+    // （document.parentElement 为 null，因此按"外部"处理并关闭）
+    const onOpenChange = vi.fn();
+    renderPopover({ defaultOpen: true, onOpenChange });
+
+    fireEvent.pointerDown(document);
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("target 是元素时走元素分支并同样按外部处理", () => {
+    const onOpenChange = vi.fn();
+    renderPopover({ defaultOpen: true, onOpenChange });
+    const outside = document.createElement("div");
+    document.body.appendChild(outside);
+
+    fireEvent.pointerDown(outside);
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+});
