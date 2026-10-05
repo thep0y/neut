@@ -470,3 +470,40 @@ describe("Select - 受控模式", () => {
     expect(isOpen()).toBe(true);
   });
 });
+
+describe("select - disabled 守卫（回归）", () => {
+  it("disabled 时点击 trigger 不打开，也不改高亮值", () => {
+    // Trigger 用原生 addEventListener 挂监听（见 useSelectTrigger），
+    // 因此禁用按钮上的 click 仍会进入处理器，`if (isDisabled()) return`
+    // 的两处早退（openAndHighlightSelected 与 onClick）才可达。
+    const onOpenChange = vi.fn();
+    const onValueChange = vi.fn();
+    renderSelect({ disabled: true, onOpenChange, onValueChange });
+
+    const trigger = document.querySelector(
+      '[data-slot="select-trigger"], button',
+    ) as HTMLElement;
+    fireEvent.click(trigger);
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(onValueChange).not.toHaveBeenCalled();
+    // 浮层元素始终挂载，可见性由 style 控制——未打开时应是隐藏的
+    const outer = document.querySelector(
+      '[data-slot="select-content"]',
+    ) as HTMLElement;
+    expect(outer.style.visibility).toBe("hidden");
+  });
+
+  it("disabled 时键盘也不打开", () => {
+    const onOpenChange = vi.fn();
+    renderSelect({ disabled: true, onOpenChange });
+
+    const trigger = document.querySelector(
+      '[data-slot="select-trigger"], button',
+    ) as HTMLElement;
+    trigger.focus();
+    fireEvent.keyDown(trigger, { key: "ArrowDown" });
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+});

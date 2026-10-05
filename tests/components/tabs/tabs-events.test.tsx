@@ -33,14 +33,16 @@ describe("Tabs 用户事件处理器", () => {
     expect(getByText("panel-b")).toBeInTheDocument();
   });
 
-  it("用户的 onClick 为数组时全部被调用", async () => {
-    const first = vi.fn();
-    const second = vi.fn();
+  it("用户的 onClick 传 bound 形式时按 (data, event) 调用", async () => {
+    // Solid 的 EventHandlerUnion 里，数组是 **bound handler**：
+    // `{ 0: (data, event) => void, 1: data }`，约定 data 在前、event 在后。
+    // （旧实现把它当成"多个处理器逐个调用"，与 Solid 的类型契约不符。）
+    const handler = vi.fn();
     const { getAllByRole } = render(() => (
       <Tabs defaultValue="a">
         <TabsList>
           <TabsTrigger value="a">a</TabsTrigger>
-          <TabsTrigger value="b" onClick={[first, second] as never}>
+          <TabsTrigger value="b" onClick={[handler, { id: 7 }] as never}>
             b
           </TabsTrigger>
         </TabsList>
@@ -52,8 +54,9 @@ describe("Tabs 用户事件处理器", () => {
 
     await user.click(getAllByRole("tab")[1]);
 
-    expect(first).toHaveBeenCalledTimes(1);
-    expect(second).toHaveBeenCalledTimes(1);
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(handler.mock.calls[0][0]).toEqual({ id: 7 });
+    expect(handler.mock.calls[0][1]).toBeInstanceOf(MouseEvent);
   });
 
   it("用户的 onFocus 被调用，且高亮仍然更新", () => {

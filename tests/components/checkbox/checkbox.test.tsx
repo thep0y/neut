@@ -296,3 +296,32 @@ describe("Checkbox - 隐藏 input 自身收到点击（回归）", () => {
     ).toBe(true);
   });
 });
+
+describe("Checkbox - 隐藏 input 在 disabled 下仍会收到 change（回归）", () => {
+  it("disabled 时直接派发原生 change 不会回写状态、也不回调", () => {
+    // `change` 不在 Solid 的事件委托名单里（委托只覆盖 click/input/keydown 等），
+    // 所以隐藏 input 的 onChange 是直接 addEventListener；即便元素 disabled，
+    // 直接派发 change 依然会进入处理器，`if (local.disabled) return` 这一侧可达。
+    const onChange = vi.fn();
+    renderCheckbox({ disabled: true, onChange });
+
+    const input = hiddenInput();
+    input.checked = true;
+    fireEvent.change(input);
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(box()).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("对照：非 disabled 时同一个 change 会回写状态", () => {
+    const onChange = vi.fn();
+    renderCheckbox({ onChange });
+
+    const input = hiddenInput();
+    input.checked = true;
+    fireEvent.change(input);
+
+    expect(onChange).toHaveBeenCalledWith(true);
+    expect(box()).toHaveAttribute("aria-checked", "true");
+  });
+});

@@ -2,7 +2,7 @@ import { ChevronLeft } from "lucide-solid";
 import { mergeProps, splitProps } from "solid-js";
 import { Button } from "~/components/button";
 import type { MouseEventHandler } from "~/types";
-import { clsx } from "~/utils";
+import { callEventHandler, clsx } from "~/utils";
 import { useCarouselContext } from "../Carousel";
 import type { CarouselPreviousProps } from "./CarouselPrevious.types";
 
@@ -22,13 +22,9 @@ export const CarouselPrevious = (props: CarouselPreviousProps) => {
    * （AGENTS.md：暴露事件 prop 时应在内部调用用户回调）。
    */
   const handleClick: MouseEventHandler<"button"> = (event) => {
-    if (!event) return;
-    const handler = local.onClick as
-      | ((event: MouseEvent) => void)
-      | [(data: unknown, event: MouseEvent) => void, unknown]
-      | undefined;
-    if (Array.isArray(handler)) handler[0](handler[1], event);
-    else handler?.(event);
+    // event 在类型上已必填（Solid 的点击事件一定有事件对象），
+    // 因此不再需要 `if (!event) return` 这种永远不成立的守卫。
+    callEventHandler(local.onClick, event);
     if (event.defaultPrevented) return;
     scrollPrev();
   };

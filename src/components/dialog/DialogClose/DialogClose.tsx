@@ -1,7 +1,7 @@
 import { mergeProps, Show } from "solid-js";
 import type { DialogCloseProps } from "./DialogClose.types";
 import { Button } from "~/components/button";
-import { clsx } from "~/utils";
+import { callEventHandler, clsx } from "~/utils";
 import { classes } from "./DialogClose.styles";
 import { X } from "lucide-solid";
 import { useDialogContext } from "../Dialog";
@@ -17,9 +17,10 @@ export const DialogClose = (props: DialogCloseProps) => {
     props,
   );
 
-  const handleClick = () => {
+  const handleClick = (event: MouseEvent) => {
     setOpen(false);
-    merged.onClick?.();
+    // 透传事件（此前 `merged.onClick?.()` 会让用户回调收到 undefined）
+    callEventHandler(merged.onClick, event);
   };
 
   return (

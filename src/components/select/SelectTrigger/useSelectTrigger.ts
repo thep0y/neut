@@ -21,8 +21,10 @@ export function useSelectTrigger<T extends ValidComponent>(
 
   const isDisabled = () => ctx.disabled() || !!props().disabled;
 
+  // 注意：本函数假定调用方已判定过 isDisabled()。
+  // 它的两个调用点（onClick / onKeyDown）都在入口处守卫，且各自还有别的分支要处理，
+  // 因此禁用判定放在入口；这里不再重复判定（重复的那份永远不可达）。
   const openAndHighlightSelected = () => {
-    if (isDisabled()) return;
     ctx.setActiveValue(
       ctx.value() ?? ctx.items.find((it) => !it.disabled)?.value,
     );

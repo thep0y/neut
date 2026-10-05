@@ -266,10 +266,9 @@ describe("ImageElement - 未缓存图片（complete=false）", () => {
 });
 
 describe("ImageElement - 绑定式 onError（回归）", () => {
-  it("onError 传 [handler, data] 时按绑定形式分发，而不是被静默丢弃", () => {
-    // Solid 的 JSX.EventHandlerUnion 允许 [handler, data] 形式。此前实现用
-    // `typeof onError !== "function"` 直接 return，等于把绑定形式静默丢掉
-    //（不报错也不回调）。现在与仓库其它组件一致地分发。
+  it("onError 传 bound 形式时按 (data, event) 调用，而不是被静默丢弃", () => {
+    // 此前实现用 `typeof onError !== "function"` 直接 return，会把
+    // Solid 的 bound handler（`[handler, data]`）静默丢掉：既不报错也不回调。
     const handler = vi.fn();
     const { img } = renderElement({ onError: [handler, { id: 7 }] });
 
