@@ -226,3 +226,41 @@ describe("ImageElement - onLoad / onError 事件", () => {
     expect(() => fireEvent.error(img())).not.toThrow();
   });
 });
+
+describe("ImageElement - 未缓存图片（complete=false）", () => {
+  it("complete=false 时挂载阶段不触发 onLoad，等真实 load 事件", async () => {
+    // jsdom 里 img.complete 恒为 true（等价于 cached），
+    // 这里显式改写成 false 来覆盖"图片还没加载完"的那一侧：
+    // 此时不应在挂载时补一次 handleLoading，而应等浏览器的 load 事件
+    const onLoad = vi.fn();
+    const descriptor = Object.getOwnPropertyDescriptor(
+      HTMLImageElement.prototype,
+      "complete",
+    );
+    Object.defineProperty(HTMLImageElement.prototype, "complete", {
+      configurable: true,
+      get: () => false,
+    });
+    try {
+      const { img } = renderElement({ onLoad });
+      await flushDecode();
+
+      // 挂载阶段没有补触发
+      expect(onLoad).not.toHaveBeenCalled();
+
+      // 真实 load 事件到达后才回调
+      img().removeAttribute("data-loaded-src");
+      fireEvent.load(img());
+      await flushDecode();
+      expect(onLoad).toHaveBeenCalledTimes(1);
+    } finally {
+      if (descriptor) {
+        Object.defineProperty(
+          HTMLImageElement.prototype,
+          "complete",
+          descriptor,
+        );
+      }
+    }
+  });
+});
