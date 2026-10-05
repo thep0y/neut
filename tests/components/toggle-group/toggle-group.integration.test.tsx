@@ -1,4 +1,4 @@
-import { render } from "@solidjs/testing-library";
+import { fireEvent, render } from "@solidjs/testing-library";
 import userEvent from "@testing-library/user-event";
 import { createSignal } from "solid-js";
 import { describe, expect, it, vi } from "vitest";
@@ -325,5 +325,124 @@ describe("ToggleGroup 受控 / 非受控", () => {
 
     expect(items()[1]).toHaveAttribute("aria-pressed", "true");
     expect(items()[0]).toHaveAttribute("aria-pressed", "false");
+  });
+});
+
+describe("ToggleGroup - 用户回调可以阻止内部处理（回归）", () => {
+  it("根节点 onKeyDown 里 preventDefault 时方向键不再切换选中", () => {
+    // 守卫是 `if (!e.defaultPrevented) handleKeyDown(e)`：
+    // 用户先在 onKeyDown 里收到事件，可以否决本次键盘导航
+    const onValueChange = vi.fn();
+    const onKeyDown = vi.fn((event: KeyboardEvent) => event.preventDefault());
+    render(() => (
+      <ToggleGroup
+        defaultValue="a"
+        onValueChange={onValueChange}
+        onKeyDown={onKeyDown}
+      >
+        <ToggleGroupItem value="a">A</ToggleGroupItem>
+        <ToggleGroupItem value="b">B</ToggleGroupItem>
+      </ToggleGroup>
+    ));
+
+    fireEvent.keyDown(document.querySelector('[data-slot="toggle-group"]')!, {
+      key: "ArrowRight",
+    });
+
+    expect(onKeyDown).toHaveBeenCalledTimes(1);
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
+
+  it("根的 onKeyDown 没有被 preventDefault 时照常处理键盘（roving focus 移动）", async () => {
+    // 方向键只移动 roving focus（不直接改选中值），因此断言焦点落点。
+    // 焦点必须先落在项上，roving navigation 才有起点可算。
+    render(() => (
+      <ToggleGroup defaultValue="a">
+        <ToggleGroupItem value="a">A</ToggleGroupItem>
+        <ToggleGroupItem value="b">B</ToggleGroupItem>
+      </ToggleGroup>
+    ));
+    const rendered = document.querySelectorAll(
+      '[data-slot="toggle-group-item"]',
+    );
+    const user = userEvent.setup();
+
+    (rendered[0] as HTMLElement).focus();
+    await user.keyboard("{ArrowRight}");
+
+    expect(document.activeElement).toBe(rendered[1]);
+  });
+
+  it("项的 onClick 里 preventDefault 时不改变选中，但用户回调仍被调用", () => {
+    const onValueChange = vi.fn();
+    const onClick = vi.fn((event: MouseEvent) => event.preventDefault());
+    render(() => (
+      <ToggleGroup defaultValue="a" onValueChange={onValueChange}>
+        <ToggleGroupItem value="a">A</ToggleGroupItem>
+        <ToggleGroupItem value="b" onClick={onClick}>
+          B
+        </ToggleGroupItem>
+      </ToggleGroup>
+    ));
+    const items = document.querySelectorAll('[data-slot="toggle-group-item"]');
+
+    fireEvent.click(items[1]!);
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(items[0]).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("项未阻止默认行为时正常切换", () => {
+    const onValueChange = vi.fn();
+    render(() => (
+      <ToggleGroup defaultValue="a" onValueChange={onValueChange}>
+        <ToggleGroupItem value="a">A</ToggleGroupItem>
+        <ToggleGroupItem value="b">B</ToggleGroupItem>
+      </ToggleGroup>
+    ));
+    const items = document.querySelectorAll('[data-slot="toggle-group-item"]');
+
+    fireEvent.click(items[1]!);
+
+    expect(onValueChange).toHaveBeenCalled();
+  });
+});
+
+describe("ToggleGroupItem - 禁用项的 focus 守卫（回归）", () => {
+  it("disabled 项即使收到 focus 事件也不更新高亮，但用户 onFocus 仍被调用", () => {
+    // 守卫是 `if (!disabled()) ctx.setHighlightedValue(...)`。
+    // disabled 的 button 在真实浏览器里不会获得焦点（tabIndex=-1），
+    // 这里直接派发 focus 事件来覆盖这条防御分支。
+    const onFocus = vi.fn();
+    render(() => (
+      <ToggleGroup defaultValue="a">
+        <ToggleGroupItem value="a">A</ToggleGroupItem>
+        <ToggleGroupItem value="b" disabled onFocus={onFocus}>
+          B
+        </ToggleGroupItem>
+      </ToggleGroup>
+    ));
+    const items = document.querySelectorAll('[data-slot="toggle-group-item"]');
+
+    items[1]!.dispatchEvent(new FocusEvent("focus"));
+
+    // 用户回调无条件转发；内部的高亮更新被 disabled 拦下
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    expect(items[1]).toHaveAttribute("disabled");
+  });
+
+  it("可用项收到 focus 时更新高亮（对照组）", () => {
+    render(() => (
+      <ToggleGroup defaultValue="a">
+        <ToggleGroupItem value="a">A</ToggleGroupItem>
+        <ToggleGroupItem value="b">B</ToggleGroupItem>
+      </ToggleGroup>
+    ));
+    const items = document.querySelectorAll('[data-slot="toggle-group-item"]');
+
+    expect(() =>
+      items[1]!.dispatchEvent(new FocusEvent("focus")),
+    ).not.toThrow();
   });
 });
