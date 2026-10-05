@@ -264,3 +264,29 @@ describe("ImageElement - 未缓存图片（complete=false）", () => {
     }
   });
 });
+
+describe("ImageElement - 绑定式 onError（回归）", () => {
+  it("onError 传 [handler, data] 时按绑定形式分发，而不是被静默丢弃", () => {
+    // Solid 的 JSX.EventHandlerUnion 允许 [handler, data] 形式。此前实现用
+    // `typeof onError !== "function"` 直接 return，等于把绑定形式静默丢掉
+    //（不报错也不回调）。现在与仓库其它组件一致地分发。
+    const handler = vi.fn();
+    const { img } = renderElement({ onError: [handler, { id: 7 }] });
+
+    fireEvent.error(img());
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(handler.mock.calls[0][0]).toEqual({ id: 7 });
+    expect(handler.mock.calls[0][1]).toBeInstanceOf(Event);
+  });
+
+  it("onError 传函数时直接调用，事件作为唯一参数", () => {
+    const handler = vi.fn();
+    const { img } = renderElement({ onError: handler });
+
+    fireEvent.error(img());
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(handler.mock.calls[0][0]).toBeInstanceOf(Event);
+  });
+});

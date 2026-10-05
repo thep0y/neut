@@ -436,3 +436,49 @@ describe("popover - 事件目标不是元素时按外部处理（回归）", () 
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });
+
+describe("popover - disabled 守卫（回归）", () => {
+  it("disabled 时点击 trigger 不打开（回调不被调用）", () => {
+    // Trigger 用 addEventListener 挂的是**原生**监听（不经 Solid 委托），
+    // 所以禁用按钮上的 click 依然会进入处理器，`if (disabled()) return` 这一侧可达。
+    const onOpenChange = vi.fn();
+    renderPopover({ disabled: true, onOpenChange });
+
+    fireEvent.click(trigger());
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(document.querySelector('[data-slot="popover-content"]')).toBeNull();
+  });
+
+  it("disabled 时 toggle 路径同样被守卫拦住", () => {
+    const onOpenChange = vi.fn();
+    renderPopover({ disabled: true, defaultOpen: true, onOpenChange });
+
+    fireEvent.click(trigger());
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("popover - 触发器上的 Escape（回归）", () => {
+  it("打开状态下在 trigger 上按 Escape 会关闭，并阻止冒泡", () => {
+    // onKeyDown 里 `if (!ctx.open()) { ...; return; }` 之后才是 Escape 分支——
+    // 即"已打开且焦点还在 trigger 上"时才走这里。这是另一条关闭路径：
+    // 焦点没进浮层时不会再触发 Content 上的 document 级 Escape 监听。
+    const onOpenChange = vi.fn();
+    renderPopover({ defaultOpen: true, onOpenChange });
+    const el = trigger();
+    el.focus();
+
+    const event = new KeyboardEvent("keydown", {
+      key: "Escape",
+      bubbles: true,
+      cancelable: true,
+    });
+    const stopSpy = vi.spyOn(event, "stopPropagation");
+    el.dispatchEvent(event);
+
+    expect(stopSpy).toHaveBeenCalled();
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+});

@@ -776,3 +776,26 @@ describe("getImgProps - 配置省略（回归）", () => {
     expect(result.meta.unoptimized).toBe(imageConfigDefault.unoptimized);
   });
 });
+
+describe("computeUnoptimized - 配置优先（回归）", () => {
+  it("config.unoptimized 为 true 时，即使 props 显式传 false 也不走优化服务", () => {
+    // `computeUnoptimized` 先看 local.unoptimized（mergeProps 里默认取 config 的值），
+    // 但调用方可以显式覆盖成 false；此时必须仍然由 config 决定 —— 这一侧此前没被覆盖。
+    const result = getImgProps(
+      {
+        alt: "",
+        src: "https://example.com/a.png",
+        width: 100,
+        height: 100,
+        unoptimized: false,
+      } as ImageProps,
+      {
+        imgConf: conf({ unoptimized: true }),
+        blurComplete: false,
+        showAltText: false,
+      },
+    );
+
+    expect(result.meta.unoptimized).toBe(true);
+  });
+});

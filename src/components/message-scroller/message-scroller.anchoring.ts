@@ -297,7 +297,9 @@ export function createAnchoring(options: AnchoringOptions): Anchoring {
       return;
     }
 
-    const previousFirstIndex = previousFirst ? list.indexOf(previousFirst) : -1;
+    // 走到这里说明 previousCount > 0：上一次测量时列表非空，而那次已经把
+    // firstItem 设成了当时的首项，因此 previousFirst 必然非空，无需再兜底。
+    const previousFirstIndex = list.indexOf(previousFirst as HTMLElement);
     if (options.preserveScrollOnPrepend() && previousFirstIndex > 0) {
       restorePrependAnchor();
       capturePrependAnchor();

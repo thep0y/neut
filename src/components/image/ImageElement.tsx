@@ -142,9 +142,14 @@ const ImageElement: Component<ImageElementProps> = (rawProps) => {
 
         if (!internal.onError) return;
 
-        if (typeof internal.onError !== "function") return;
-
-        internal.onError(e);
+        // onError 的类型是 JSX.EventHandlerUnion，可能是 Solid 的
+        // [handler, data] 绑定形式。此前这里用 `typeof !== "function"` 直接 return，
+        // 等于把绑定形式**静默丢掉**（既不报错也不回调）；按仓库其它组件的做法分发。
+        const handler = internal.onError as
+          | ((event: Event) => void)
+          | [(data: unknown, event: Event) => void, unknown];
+        if (Array.isArray(handler)) handler[0](handler[1], e);
+        else handler(e);
       }}
     />
   );
