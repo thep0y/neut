@@ -941,8 +941,14 @@ describe("ResizableHandle - 拖拽中途面板卸载（回归）", () => {
     const group = result.container.querySelector(
       '[data-slot="resizable-panel-group"]',
     ) as HTMLElement;
-    Object.defineProperty(group, "clientWidth", { value: 400, configurable: true });
-    Object.defineProperty(group, "clientHeight", { value: 0, configurable: true });
+    Object.defineProperty(group, "clientWidth", {
+      value: 400,
+      configurable: true,
+    });
+    Object.defineProperty(group, "clientHeight", {
+      value: 0,
+      configurable: true,
+    });
 
     const handle = result.container.querySelector(
       '[data-slot="resizable-handle"]',

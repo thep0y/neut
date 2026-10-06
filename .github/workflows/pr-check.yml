@@ -78,6 +78,7 @@ jobs:
             # if: always() —— 覆盖率步骤本身不达标时，更需要看到具体是哪些真实缺口；
             # 但这一步自己失败同样是门禁失败。
             - name: Check coverage gaps (real code)
+              if: always()
               run: bun run check:branches
 
             # 反作弊检查：禁止 .only / .skip 与覆盖率屏蔽注释（见 TESTING.md §4.7/§9）
