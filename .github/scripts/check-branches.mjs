@@ -115,6 +115,10 @@ const UNREACHABLE = new Map([
     "时序：`adjacent()` 作为 JSX 属性在 ref 赋值之后求值（Solid 的 ref 在创建期赋值、属性在插入期求值），故 `element()` 此时必有值",
   ],
   [
+    "src/components/message-scroller/message-scroller.anchoring.ts:207",
+    "`if (applied)` 的 false 侧不可达：函数入口已排除 `!viewport`，而 `applied` 的三个来源里，`scrollToEnd`/`scrollToStart` 只在 `!viewport` 时返回 false；`scrollToElement` 只在 `!viewport` 或 `!content.contains(element)` 时返回 false，而它拿到的元素来自 `measure.items()`（即 `content.children`），同一同步执行内 content 不变，故必被包含",
+  ],
+  [
     "src/components/select/Select/Select.tsx:80",
     "注销闭包只在对应 item 已注册时调用，`list` 必含该 value；此前用变异测试确认（去掉守卫后全量仍绿）",
   ],
@@ -125,12 +129,7 @@ const UNREACHABLE = new Map([
  * 它们放行以免门禁长期变红，但每次运行都会打印出来，作为显式的待办债务——
  * 不允许把"其实能测、只是没测"的东西留在 UNREACHABLE 里冒充不可达。
  */
-const DEFERRED = new Map([
-  [
-    "src/components/message-scroller/message-scroller.anchoring.ts:207",
-    "`if (applied)` 的 false 侧 = 默认滚动位置未生效（scrollToEnd/Start 返回 false）。属失败路径，用例待补",
-  ],
-]);
+const DEFERRED = new Map([]);
 
 /** 源码行里出现这些才说明"这一行真的写了分支" */
 const BRANCH_CONSTRUCT = /\bif\b|\?|&&|\|\||\?\?|\bswitch\b|\bcase\b|\bcatch\b/;

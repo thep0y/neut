@@ -479,7 +479,7 @@ Solid 会把模板提升到模块顶层。V8 覆盖率把 `solid-js/web` 内部�
 | 位置 | 缺口 | 说明 |
 | --- | --- | --- |
 | `components/dialog/Dialog/Dialog.types.ts`（AlertDialog / Sheet 继承） | `DialogProps.onOpenChange` 是**单参数** `(open: boolean) => void`，没有 `ChangeEventDetails` | drawer / context-menu / combobox / toggle-group 都有 details，Dialog 家族没有，调用方无从调用 `details.cancel()`（实测 `mock.calls[0].length === 1`）。因此本模块**不存在**"cancel() 被忽略"的缺陷，不能写一条永远为绿的 cancel 断言冒充覆盖。补齐需先给 Dialog 引入 details（属于实现变更） |
-| `components/message-scroller/message-scroller.anchoring.ts:207` | `if (applied)` 的 false 侧（默认滚动位置未生效，`scrollToEnd/Start` 返回 `false`） | 失败路径，用例待补（已登记在 `DEFERRED`） |
+| `components/message-scroller/message-scroller.anchoring.ts:207` | 原以为 `if (applied)` 的 false 侧是"滚动失败路径" | **实为不可达**：入口已排除 `!viewport`；`applied` 的三个来源中 `scrollToEnd`/`scrollToStart` 只在 `!viewport` 时返回 `false`，而 `scrollToElement` 只在 `!viewport` 或 `!content.contains(element)` 时返回 `false`——它拿到的元素来自 `measure.items()`（即 `content.children`），同一同步执行内 content 不变，必被包含。已从 `DEFERRED` 转入 `UNREACHABLE` |
 | `components/questionnaire/useQuestionnaireRoot.ts:167` | 原为"导航后、focus effect 落地前该项被禁用"的竞态 | **已补测**：非受控模式下 `batch(() => { goNext(); setDisabled(true) })` 让两次变更进入同一次 effect 刷新。注意受控模式走不到这里——受控时 `navigate` 不改 `activeName`，effect 会在第一个守卫早退 |
 
 ## 9. CI 门禁
