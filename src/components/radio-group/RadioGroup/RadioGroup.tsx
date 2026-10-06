@@ -72,6 +72,7 @@ export function RadioGroup(props: RadioGroupProps): JSX.Element {
       role="radiogroup"
       data-slot="radio-group"
       class={clsx("grid w-full gap-2", local.class)}
+      classList={local.classList}
       style={local.style}
       dir={local.dir}
       {...rest}

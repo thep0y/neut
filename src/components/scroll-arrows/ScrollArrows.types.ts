@@ -1,14 +1,16 @@
 import type { Accessor } from "solid-js";
 
 export interface ScrollArrowsProps {
-  /** 滚动容器 accessor；组件内部据此计算上下边缘状态 */
+  /** 滚动容器 accessor；组件内部据此计算上下边缘状态并驱动悬停滚动 */
   target: Accessor<HTMLElement | undefined>;
   /**
-   * 箭头是否可交互(悬停/按住持续滚动)。默认 false:
-   * 箭头只是**装饰性提示**(pointer-events-none),不拦截指针、不会与滚动互相触发。
-   * 开启后箭头会覆盖列表边缘并参与指针命中,请确保列表项不依赖该区域点击。
+   * 指针停在滚动容器上/下边缘带时是否持续滚动，默认 **true**。
+   *
+   * 注意：悬停滚动是在**容器**上按指针坐标驱动的（箭头本身始终
+   * `pointer-events-none`），因此不会抢走边缘列表项的点击；
+   * 指针按下、滚轮、键盘、离开容器都会立即停止。
    */
-  interactive?: boolean;
+  hoverScroll?: boolean;
   /** 两个箭头共用的额外 class */
   class?: string;
   /** 顶部箭头额外 class(圆角等) */
@@ -20,7 +22,5 @@ export interface ScrollArrowsProps {
 export interface ScrollArrowButtonProps {
   direction: "up" | "down";
   visible: boolean;
-  interactive: boolean;
-  target: Accessor<HTMLElement | undefined>;
   class?: string;
 }

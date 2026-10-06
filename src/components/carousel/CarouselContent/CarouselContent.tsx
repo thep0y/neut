@@ -42,8 +42,15 @@ export const CarouselContent = (props: CarouselContentProps) => {
           orientation() === "horizontal" ? "-ml-4" : "-mt-4 flex-col",
           local.class,
         )}
-        style={{ transform: translate() }}
+        classList={local.classList}
         {...rest}
+        // transform 由内部提供：用户的 style 必须**合并**而不是覆盖，
+        // 否则轮播会因为没有 transform 而完全不再位移。
+        // 因此这里放在 spread **之后**，让内部 transform 胜出。
+        style={{
+          ...(rest.style as Record<string, string>),
+          transform: translate(),
+        }}
       />
     </div>
   );

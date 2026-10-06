@@ -10,6 +10,7 @@ export const Pagination = (props: PaginationProps) => {
       aria-label="pagination"
       data-slot="pagination"
       class={clsx("mx-auto flex w-full justify-center", local.class)}
+      classList={local.classList}
       {...others}
     />
   );

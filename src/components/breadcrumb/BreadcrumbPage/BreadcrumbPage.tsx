@@ -14,6 +14,7 @@ export const BreadcrumbPage = (props: BreadcrumbPageProps) => {
       aria-disabled="true"
       aria-current="page"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

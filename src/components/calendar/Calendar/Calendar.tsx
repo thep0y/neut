@@ -1,91 +1,33 @@
 import {
   For,
-  Show,
   createMemo,
   createSignal,
   mergeProps,
   splitProps,
   type JSX,
 } from "solid-js";
-import { ChevronLeft, ChevronRight } from "lucide-solid";
-import buttonVariants from "~/components/button/Button.styles";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/select";
 import { clsx } from "~/utils";
+import { CalendarMonth } from "./CalendarMonth";
+import { calendarClassNames } from "./Calendar.styles";
 import type {
   CalendarClassNames,
   CalendarMode,
   CalendarProps,
   CalendarSelected,
-  DateRange,
 } from "./Calendar.types";
 import {
-  addDays,
+  buildMonthOptions,
+  buildYearOptions,
+  canMoveNext,
+  canMovePrev,
+} from "./Calendar.options";
+import { nextSelected } from "./Calendar.selection";
+import {
   addMonths,
-  eachDayOfInterval,
-  endOfWeek,
-  formatMonthYear,
-  formatWeekday,
-  getFirstDate,
-  getISOWeekNumber,
-  isAfter,
-  isAfterOrSame,
-  isBefore,
-  isBeforeOrSame,
-  isSameDay,
+  resolveInitialMonth,
   resolveLocaleCode,
   startOfMonth,
-  startOfWeek,
 } from "./Calendar.utils";
-
-const defaultClassNames: Record<keyof CalendarClassNames, string> = {
-  root: "group/calendar w-fit bg-background p-2 [--cell-radius:var(--radius-md)] [--cell-size:--spacing(7)] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent",
-  months: "relative flex flex-row gap-4",
-  month: "relative flex w-full flex-col gap-4",
-  nav: "absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1",
-  button_previous:
-    "size-(--cell-size) p-0 select-none aria-disabled:opacity-50",
-  button_next: "size-(--cell-size) p-0 select-none aria-disabled:opacity-50",
-  month_caption:
-    "flex h-(--cell-size) w-full items-center justify-center px-(--cell-size)",
-  dropdowns:
-    "flex h-(--cell-size) w-full items-center justify-center gap-1.5 text-sm font-medium",
-  dropdown_root: "relative rounded-(--cell-radius)",
-  dropdown: "absolute inset-0 bg-popover opacity-0",
-  caption_label: "font-medium select-none text-sm",
-  month_grid: "w-full border-collapse",
-  weekdays: "flex",
-  weekday:
-    "flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none",
-  week: "mt-2 flex w-full",
-  week_number_header: "w-(--cell-size) select-none",
-  week_number: "text-[0.8rem] text-muted-foreground select-none",
-  day: "relative aspect-square h-full w-full rounded-(--cell-radius) p-0 text-center select-none [&:last-child[data-selected=true]_button]:rounded-r-(--cell-radius) [&:first-child[data-selected=true]_button]:rounded-l-(--cell-radius)",
-  outside: "text-muted-foreground aria-selected:text-muted-foreground",
-  disabled: "text-muted-foreground opacity-50",
-  hidden: "invisible",
-  today:
-    "rounded-(--cell-radius) bg-muted text-foreground data-[selected=true]:rounded-none",
-  range_start:
-    "relative isolate z-0 rounded-l-(--cell-radius) bg-muted after:absolute after:inset-y-0 after:right-0 after:w-4 after:bg-muted",
-  range_middle: "rounded-none",
-  range_end:
-    "relative isolate z-0 rounded-r-(--cell-radius) bg-muted after:absolute after:inset-y-0 after:left-0 after:w-4 after:bg-muted",
-};
-
-function resolveInitialMonth(props: CalendarProps): Date {
-  return (
-    props.month ??
-    props.defaultMonth ??
-    getFirstDate(props.selected ?? props.defaultSelected) ??
-    new Date()
-  );
-}
 
 /**
  * 日历组件：react-day-picker 的 SolidJS 移植，覆盖 shadcn Base UI 版本
@@ -157,16 +99,13 @@ export function Calendar(props: CalendarProps): JSX.Element {
   const moveMonth = (delta: number) =>
     setMonth(addMonths(currentMonth(), delta));
 
-  const canPrev = () =>
-    !merged.min ||
-    isAfter(startOfMonth(currentMonth()), startOfMonth(merged.min));
+  const canPrev = () => canMovePrev(currentMonth(), merged.min);
 
-  const canNext = () =>
-    !merged.max ||
-    isBefore(startOfMonth(currentMonth()), startOfMonth(merged.max));
+  const canNext = () => canMoveNext(currentMonth(), merged.max);
 
   const monthList = createMemo(() => {
-    const count = Math.max(1, merged.numberOfMonths ?? 1);
+    // mergeProps 已把 numberOfMonths 默认成 1，这里只负责夹取下界
+    const count = Math.max(1, merged.numberOfMonths);
     return Array.from({ length: count }, (_, i) =>
       addMonths(currentMonth(), i),
     );
@@ -174,324 +113,69 @@ export function Calendar(props: CalendarProps): JSX.Element {
 
   const localeCode = createMemo(() => resolveLocaleCode(merged.locale));
 
+  /** 月份下拉项：按 locale 格式化月份名 */
   const monthOptions = (year: number) =>
-    Array.from({ length: 12 }, (_, i) => i)
-      .filter((i) => {
-        const beforeMin =
-          !!merged.min &&
-          (year < merged.min.getFullYear() ||
-            (year === merged.min.getFullYear() && i < merged.min.getMonth()));
-        const afterMax =
-          !!merged.max &&
-          (year > merged.max.getFullYear() ||
-            (year === merged.max.getFullYear() && i > merged.max.getMonth()));
-        return !beforeMin && !afterMax;
-      })
-      .map((i) => {
-        const monthDate = new Date(2024, i, 1);
-        return {
-          value: String(i),
-          label: new Intl.DateTimeFormat(localeCode(), {
-            month: "long",
-          }).format(monthDate),
-        };
-      });
-
-  const yearOptions = createMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const startYear = merged.min ? merged.min.getFullYear() : currentYear - 100;
-    const endYear = merged.max ? merged.max.getFullYear() : currentYear + 100;
-    return Array.from(
-      { length: Math.max(0, endYear - startYear + 1) },
-      (_, i) => startYear + i,
+    buildMonthOptions(year, { min: merged.min, max: merged.max }, (index) =>
+      new Intl.DateTimeFormat(localeCode(), { month: "long" }).format(
+        new Date(2024, index, 1),
+      ),
     );
-  });
+
+  const yearOptions = createMemo(() =>
+    buildYearOptions(
+      { min: merged.min, max: merged.max },
+      new Date().getFullYear(),
+    ),
+  );
 
   const slotClass = (key: keyof CalendarClassNames) =>
-    clsx(defaultClassNames[key], merged.classNames?.[key]);
+    clsx(calendarClassNames[key], merged.classNames?.[key]);
 
-  const isDisabledDay = (day: Date) => {
-    if (merged.disabled === true) return true;
-    if (typeof merged.disabled === "function") return merged.disabled(day);
-    if (merged.min && isBefore(day, merged.min)) return true;
-    if (merged.max && isAfter(day, merged.max)) return true;
-    return false;
-  };
-
-  const isRangeStart = (day: Date) => {
-    const range = selected() as DateRange | undefined;
-    return !!range?.from && isSameDay(day, range.from);
-  };
-
-  const isRangeEnd = (day: Date) => {
-    const range = selected() as DateRange | undefined;
-    return !!range?.to && isSameDay(day, range.to);
-  };
-
-  const isRangeMiddle = (day: Date) => {
-    const range = selected() as DateRange | undefined;
-    return (
-      !!range?.from &&
-      !!range?.to &&
-      isAfter(day, range.from) &&
-      isBefore(day, range.to)
-    );
-  };
-
-  const isDateSelected = (day: Date) => {
-    const value = selected();
-    if (merged.mode === "single") {
-      return value instanceof Date && isSameDay(day, value);
-    }
-    if (merged.mode === "multiple") {
-      return Array.isArray(value) && value.some((d) => isSameDay(d, day));
-    }
-    const range = value as DateRange | undefined;
-    return (
-      !!range &&
-      ((range.from && isSameDay(day, range.from)) ||
-        (range.to && isSameDay(day, range.to)) ||
-        (!!range.from &&
-          !!range.to &&
-          isAfterOrSame(day, range.from) &&
-          isBeforeOrSame(day, range.to)))
-    );
-  };
-
+  // 禁用判定由 CalendarDay 负责（它同时决定按钮 disabled 与点击是否生效），
+  // 这里不再重复守卫：唯一调用方只会在可选的日期上回调。
   const selectDay = (day: Date) => {
-    if (isDisabledDay(day)) return;
-
-    if (merged.mode === "single") {
-      const current = selected();
-      commitSelected(
-        current instanceof Date && isSameDay(current, day) ? undefined : day,
-      );
-      return;
-    }
-
-    if (merged.mode === "multiple") {
-      const current = selected();
-      const list = Array.isArray(current) ? [...current] : [];
-      const index = list.findIndex((d) => isSameDay(d, day));
-      if (index >= 0) list.splice(index, 1);
-      else list.push(day);
-      commitSelected(list);
-      return;
-    }
-
-    const range = selected() as DateRange | undefined;
-    if (!range?.from || (range.from && range.to)) {
-      commitSelected({ from: day });
-    } else if (isBefore(day, range.from)) {
-      commitSelected({ from: day, to: range.from });
-    } else if (isSameDay(day, range.from)) {
-      commitSelected({ from: day, to: day });
-    } else {
-      commitSelected({ from: range.from, to: day });
-    }
-  };
-
-  const renderDay = (day: Date, monthDate: Date) => {
-    return (
-      <div
-        aria-disabled={isDisabledDay(day)}
-        data-selected={isDateSelected(day) ? "true" : undefined}
-        class={clsx(
-          slotClass("day"),
-          day.getMonth() !== monthDate.getMonth() && slotClass("outside"),
-          !merged.showOutsideDays &&
-            day.getMonth() !== monthDate.getMonth() &&
-            slotClass("hidden"),
-          isSameDay(day, new Date()) && slotClass("today"),
-          isDisabledDay(day) && slotClass("disabled"),
-          isRangeStart(day) && slotClass("range_start"),
-          isRangeMiddle(day) && slotClass("range_middle"),
-          isRangeEnd(day) && slotClass("range_end"),
-        )}
-      >
-        <button
-          type="button"
-          disabled={isDisabledDay(day)}
-          aria-pressed={isDateSelected(day)}
-          data-day={day.toLocaleDateString(localeCode())}
-          data-selected-single={
-            merged.mode === "single" &&
-            selected() instanceof Date &&
-            isSameDay(day, selected() as Date)
-              ? "true"
-              : undefined
-          }
-          data-range-start={isRangeStart(day) ? "true" : undefined}
-          data-range-end={isRangeEnd(day) ? "true" : undefined}
-          data-range-middle={isRangeMiddle(day) ? "true" : undefined}
-          onClick={() => selectDay(day)}
-          class={clsx(
-            buttonVariants({ variant: merged.buttonVariant }),
-            "relative isolate z-10 flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 border-0 leading-none font-normal",
-            "data-[range-end=true]:rounded-(--cell-radius) data-[range-end=true]:rounded-r-(--cell-radius) data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground",
-            "data-[range-end=true]:hover:bg-primary data-[range-end=true]:hover:text-primary-foreground",
-            "data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-muted data-[range-middle=true]:text-foreground",
-            "data-[range-middle=true]:hover:bg-muted data-[range-middle=true]:hover:text-foreground",
-            "data-[range-start=true]:rounded-(--cell-radius) data-[range-start=true]:rounded-l-(--cell-radius) data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground",
-            "data-[range-start=true]:hover:bg-primary data-[range-start=true]:hover:text-primary-foreground",
-            "data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground",
-            "data-[selected-single=true]:hover:bg-primary data-[selected-single=true]:hover:text-primary-foreground",
-            day.getMonth() !== monthDate.getMonth() && "text-muted-foreground",
-          )}
-        >
-          {day.getDate()}
-        </button>
-      </div>
-    );
-  };
-
-  const renderMonth = (monthDate: Date) => {
-    const firstDay = startOfMonth(monthDate);
-    const lastDay = addDays(addMonths(monthDate, 1), -1);
-    const gridStart = startOfWeek(firstDay, merged.weekStartsOn);
-    const gridEnd = endOfWeek(lastDay, merged.weekStartsOn);
-    const days = eachDayOfInterval(gridStart, gridEnd);
-    const weeks: Date[][] = [];
-    for (let i = 0; i < days.length; i += 7) {
-      weeks.push(days.slice(i, i + 7));
-    }
-
-    const weekdayLabels = Array.from({ length: 7 }, (_, i) =>
-      formatWeekday(addDays(gridStart, i), localeCode()),
-    );
-
-    return (
-      <div class={slotClass("month")}>
-        <div class={slotClass("nav")}>
-          <button
-            type="button"
-            disabled={!canPrev()}
-            aria-label="Previous month"
-            onClick={() => moveMonth(-1)}
-            class={clsx(
-              buttonVariants({ variant: merged.buttonVariant }),
-              slotClass("button_previous"),
-            )}
-          >
-            <ChevronLeft class="size-4" />
-          </button>
-          <button
-            type="button"
-            disabled={!canNext()}
-            aria-label="Next month"
-            onClick={() => moveMonth(1)}
-            class={clsx(
-              buttonVariants({ variant: merged.buttonVariant }),
-              slotClass("button_next"),
-            )}
-          >
-            <ChevronRight class="size-4" />
-          </button>
-        </div>
-
-        <div class={slotClass("month_caption")}>
-          <Show
-            when={merged.captionLayout === "dropdown"}
-            fallback={
-              <span class={slotClass("caption_label")}>
-                {formatMonthYear(monthDate, localeCode())}
-              </span>
-            }
-          >
-            <div class={slotClass("dropdowns")}>
-              <Select
-                value={String(monthDate.getMonth())}
-                onValueChange={(value) => {
-                  setMonth(new Date(monthDate.getFullYear(), Number(value), 1));
-                }}
-              >
-                <SelectTrigger
-                  variant="ghost"
-                  class={clsx(
-                    "h-(--cell-size) rounded-(--cell-radius) px-2 text-sm font-medium",
-                    slotClass("dropdown_root"),
-                  )}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent class="max-h-56">
-                  <For each={monthOptions(monthDate.getFullYear())}>
-                    {(option) => (
-                      <SelectItem value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    )}
-                  </For>
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={String(monthDate.getFullYear())}
-                onValueChange={(value) => {
-                  setMonth(new Date(Number(value), monthDate.getMonth(), 1));
-                }}
-              >
-                <SelectTrigger
-                  variant="ghost"
-                  class={clsx(
-                    "h-(--cell-size) rounded-(--cell-radius) px-2 text-sm font-medium tabular-nums",
-                    slotClass("dropdown_root"),
-                  )}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent class="max-h-56">
-                  <For each={yearOptions()}>
-                    {(year) => (
-                      <SelectItem value={String(year)}>{year}</SelectItem>
-                    )}
-                  </For>
-                </SelectContent>
-              </Select>
-            </div>
-          </Show>
-        </div>
-
-        <div class={slotClass("month_grid")}>
-          <div class={slotClass("weekdays")}>
-            <Show when={merged.showWeekNumber}>
-              <div class={slotClass("week_number_header")} />
-            </Show>
-            <For each={weekdayLabels}>
-              {(label) => <div class={slotClass("weekday")}>{label}</div>}
-            </For>
-          </div>
-
-          <For each={weeks}>
-            {(week) => (
-              <div class={slotClass("week")}>
-                <Show when={merged.showWeekNumber}>
-                  <div class={slotClass("week_number")}>
-                    {getISOWeekNumber(week[0])}
-                  </div>
-                </Show>
-                <For each={week}>{(day) => renderDay(day, monthDate)}</For>
-              </div>
-            )}
-          </For>
-        </div>
-      </div>
-    );
+    commitSelected(nextSelected(merged.mode, selected(), day));
   };
 
   return (
     <div
       data-slot="calendar"
       class={clsx(slotClass("root"), local.class)}
+      classList={local.classList}
       style={local.style}
       dir={local.dir}
       {...rest}
     >
       <div class={slotClass("months")}>
-        <For each={monthList()}>{(monthDate) => renderMonth(monthDate)}</For>
+        <For each={monthList()}>
+          {(monthDate) => (
+            <CalendarMonth
+              monthDate={monthDate}
+              canPrev={canPrev()}
+              canNext={canNext()}
+              onMoveMonth={moveMonth}
+              captionLayout={merged.captionLayout}
+              localeCode={localeCode()}
+              monthOptions={monthOptions}
+              yearOptions={yearOptions()}
+              onSelectMonth={setMonth}
+              showWeekNumber={merged.showWeekNumber}
+              weekStartsOn={merged.weekStartsOn}
+              mode={merged.mode}
+              selected={selected()}
+              showOutsideDays={merged.showOutsideDays}
+              buttonVariant={merged.buttonVariant}
+              disabled={merged.disabled}
+              min={merged.min}
+              max={merged.max}
+              onSelectDay={selectDay}
+              slotClass={slotClass}
+            />
+          )}
+        </For>
       </div>
     </div>
   );
 }
 
-export { defaultClassNames as calendarClassNames };
+export { calendarClassNames } from "./Calendar.styles";

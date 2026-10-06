@@ -10,6 +10,7 @@ export const SidebarMenu = (props: SidebarMenuProps) => {
       data-slot="sidebar-menu"
       data-sidebar="menu"
       class={clsx("flex w-full min-w-0 flex-col gap-0", local.class)}
+      classList={local.classList}
       {...others}
     />
   );

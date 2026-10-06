@@ -17,6 +17,7 @@ export const SliderIndicator = (props: SliderIndicatorProps) => {
       data-slot="slider-range"
       data-orientation={ctx.orientation()}
       class={clsx(classes, local.class)}
+      classList={local.classList}
       style={indicatorStyle()}
       {...others}
     />

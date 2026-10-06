@@ -1,7 +1,13 @@
 import { createMemo, createSignal, createUniqueId, type JSX } from "solid-js";
 import { useScrollLock } from "~/hooks";
+import { createChangeEventDetails } from "~/utils";
 import { ComboboxContext } from "./Combobox.context";
-import type { ComboboxContextValue, ComboboxProps } from "./Combobox.types";
+import type {
+  ComboboxContextValue,
+  ComboboxOpenChangeReason,
+  ComboboxProps,
+  ComboboxValueChangeReason,
+} from "./Combobox.types";
 
 const DEFAULT_ITEM_TO_STRING = (item: any) => String(item);
 
@@ -26,9 +32,17 @@ export function Combobox<T = any>(props: ComboboxProps<T>): JSX.Element {
     props.value !== undefined ? props.value : internalValue(),
   );
 
-  const setValue = (next: T | T[] | null) => {
+  const setValue = (
+    next: T | T[] | null,
+    reason: ComboboxValueChangeReason = "none",
+    event?: Event,
+  ): boolean => {
+    const details = createChangeEventDetails(reason, event, reference());
+    // 先回调再落状态：调用方可以在 details.cancel() 里否决本次变更
+    props.onValueChange?.(next, details);
+    if (details.isCanceled) return false;
     if (props.value === undefined) setInternalValue(next as any);
-    props.onValueChange?.(next);
+    return true;
   };
 
   const [internalOpen, setInternalOpen] = createSignal(
@@ -47,15 +61,24 @@ export function Combobox<T = any>(props: ComboboxProps<T>): JSX.Element {
   });
 
   const multiple = createMemo(() => !!props.multiple);
-  const setOpen = (next: boolean) => {
+  const setOpen = (
+    next: boolean,
+    reason: ComboboxOpenChangeReason = "none",
+    event?: Event,
+  ) => {
+    const details = createChangeEventDetails(reason, event, reference());
+    props.onOpenChange?.(next, details);
+    if (details.isCanceled) return;
     if (props.open === undefined) setInternalOpen(next);
-    props.onOpenChange?.(next);
   };
 
   const [activeIndex, setActiveIndex] = createSignal(-1);
   const [reference, setReference] = createSignal<HTMLElement>();
   const [floating, setFloating] = createSignal<HTMLElement>();
   const contentId = `combobox-content-${createUniqueId()}`;
+  const listId = `combobox-list-${createUniqueId()}`;
+  // 选项 id 由 listId + 值派生：aria-activedescendant 需要能指向当前高亮项
+  const optionId = (value: unknown) => `${listId}-option-${String(value)}`;
 
   const isGrouped = createMemo(() =>
     items().some(
@@ -81,23 +104,30 @@ export function Combobox<T = any>(props: ComboboxProps<T>): JSX.Element {
   const isSelected = (item: T) =>
     selectedItems().some((selected) => selected === item);
 
-  const close = () => setOpen(false);
+  const close = (reason: ComboboxOpenChangeReason = "none", event?: Event) =>
+    setOpen(false, reason, event);
 
-  const selectItem = (item: T) => {
+  const selectItem = (item: T, event?: Event) => {
     if (disabled()) return;
+    const applied = setValue(
+      props.multiple
+        ? isSelected(item)
+          ? selectedItems().filter((selected) => selected !== item)
+          : [...selectedItems(), item]
+        : item,
+      "item-press",
+      event,
+    );
+    // 值变更被 cancel() 时，输入框的展示与关闭也不该跟着变，
+    // 否则会出现"值没改但输入框被回填/面板被关掉"的不一致状态
+    if (!applied) return;
     if (props.multiple) {
-      const current = selectedItems();
-      const next = isSelected(item)
-        ? current.filter((selected) => selected !== item)
-        : [...current, item];
-      setValue(next);
       setInputValue("");
       setFilterValue("");
     } else {
-      setValue(item);
       setInputValue(itemToStringValue()(item));
       setFilterValue("");
-      close();
+      close("item-press", event);
     }
   };
 
@@ -125,6 +155,8 @@ export function Combobox<T = any>(props: ComboboxProps<T>): JSX.Element {
     floating,
     setFloating,
     contentId,
+    listId,
+    optionId,
     close,
   };
 

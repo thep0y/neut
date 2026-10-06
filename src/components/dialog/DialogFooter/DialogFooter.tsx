@@ -10,6 +10,7 @@ export const DialogFooter = (props: DialogFooterProps) => {
     <div
       data-slot="dialog-footer"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

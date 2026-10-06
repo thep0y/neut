@@ -10,6 +10,7 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
       data-slot="sidebar-group"
       data-sidebar="group"
       class={clsx("relative flex w-full min-w-0 flex-col p-2", local.class)}
+      classList={local.classList}
       {...others}
     />
   );

@@ -1,3 +1,4 @@
+import { createChangeEventDetails } from "~/utils";
 import type {
   DrawerChangeEventDetails,
   DrawerChangeReason,
@@ -9,23 +10,5 @@ export function createDrawerChangeEventDetails(
   event?: Event,
   trigger?: Element,
 ): DrawerChangeEventDetails {
-  let canceled = false;
-  let propagationAllowed = false;
-  return {
-    reason,
-    event,
-    trigger,
-    cancel: () => {
-      canceled = true;
-    },
-    allowPropagation: () => {
-      propagationAllowed = true;
-    },
-    get isCanceled() {
-      return canceled;
-    },
-    get isPropagationAllowed() {
-      return propagationAllowed;
-    },
-  };
+  return createChangeEventDetails(reason, event, trigger);
 }

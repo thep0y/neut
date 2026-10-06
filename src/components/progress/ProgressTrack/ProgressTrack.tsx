@@ -14,6 +14,7 @@ export const ProgressTrack = (props: ProgressTrackProps) => {
       data-slot="progress-track"
       data-progressing={value() > 0 && value() < 100}
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

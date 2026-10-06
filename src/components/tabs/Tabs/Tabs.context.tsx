@@ -145,7 +145,6 @@ export function TabsProvider(
 
 export const useTabsContext = () => {
   const context = useContext(TabsContext);
-  if (!context)
-    throw new Error("useTabsContext must be used within a <Tabs> component");
+  if (!context) throw new Error("useTabsContext 必须用在 <Tabs> 内部");
   return context;
 };

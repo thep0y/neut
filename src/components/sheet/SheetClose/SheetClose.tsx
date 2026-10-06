@@ -1,6 +1,7 @@
 import { Show, mergeProps } from "solid-js";
 import { X } from "lucide-solid";
 import { Button } from "~/components/button";
+import { callEventHandler } from "~/utils";
 import { useDialogContext } from "~/components/dialog";
 import type { SheetCloseProps } from "../sheet.types";
 
@@ -13,9 +14,10 @@ export const SheetClose = (props: SheetCloseProps) => {
 
   const merged = mergeProps({ variant: "ghost", size: "sm" } as const, props);
 
-  const handleClick = () => {
+  const handleClick = (event: MouseEvent) => {
     setOpen(false);
-    merged.onClick?.();
+    // 透传事件（此前 `merged.onClick?.()` 会让用户回调收到 undefined）
+    callEventHandler(merged.onClick, event);
   };
 
   return (

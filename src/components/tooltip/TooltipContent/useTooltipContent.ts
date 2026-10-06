@@ -2,12 +2,8 @@ import { createSignal, createMemo, createEffect, onCleanup } from "solid-js";
 import { createPositioner, type Positioner } from "~/lib";
 import { useTooltipContext } from "../Tooltip/Tooltip.context";
 import { createTooltipMiddleware, toPlacement } from "./TooltipContent.utils";
+import { usePresence } from "./usePresence";
 import type { TooltipContentProps } from "./TooltipContent.types";
-
-/** 没有触发任何 CSS animation 时的兜底卸载延迟（ms）——比如没装 tailwindcss-animate、
- * 或者自定义样式只用了 transition 而不是 @keyframes，animationend 永远不会触发，
- * 避免元素卡在 DOM 里退不出去。 */
-const EXIT_FALLBACK_MS = 300;
 
 export interface UseTooltipContentResult {
   ctx: ReturnType<typeof useTooltipContext>;
@@ -104,7 +100,11 @@ export function useTooltipContent(
     y: number;
   }>();
 
-  const [mounted, setMounted] = createSignal(isVisible());
+  const mounted = usePresence({
+    visible: isVisible,
+    element: contentElement,
+    consumeSuppressExitAnimation: () => ctx.consumeSuppressExitAnimation(),
+  });
 
   createEffect(() => {
     if (!mounted()) return;
@@ -141,46 +141,6 @@ export function useTooltipContent(
       transition: atRest ? "transform 150ms ease" : undefined,
     };
   });
-
-  // --- 退场动画支持（Presence）---
-  // isVisible 从 true 变 false 的瞬间，不立刻让 <Show> 卸载节点：先把 data-state
-  // 切到 closed（触发退场动画的 CSS class），等这个节点自己的 animationend 触发
-  // （或者兜底超时）之后，才真正把 mounted 设为 false，交给 <Show> 卸载。
-  createEffect((wasVisible: boolean) => {
-    const visible = isVisible();
-    const el = contentElement();
-
-    if (visible) {
-      setMounted(true);
-    } else if (wasVisible && el) {
-      if (ctx.consumeSuppressExitAnimation()) {
-        // 被 TooltipGroup 抢占强制关闭：跳过退场动画，立即卸载，避免和正在
-        // 滑入的新 tooltip 同时出现在屏幕上（这是"同时存在两个 tooltip"这个
-        // bug 的根因——之前不管什么原因关闭，都统一走了退场动画那条路）。
-        setMounted(false);
-      } else {
-        const handleAnimationEnd = (e: AnimationEvent) => {
-          // 忽略从子元素冒泡上来的 animationend，只认内容元素自己播放的那个动画
-          if (e.target !== el) return;
-          setMounted(false);
-        };
-        el.addEventListener("animationend", handleAnimationEnd);
-        onCleanup(() =>
-          el.removeEventListener("animationend", handleAnimationEnd),
-        );
-
-        const fallback = window.setTimeout(
-          () => setMounted(false),
-          EXIT_FALLBACK_MS,
-        );
-        onCleanup(() => window.clearTimeout(fallback));
-      }
-    } else if (!visible) {
-      setMounted(false);
-    }
-
-    return visible;
-  }, isVisible());
 
   return {
     ctx,

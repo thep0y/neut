@@ -20,9 +20,7 @@ export const ScrollAreaContext = createContext<ScrollAreaContextValue>();
 export const useScrollAreaContext = () => {
   const context = useContext(ScrollAreaContext);
   if (!context) {
-    throw new Error(
-      "useScrollAreaContext must be used within a ScrollAreaProvider",
-    );
+    throw new Error("useScrollAreaContext 必须用在 <ScrollArea> 内部");
   }
   return context;
 };

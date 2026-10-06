@@ -1,15 +1,15 @@
 import { createSignal, type Accessor } from "solid-js";
-import { createStore, produce } from "solid-js/store";
 import type { ResizablePanelGroupContextValue } from "./resizable.context";
 import type {
   ResizableLayout,
   ResizableOrientation,
   ResizablePanelMeta,
 } from "./resizable.types";
-import { clamp, normalizeSizes, roundPercent } from "./resizable.utils";
-
-const EPSILON = 0.001;
-const STORAGE_PREFIX = "neut-resizable:";
+import { createPanelCommands } from "./resizable.commands";
+import { createPanelLifecycle } from "./resizable.lifecycle";
+import { createPanelRegistry } from "./resizable.registry";
+import { createLayoutReporting } from "./resizable.reporting";
+import { createPanelSizes } from "./resizable.sizes";
 
 interface Options {
   orientation: Accessor<ResizableOrientation>;
@@ -34,241 +34,45 @@ export function useResizablePanelGroup(
 ): ResizablePanelGroupContextValue {
   const [groupElement, setGroupElement] = createSignal<HTMLElement>();
   const [dragging, setDragging] = createSignal(false);
-  const [store, setStore] = createStore<Record<string, number>>({});
+  const registry = createPanelRegistry();
+  // 注册表变化本身不是响应式的，但 resolveAdjacent 的消费方（Handle 的 aria 值）
+  // 需要「面板挂载/卸载后重算」。这个版本号就是那条依赖边。
+  const [registryVersion, setRegistryVersion] = createSignal(0);
 
-  const metas = new Map<HTMLElement, ResizablePanelMeta>();
-  let order: HTMLElement[] = [];
-  let initialized = false;
-  const collapsedMemory = new Map<string, number>();
+  const orderedMetas = (): ResizablePanelMeta[] => registry.ordered();
 
-  const orderedMetas = (): ResizablePanelMeta[] =>
-    order
-      .map((element) => metas.get(element))
-      .filter((meta): meta is ResizablePanelMeta => !!meta);
+  const sizes = createPanelSizes({
+    metas: orderedMetas,
+    registry,
+    reportSizeChange: (meta, oldSize, newSize) =>
+      reporting.reportSizeChange(meta, oldSize, newSize),
+  });
+  const { store, sizeOf, applyPair } = sizes;
 
-  /** 可折叠时为 collapsedSize,否则为 minSize(即拖拽能到的最小值) */
-  const effMin = (meta: ResizablePanelMeta) =>
-    meta.collapsible() ? meta.collapsedSize() : meta.minSize();
+  const reporting = createLayoutReporting({
+    metas: orderedMetas,
+    sizeOf,
+    onLayoutChange: options.onLayoutChange,
+    persist: () => ({
+      autoSaveId: options.autoSaveId(),
+      storage: options.storage(),
+    }),
+  });
+  const { notify, commit, readSaved } = reporting;
 
-  const isCollapsedSize = (meta: ResizablePanelMeta, size: number) =>
-    meta.collapsible() && size <= meta.collapsedSize() + EPSILON;
+  const lifecycle = createPanelLifecycle({
+    metas: orderedMetas,
+    registry,
+    sizes,
+    readSaved,
+    defaultLayout: options.defaultLayout,
+    commit,
+    onRegistryChange: () => setRegistryVersion((version) => version + 1),
+  });
+  const registerPanel = lifecycle.registerPanel;
 
-  const storageOf = (): Storage | undefined =>
-    options.storage() ??
-    (typeof localStorage !== "undefined" ? localStorage : undefined);
-
-  const storageKey = (): string | undefined => {
-    const id = options.autoSaveId();
-    return id ? `${STORAGE_PREFIX}${id}` : undefined;
-  };
-
-  const layout = (): ResizableLayout => {
-    const result: ResizableLayout = {};
-    for (const meta of orderedMetas()) {
-      result[meta.id] = roundPercent(store[meta.id] ?? 0);
-    }
-    return result;
-  };
-
-  const persist = (next: ResizableLayout) => {
-    const key = storageKey();
-    const storage = storageOf();
-    if (!key || !storage) return;
-    try {
-      storage.setItem(key, JSON.stringify(next));
-    } catch {
-      // 隐私模式等场景下忽略持久化失败
-    }
-  };
-
-  /** 只通知布局变化(拖拽的每一帧),不写 storage */
-  const notify = () => options.onLayoutChange(layout());
-
-  /** 通知 + 持久化(离散操作与拖拽结束) */
-  const commit = () => {
-    const next = layout();
-    options.onLayoutChange(next);
-    persist(next);
-  };
-
-  const readSaved = (): ResizableLayout | undefined => {
-    const key = storageKey();
-    const storage = storageOf();
-    if (!key || !storage) return undefined;
-    try {
-      const raw = storage.getItem(key);
-      if (!raw) return undefined;
-      const parsed = JSON.parse(raw) as unknown;
-      return typeof parsed === "object" && parsed !== null
-        ? (parsed as ResizableLayout)
-        : undefined;
-    } catch {
-      return undefined;
-    }
-  };
-
-  const bounds = () =>
-    orderedMetas().map((meta) => ({
-      min: effMin(meta),
-      max: meta.maxSize(),
-    }));
-
-  const reportResize = (
-    meta: ResizablePanelMeta,
-    oldSize: number,
-    newSize: number,
-  ) => {
-    meta.onResize?.(roundPercent(newSize));
-    if (!meta.collapsible()) return;
-    const was = isCollapsedSize(meta, oldSize);
-    const now = isCollapsedSize(meta, newSize);
-    if (!was && now) meta.onCollapse?.();
-    else if (was && !now) meta.onExpand?.();
-  };
-
-  const applySizes = (values: number[], report = true) => {
-    const list = orderedMetas();
-    const before = list.map((meta) => store[meta.id] ?? 0);
-    setStore(
-      produce((draft) => {
-        list.forEach((meta, index) => {
-          const value = values[index];
-          if (value !== undefined) draft[meta.id] = value;
-        });
-      }),
-    );
-    if (report) {
-      list.forEach((meta, index) => {
-        const value = values[index];
-        if (value !== undefined) reportResize(meta, before[index]!, value);
-      });
-    }
-  };
-
-  const buildInitial = (): number[] => {
-    const list = orderedMetas();
-    const saved = readSaved() ?? options.defaultLayout();
-    const raw = list.map((meta) => {
-      const fromLayout = saved?.[meta.id];
-      if (fromLayout !== undefined) return fromLayout;
-      return meta.defaultSize;
-    });
-    const defined = raw.filter((value): value is number => value !== undefined);
-    const unknown = raw.length - defined.length;
-    const used = defined.reduce((acc, value) => acc + value, 0);
-    const remaining = Math.max(0, 100 - used);
-    const fill = unknown > 0 ? remaining / unknown : 0;
-    return raw.map((value) => value ?? fill);
-  };
-
-  const initialize = () => {
-    if (initialized) return;
-    // SSR 不计算布局:首屏由 Panel 的 defaultSize fallback 撑起,客户端再归一化
-    if (typeof window === "undefined") return;
-    const list = orderedMetas();
-    if (list.length === 0) return;
-    initialized = true;
-    applySizes(normalizeSizes(buildInitial(), bounds()), false);
-    commit();
-  };
-
-  const scheduleInitialize = () => {
-    if (typeof window === "undefined") return;
-    queueMicrotask(() => {
-      if (!initialized) initialize();
-    });
-  };
-
-  const registerPanel = (meta: ResizablePanelMeta) => {
-    metas.set(meta.element, meta);
-    order = [...order, meta.element];
-    if (!initialized) {
-      scheduleInitialize();
-    } else if (store[meta.id] === undefined) {
-      // 动态新增:给它默认尺寸,并把其它面板等比压回 100
-      const list = orderedMetas();
-      const raw = list.map((item) =>
-        item.id === meta.id
-          ? (item.defaultSize ?? 100 / list.length)
-          : (store[item.id] ?? 0),
-      );
-      applySizes(normalizeSizes(raw, bounds()));
-      commit();
-    }
-    return () => {
-      metas.delete(meta.element);
-      order = order.filter((element) => element !== meta.element);
-      setStore(
-        produce((draft) => {
-          delete draft[meta.id];
-        }),
-      );
-    };
-  };
-
-  const adjacentOf = (handleEl: HTMLElement) => {
-    let prevEl = handleEl.previousElementSibling as HTMLElement | null;
-    while (prevEl && !metas.has(prevEl)) {
-      prevEl = prevEl.previousElementSibling as HTMLElement | null;
-    }
-    let nextEl = handleEl.nextElementSibling as HTMLElement | null;
-    while (nextEl && !metas.has(nextEl)) {
-      nextEl = nextEl.nextElementSibling as HTMLElement | null;
-    }
-    if (!prevEl || !nextEl) return undefined;
-    const prev = metas.get(prevEl)!;
-    const next = metas.get(nextEl)!;
-    const prevSize = store[prev.id] ?? 0;
-    const nextSize = store[next.id] ?? 0;
-    return { prev, next, prevSize, total: prevSize + nextSize };
-  };
-
-  const applyPair = (
-    prev: ResizablePanelMeta,
-    next: ResizablePanelMeta,
-    targetPrev: number,
-    total: number,
-  ) => {
-    const lo = Math.max(effMin(prev), total - next.maxSize());
-    const hi = Math.min(prev.maxSize(), total - effMin(next));
-    let size = clamp(targetPrev, lo, hi);
-
-    // 折叠吸附:落在 (collapsedSize, minSize) 之间时贴向较近的一端
-    if (
-      prev.collapsible() &&
-      size < prev.minSize() - EPSILON &&
-      size > prev.collapsedSize() + EPSILON
-    ) {
-      size =
-        size - prev.collapsedSize() < prev.minSize() - size
-          ? prev.collapsedSize()
-          : prev.minSize();
-    }
-    if (
-      next.collapsible() &&
-      total - size < next.minSize() - EPSILON &&
-      total - size > next.collapsedSize() + EPSILON
-    ) {
-      const rest = total - size;
-      size =
-        total -
-        (rest - next.collapsedSize() < next.minSize() - rest
-          ? next.collapsedSize()
-          : next.minSize());
-    }
-    size = clamp(size, lo, hi);
-
-    const prevOld = store[prev.id] ?? 0;
-    const nextOld = store[next.id] ?? 0;
-    setStore(
-      produce((draft) => {
-        draft[prev.id] = size;
-        draft[next.id] = total - size;
-      }),
-    );
-    reportResize(prev, prevOld, size);
-    reportResize(next, nextOld, total - size);
-  };
+  const adjacentOf = (handleEl: HTMLElement) =>
+    registry.adjacent(handleEl, sizeOf);
 
   const setAdjacentSize = (handleEl: HTMLElement, targetPrevSize: number) => {
     const adjacent = adjacentOf(handleEl);
@@ -290,74 +94,19 @@ export function useResizablePanelGroup(
     commit();
   };
 
-  const collapsePanel = (id: string) => {
-    const meta = orderedMetas().find((item) => item.id === id);
-    if (!meta?.collapsible()) return false;
-    const current = store[id] ?? 0;
-    if (isCollapsedSize(meta, current)) return false;
-    collapsedMemory.set(id, current);
-    applyPanelTarget(meta, meta.collapsedSize());
-    commit();
-    return true;
-  };
-
-  const expandPanel = (id: string) => {
-    const meta = orderedMetas().find((item) => item.id === id);
-    if (!meta?.collapsible()) return false;
-    const current = store[id] ?? 0;
-    if (!isCollapsedSize(meta, current)) return false;
-    const remembered = collapsedMemory.get(id) ?? meta.minSize();
-    applyPanelTarget(meta, Math.max(remembered, meta.minSize()));
-    commit();
-    return true;
-  };
-
-  /** 命令式设置单个 panel,并把它与相邻 panel 之间重新分配 */
-  const applyPanelTarget = (meta: ResizablePanelMeta, targetSize: number) => {
-    const index = order.indexOf(meta.element);
-    const nextElement = order[index + 1];
-    const prevElement = order[index - 1];
-    const nextMeta = nextElement ? metas.get(nextElement) : undefined;
-    const prevMeta = prevElement ? metas.get(prevElement) : undefined;
-    if (nextMeta) {
-      const total = (store[meta.id] ?? 0) + (store[nextMeta.id] ?? 0);
-      applyPair(meta, nextMeta, targetSize, total);
-    } else if (prevMeta) {
-      const total = (store[prevMeta.id] ?? 0) + (store[meta.id] ?? 0);
-      applyPair(prevMeta, meta, total - targetSize, total);
-    } else {
-      setStore(meta.id, 100);
-    }
-  };
-
-  const setPanelSize = (id: string, size: number) => {
-    const meta = orderedMetas().find((item) => item.id === id);
-    if (!meta) return;
-    applyPanelTarget(meta, size);
-    commit();
-  };
-
-  const toggleHandleCollapse = (handleEl: HTMLElement) => {
-    const adjacent = adjacentOf(handleEl);
-    if (!adjacent) return;
-    const { prev, next } = adjacent;
-    if (prev.collapsible()) {
-      if (isCollapsedSize(prev, store[prev.id] ?? 0)) {
-        expandPanel(prev.id);
-      } else {
-        collapsePanel(prev.id);
-      }
-      return;
-    }
-    if (next.collapsible()) {
-      if (isCollapsedSize(next, store[next.id] ?? 0)) {
-        expandPanel(next.id);
-      } else {
-        collapsePanel(next.id);
-      }
-      return;
-    }
-  };
+  const commands = createPanelCommands({
+    metas: orderedMetas,
+    registry,
+    sizes,
+    commit,
+  });
+  const {
+    collapsePanel,
+    expandPanel,
+    setPanelSize,
+    isPanelCollapsed,
+    toggleHandleCollapse,
+  } = commands;
 
   const groupSizePx = () => {
     const element = groupElement();
@@ -381,7 +130,11 @@ export function useResizablePanelGroup(
     dragging,
     keyboardResizeBy: options.keyboardResizeBy,
     registerPanel,
-    resolveAdjacent: (handleEl) => adjacentOf(handleEl),
+    resolveAdjacent: (handleEl) => {
+      // 读取版本号：面板挂载/卸载后让消费方（如 aria-valuenow）重算
+      registryVersion();
+      return adjacentOf(handleEl);
+    },
     setAdjacentSize,
     nudgeAdjacent,
     toggleHandleCollapse,
@@ -393,10 +146,7 @@ export function useResizablePanelGroup(
     setPanelSize,
     collapsePanel,
     expandPanel,
-    isPanelCollapsed: (id) => {
-      const meta = orderedMetas().find((item) => item.id === id);
-      return meta ? isCollapsedSize(meta, store[id] ?? 0) : false;
-    },
-    getPanelSize: (id) => store[id] ?? 0,
+    isPanelCollapsed,
+    getPanelSize: sizeOf,
   };
 }

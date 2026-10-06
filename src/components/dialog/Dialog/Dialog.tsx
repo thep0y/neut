@@ -1,4 +1,10 @@
-import { createEffect, createMemo, createSignal, splitProps } from "solid-js";
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  splitProps,
+} from "solid-js";
 import { useScrollLock } from "~/hooks";
 import type { DialogProps } from "./Dialog.types";
 import { DialogContext } from "./Dialog.context";
@@ -9,6 +15,7 @@ export const Dialog = (props: DialogProps) => {
     "defaultOpen",
     "onOpenChange",
     "lockScroll",
+    "dismissOnEscape",
     "children",
   ]);
 
@@ -38,6 +45,18 @@ export const Dialog = (props: DialogProps) => {
     }
     local.onOpenChange?.(next);
   };
+
+  // 打开期间按 Escape 关闭（与 Drawer 一致）
+  createEffect(() => {
+    if (!open() || local.dismissOnEscape === false) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      event.preventDefault();
+      setOpen(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    onCleanup(() => document.removeEventListener("keydown", handleKeyDown));
+  });
 
   // 打开时立刻挂载；关闭时保留挂载直到动画结束，由 Content/Overlay 的
   // onAnimationEnd 负责卸载，保证退场动画能完整播放。

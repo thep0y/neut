@@ -10,6 +10,7 @@ export const SidebarGroupContent = (props: SidebarGroupContentProps) => {
       data-slot="sidebar-group-content"
       data-sidebar="group-content"
       class={clsx("w-full text-sm", local.class)}
+      classList={local.classList}
       {...others}
     />
   );

@@ -39,6 +39,7 @@ export const AccordionTrigger = (props: AccordionTriggerProps) => {
         aria-disabled={disabled}
         data-accordion-trigger=""
         class={clsx(classes.button, local.class)}
+        classList={local.classList}
         onClick={handleClick}
         data-orientation={orientation}
         data-open={open()}

@@ -19,6 +19,7 @@ export const SidebarMenuSkeleton = (props: SidebarMenuSkeletonProps) => {
       data-slot="sidebar-menu-skeleton"
       data-sidebar="menu-skeleton"
       class={clsx("flex h-8 items-center gap-2 rounded-md px-2", local.class)}
+      classList={local.classList}
       {...others}
     >
       <Show when={local.showIcon}>

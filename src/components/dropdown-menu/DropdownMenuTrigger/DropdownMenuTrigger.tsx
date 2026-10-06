@@ -1,3 +1,4 @@
+// classlist-opt-out: Dynamic 的 component 是 Button（子组件会自己处理 classList），实际不丢
 import type { ValidComponent } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { Button } from "~/components/button";
@@ -11,7 +12,8 @@ export const DropdownMenuTrigger = <
 >(
   props: DropdownMenuTriggerProps<T>,
 ) => {
-  const { ctx, attachListeners } = useDropdownMenuTrigger();
+  const ownDisabled = () => Boolean((props as { disabled?: boolean }).disabled);
+  const { ctx, attachListeners } = useDropdownMenuTrigger(ownDisabled);
 
   return (
     <Dynamic
@@ -22,7 +24,7 @@ export const DropdownMenuTrigger = <
         props.ref,
         attachListeners,
       )}
-      disabled={ctx.disabled() || (props as { disabled?: boolean }).disabled}
+      disabled={ctx.disabled() || ownDisabled()}
       data-slot="dropdown-menu-trigger"
       aria-haspopup="menu"
       aria-expanded={ctx.open()}

@@ -10,6 +10,7 @@ export const AlertDialogFooter = (props: AlertDialogFooterProps) => {
     <div
       data-slot="alert-dialog-footer"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

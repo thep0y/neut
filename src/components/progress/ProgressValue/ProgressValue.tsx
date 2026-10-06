@@ -13,6 +13,7 @@ export const ProgressValue = (props: ProgressValueProps) => {
     <span
       data-slot="progress-value"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     >
       {value()}%

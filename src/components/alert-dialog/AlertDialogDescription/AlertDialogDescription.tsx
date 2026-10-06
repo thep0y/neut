@@ -20,6 +20,7 @@ export const AlertDialogDescription = (props: AlertDialogDescriptionProps) => {
       id={id}
       data-slot="alert-dialog-description"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

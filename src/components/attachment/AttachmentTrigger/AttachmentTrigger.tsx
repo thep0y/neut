@@ -1,4 +1,4 @@
-import type { ValidComponent } from "solid-js";
+import { splitProps, type ValidComponent } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { clsx } from "~/utils";
 import type { AttachmentTriggerProps } from "./AttachmentTrigger.types";
@@ -10,7 +10,14 @@ import type { AttachmentTriggerProps } from "./AttachmentTrigger.types";
 export const AttachmentTrigger = <T extends ValidComponent = "button">(
   props: AttachmentTriggerProps<T>,
 ) => {
-  const component = (props.component as ValidComponent) ?? "button";
+  // class / classList 必须先摘出来：若直接 `{...props}` 再写 to显式 class，
+  // Solid 会用 node.className = value 把 classList 加上的类整体覆盖掉。
+  const [local, others] = splitProps(props as AttachmentTriggerProps, [
+    "component",
+    "class",
+    "classList",
+  ]);
+  const component = (local.component as ValidComponent) ?? "button";
   const type =
     component === "button"
       ? ((props as { type?: "button" | "submit" | "reset" }).type ?? "button")
@@ -18,11 +25,12 @@ export const AttachmentTrigger = <T extends ValidComponent = "button">(
 
   return (
     <Dynamic
-      {...props}
+      {...others}
       component={component}
       type={type}
       data-slot="attachment-trigger"
-      class={clsx("absolute inset-0 z-10 outline-none", props.class)}
+      class={clsx("absolute inset-0 z-10 outline-none", local.class)}
+      classList={local.classList}
     />
   );
 };

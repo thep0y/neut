@@ -1,25 +1,13 @@
-import {
-  createEffect,
-  createMemo,
-  createSignal,
-  onCleanup,
-  type Accessor,
-} from "solid-js";
-import type {
-  QuestionnaireItemHandle,
-  QuestionnaireRootContextValue,
-} from "./questionnaire.context";
+import { createEffect, createSignal, type Accessor } from "solid-js";
+import type { QuestionnaireRootContextValue } from "./questionnaire.context";
 import type {
   QuestionnaireItemDefinition,
   QuestionnaireShortcutMode,
 } from "./questionnaire.types";
-import {
-  compareDocumentOrder,
-  isAnswerFilled,
-  isNativeRadio,
-  isTypingElement,
-  normalizeShortcut,
-} from "./questionnaire.utils";
+import { createDomVersionWatcher } from "./questionnaire.dom-watch";
+import { createItemView, resolveActiveName } from "./questionnaire.item-view";
+import { handleQuestionnaireKeyDown } from "./questionnaire.keys";
+import { createItemRegistry } from "./questionnaire.registry";
 
 interface Options {
   item: Accessor<string | undefined>;
@@ -48,48 +36,27 @@ export function useQuestionnaireRoot(options: Options): {
     onReset: (event: Event) => void;
   };
 } {
-  const [registered, setRegistered] = createSignal<QuestionnaireItemHandle[]>(
-    [],
-  );
-  const [domVersion, setDomVersion] = createSignal(0);
+  const registry = createItemRegistry();
+  const domVersion = createDomVersionWatcher(options.formRef);
   const [internalName, setInternalName] = createSignal<string | null>(null);
   let pendingFocus: { name: string; target: "item" | "invalid" } | null = null;
 
-  const ordered = createMemo(() => {
-    domVersion();
-    return [...registered()].sort((a, b) =>
-      compareDocumentOrder(a.element, b.element),
-    );
+  const view = createItemView({
+    registered: registry.items,
+    domVersion,
+    controlledItem: options.item,
+    internalName,
+    definitions: options.items,
   });
-  const enabled = createMemo(() =>
-    ordered().filter((item) => !item.disabled()),
-  );
-  const activeName = createMemo(() => options.item() ?? internalName());
-  const activeItem = createMemo(
-    () => enabled().find((item) => item.name === activeName()) ?? null,
-  );
-  const total = createMemo(() => enabled().length);
-  const index = createMemo(() =>
-    enabled().findIndex((item) => item.name === activeName()),
-  );
-  const current = createMemo(() => (index() < 0 ? 0 : index() + 1));
-  const first = createMemo(() => total() > 0 && index() === 0);
-  const last = createMemo(() => total() > 0 && index() === total() - 1);
+  const { enabled, activeName, activeItem, total, index, first, last } = view;
+  const { current, itemDefinitions } = view;
 
-  const itemDefinitions = createMemo(() => {
-    const list = options.items();
-    if (!list) return null;
-    return new Map(list.map((definition) => [definition.name, definition]));
-  });
-
-  const resolveName = () => {
-    const list = enabled();
-    const candidate = options.item() ?? options.defaultItem();
-    if (candidate && list.some((entry) => entry.name === candidate)) {
-      return candidate;
-    }
-    return list[0]?.name ?? null;
-  };
+  const resolveName = () =>
+    resolveActiveName({
+      enabled: enabled(),
+      controlledItem: options.item(),
+      defaultItem: options.defaultItem(),
+    });
 
   // 激活项不可用时回退到定义/第一个可用项
   createEffect(() => {
@@ -101,17 +68,7 @@ export function useQuestionnaireRoot(options: Options): {
     if (next !== name) setInternalName(next);
   });
 
-  const registerItem = (handle: QuestionnaireItemHandle) => {
-    setRegistered((prev) => {
-      const exists = prev.some((item) => item.element === handle.element);
-      return exists
-        ? prev.map((item) => (item.element === handle.element ? handle : item))
-        : [...prev, handle];
-    });
-    return () => {
-      setRegistered((prev) => prev.filter((item) => item !== handle));
-    };
-  };
+  const registerItem = registry.register;
 
   const navigate = (
     name: string | null,
@@ -159,7 +116,9 @@ export function useQuestionnaireRoot(options: Options): {
     }
     const list = enabled();
     const position = list.indexOf(item);
-    navigate(list[position + 1]?.name ?? null);
+    // 走到这里说明 last() 为 false，即 position 必然小于末位；
+    // 且 position 与 item-view 的 index() 同源于 enabled()，因此下一项一定存在
+    navigate(list[position + 1].name);
   };
 
   const submitOrNext = () => {
@@ -187,68 +146,15 @@ export function useQuestionnaireRoot(options: Options): {
   const handleKeyDown = (event: KeyboardEvent) => {
     const item = activeItem();
     if (!item) return;
-    if (
-      event.defaultPrevented ||
-      event.isComposing ||
-      event.keyCode === 229 ||
-      !(event.target instanceof Element)
-    ) {
-      return;
-    }
-    const target = event.target;
 
-    if (
-      event.key === "Enter" &&
-      (event.metaKey || event.ctrlKey) &&
-      !event.altKey &&
-      !event.shiftKey
-    ) {
-      event.preventDefault();
-      if (!event.repeat) submitOrNext();
-      return;
-    }
-    if (event.metaKey || event.ctrlKey || event.altKey) return;
-
-    if (
-      (event.key === "ArrowUp" || event.key === "ArrowDown") &&
-      item.moveAnswerFocus(
-        target,
-        event.key === "ArrowDown" ? "next" : "previous",
-      )
-    ) {
-      event.preventDefault();
-      return;
-    }
-
-    if (
-      (event.key === "ArrowLeft" || event.key === "ArrowRight") &&
-      !isTypingElement(target) &&
-      !isNativeRadio(target)
-    ) {
-      event.preventDefault();
-      if (event.repeat) return;
-      if (event.key === "ArrowLeft") goPrevious();
-      else if (item.status() !== "unanswered") goNext();
-      return;
-    }
-
-    if (event.key === "Enter") {
-      const answer = item.getAnswerByElement(target);
-      if (!answer) return;
-      event.preventDefault();
-      if (!event.repeat && isAnswerFilled(answer)) submitOrNext();
-      return;
-    }
-
-    const mode = options.shortcuts() ?? null;
-    if (!mode || isTypingElement(target)) return;
-    const shortcut = normalizeShortcut(event.key, mode);
-    const answer = shortcut ? item.getAnswerByShortcut(shortcut) : null;
-    if (!answer) return;
-    event.preventDefault();
-    if (event.repeat) return;
-    answer.element.focus();
-    if (answer.type === "choice") (answer.element as HTMLInputElement).click();
+    handleQuestionnaireKeyDown(event, {
+      item,
+      status: () => item.status(),
+      shortcuts: options.shortcuts() ?? null,
+      goNext,
+      goPrevious,
+      submitOrNext,
+    });
   };
 
   // 导航后聚焦新激活项(或它的首个答案控件)
@@ -263,15 +169,6 @@ export function useQuestionnaireRoot(options: Options): {
       if (target === "invalid") handle.focusInvalid();
       else handle.focus();
     });
-  });
-
-  // 观察 DOM 变化(动态增删 Item)以便重新排序
-  createEffect(() => {
-    const form = options.formRef();
-    if (!form || typeof MutationObserver === "undefined") return;
-    const observer = new MutationObserver(() => setDomVersion((v) => v + 1));
-    observer.observe(form, { childList: true, subtree: true });
-    onCleanup(() => observer.disconnect());
   });
 
   const context: QuestionnaireRootContextValue = {

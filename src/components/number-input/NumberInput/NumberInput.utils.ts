@@ -1,9 +1,9 @@
-/** 限制到 [min, max]（两者都可缺省） */
-export function clamp(value: number, min?: number, max?: number): number {
-  if (min !== undefined && value < min) return min;
-  if (max !== undefined && value > max) return max;
-  return value;
-}
+/**
+ * 限制到 [min, max]（两者都可缺省）。
+ *
+ * 实现复用 `~/utils` 的 `clamp`（与 resizable 共用同一份边界逻辑）。
+ */
+export { clamp } from "~/utils";
 
 /** 一个数的小数位数 */
 export function decimalPlaces(value: number): number {

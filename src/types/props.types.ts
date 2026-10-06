@@ -4,7 +4,7 @@ import type { DynamicProps } from "solid-js/web";
 export type EmptyObject = Record<never, never>;
 
 export type MouseEventHandler<T extends keyof HTMLElementTagNameMap> = (
-  e?: MouseEvent & {
+  e: MouseEvent & {
     currentTarget: HTMLElementTagNameMap[T];
     target: Element;
   },

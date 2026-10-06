@@ -13,6 +13,7 @@ export const ProgressIndicator = (props: ProgressIndicatorProps) => {
     <div
       data-slot="progress-indicator"
       class={clsx(classes, "inset-s-0 h-[inherit]", local.class)}
+      classList={local.classList}
       data-progressing={value() > 0 && value() < 100}
       style={{ width: `${value()}%` }}
       {...others}

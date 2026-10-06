@@ -110,8 +110,9 @@ export function useFontLoader(options?: UseFontLoaderOptions) {
   createEffect(() => {
     if (!apply || validLangs.length === 0) return;
 
-    // targetRef 未传或 ref.current 尚未挂载时，回退到
-    const el = targetRef ?? document.documentElement;
+    // targetRef 在解构 options 时已默认成 document.documentElement
+    // （显式传 undefined 也会走默认值），因此这里不再需要二次兜底。
+    const el = targetRef;
     const lang = validLangs[0];
     const prev = el.getAttribute("data-lang");
 

@@ -10,6 +10,7 @@ export const AlertDialogHeader = (props: AlertDialogHeaderProps) => {
     <div
       data-slot="alert-dialog-header"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     />
   );

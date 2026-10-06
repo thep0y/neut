@@ -1,33 +1,24 @@
+import { createChangeEventDetails as createSharedDetails } from "~/utils";
 import type { ToggleGroupChangeEventDetails } from "./ToggleGroup.types";
 
 /**
  * 构造 onValueChange 的事件详情(对齐 base-ui 的 `ChangeEventDetails`)。
  *
- * `isCanceled` / `isPropagationAllowed` 用 getter 暴露:回调内部可以即时读到
- * `cancel()` / `allowPropagation()` 之后的最新值,而不是创建时的快照。
+ * 实现已抽到 `~/utils` 的 `createChangeEventDetails`——`isCanceled` /
+ * `isPropagationAllowed` 的 getter 语义是所有组件共用的关键细节,
+ * 这里只做「补上 ToggleGroup 的 reason 类型」这一层。
+ *
+ * ToggleGroup 的 `event` 是必填(调用方 `toggleItem` 一定拿得到事件),
+ * 而共享工厂的签名是可选,因此这里显式断言回必填类型,不放宽对外契约。
  */
 export function createChangeEventDetails(
   event: Event,
   trigger?: Element,
 ): ToggleGroupChangeEventDetails {
-  let canceled = false;
-  let propagationAllowed = false;
-
-  return {
-    reason: "none",
+  // ToggleGroup 的 reason 目前只有 "none"
+  return createSharedDetails(
+    "none",
     event,
     trigger,
-    cancel: () => {
-      canceled = true;
-    },
-    allowPropagation: () => {
-      propagationAllowed = true;
-    },
-    get isCanceled() {
-      return canceled;
-    },
-    get isPropagationAllowed() {
-      return propagationAllowed;
-    },
-  };
+  ) as ToggleGroupChangeEventDetails;
 }

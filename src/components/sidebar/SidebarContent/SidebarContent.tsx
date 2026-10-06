@@ -13,6 +13,7 @@ export const SidebarContent = (props: SidebarContentProps) => {
         "no-scrollbar flex min-h-0 flex-1 flex-col gap-0 overflow-auto group-data-[collapsible=icon]:overflow-hidden",
         local.class,
       )}
+      classList={local.classList}
       {...others}
     />
   );

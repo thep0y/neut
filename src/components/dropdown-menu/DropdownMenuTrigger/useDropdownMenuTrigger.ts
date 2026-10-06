@@ -1,17 +1,26 @@
 import { onCleanup } from "solid-js";
 import { useDropdownMenuContext } from "../DropdownMenu/DropdownMenu.context";
 
-export function useDropdownMenuTrigger() {
+export function useDropdownMenuTrigger(
+  /**
+   * 触发器自身的 disabled（根状态之外的 `props.disabled`）。
+   * 必须参与守卫：多态渲染成 div/a 时浏览器不会帮忙屏蔽点击，
+   * 只判 `ctx.disabled()` 会让"禁用的触发器"照样打开菜单。
+   */
+  ownDisabled: () => boolean,
+) {
   const ctx = useDropdownMenuContext("DropdownMenuTrigger");
 
   const attachListeners = (el: Element) => {
+    const disabled = () => ctx.disabled() || ownDisabled();
+
     const onClick = (event: Event) => {
-      if (ctx.disabled()) return;
+      if (disabled()) return;
       ctx.toggle(event);
     };
 
     const onKeyDown = (event: Event) => {
-      if (ctx.disabled()) return;
+      if (disabled()) return;
       const e = event as KeyboardEvent;
       if (!["ArrowDown", "ArrowUp", "Enter", " "].includes(e.key)) return;
       e.preventDefault();

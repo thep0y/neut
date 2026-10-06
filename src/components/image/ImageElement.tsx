@@ -11,6 +11,7 @@ import type {
   OnLoadingComplete,
   PlaceholderValue,
 } from "./Image.types";
+import { callEventHandler } from "~/utils";
 import { handleLoading } from "./Image.utils";
 
 // ─── 额外内部 Props ────────────────────────────────────────────────────────────
@@ -114,6 +115,7 @@ const ImageElement: Component<ImageElementProps> = (rawProps) => {
       decoding={internal.decoding}
       data-nimg={internal.fill ? "fill" : "1"}
       class={internal.class}
+      classList={internal.classList}
       style={internal.style}
       sizes={internal.sizes}
       srcset={internal.srcSet}
@@ -139,11 +141,10 @@ const ImageElement: Component<ImageElementProps> = (rawProps) => {
           internal.setBlurComplete(true);
         }
 
-        if (!internal.onError) return;
-
-        if (typeof internal.onError !== "function") return;
-
-        internal.onError(e);
+        // 此前这里用 `typeof internal.onError !== "function"` 直接 return，
+        // 等于把 Solid 的数组/绑定形式**静默丢掉**（既不报错也不回调）。
+        // 统一走仓库的 callEventHandler（数组=多个处理器，非函数项跳过）。
+        callEventHandler(internal.onError, e);
       }}
     />
   );

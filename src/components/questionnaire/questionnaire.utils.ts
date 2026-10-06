@@ -84,11 +84,31 @@ export function isNativeRadio(element: EventTarget | null): boolean {
   return element instanceof HTMLInputElement && element.type === "radio";
 }
 
-/** 按文档顺序比较两个元素 */
+/**
+ * 按文档顺序比较两个元素。
+ *
+ * **只在两个元素都连在文档里时**才比较：`QuestionnaireItem` 是在 ref 里注册的，
+ * 而 Solid 的 ref 在节点插入文档**之前**触发，此刻 fieldset 还是分离节点。
+ * 分离节点的 `compareDocumentPosition` 返回的是「实现相关」的 FOLLOWING/
+ * PRECEDING（jsdom 恒为 FOLLOWING），据此排序会把题目顺序整体颠倒。
+ * 这种情况返回 0（视为等价），由调用方回退到注册顺序。
+ */
 export function compareDocumentOrder(a: Element, b: Element): number {
   if (a === b) return 0;
+  if (!a.isConnected || !b.isConnected) return 0;
   const position = a.compareDocumentPosition(b);
   if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
   if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1;
   return 0;
+}
+
+/**
+ * 答案是否处于禁用态：组件层标记（`disabled` prop）或原生控件自身禁用。
+ * 判定被"状态推导 / 焦点移动 / 校验"共用，因此集中在这里。
+ */
+export function isAnswerDisabled(entry: {
+  disabled: boolean;
+  element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+}): boolean {
+  return entry.disabled || entry.element.disabled;
 }

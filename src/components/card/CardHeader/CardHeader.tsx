@@ -7,6 +7,11 @@ export const CardHeader = (props: CardHeaderProps) => {
   const [local, rest] = splitProps(props, ["class", "classList"]);
 
   return (
-    <div data-slot="card-header" class={clsx(classes, local.class)} {...rest} />
+    <div
+      data-slot="card-header"
+      class={clsx(classes, local.class)}
+      classList={local.classList}
+      {...rest}
+    />
   );
 };

@@ -13,6 +13,7 @@ export const BreadcrumbEllipsis = (props: BreadcrumbEllipsisProps) => {
       role="presentation"
       aria-hidden="true"
       class={clsx(classes, local.class)}
+      classList={local.classList}
       {...others}
     >
       <Ellipsis />

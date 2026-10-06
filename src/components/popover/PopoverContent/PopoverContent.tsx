@@ -64,6 +64,7 @@ export function PopoverContent(props: PopoverContentProps) {
               "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
               local.class,
             )}
+            classList={local.classList}
             {...rest}
           >
             {local.children}
