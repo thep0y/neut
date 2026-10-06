@@ -1,5 +1,5 @@
 import { renderHook } from "@solidjs/testing-library";
-import { createSignal } from "solid-js";
+import { batch, createSignal } from "solid-js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { QuestionnaireItemHandle } from "~/components/questionnaire/questionnaire.context";
 import { useQuestionnaireRoot } from "~/components/questionnaire/useQuestionnaireRoot";
@@ -904,6 +904,29 @@ describe("useQuestionnaireRoot - 键盘处理", () => {
     result.formProps.onKeyDown(event);
 
     expect(event.defaultPrevented).toBe(true);
+
+    cleanup();
+  });
+});
+
+describe("useQuestionnaireRoot - 待聚焦项在 effect 落地前失效（回归）", () => {
+  it("导航后在同一批内禁用目标项：pending focus 被安全丢弃，不聚焦也不抛错", () => {
+    // 只有"导航时目标项还在 enabled()、focus effect 执行时它已不在"这一竞态
+    // 才会走到 `if (!handle) return;`。用 batch 让两次变更一起进入同一次 effect 刷新。
+    // 必须用**非受控**模式：受控时 navigate 不会改 activeName（等父组件回写 item），
+    // 于是 focus effect 会在第一个守卫就早退，走不到 `!handle` 这一侧。
+    const { result, cleanup, fakeItems } = renderRoot({ defaultItem: "q1" }, [
+      { name: "q1" },
+      { name: "q2" },
+    ]);
+
+    batch(() => {
+      result.context.goNext();
+      fakeItems[1].setDisabled(true);
+    });
+
+    expect(fakeItems[1].focusSpy).not.toHaveBeenCalled();
+    expect(fakeItems[1].focusInvalidSpy).not.toHaveBeenCalled();
 
     cleanup();
   });

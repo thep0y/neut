@@ -130,10 +130,6 @@ const DEFERRED = new Map([
     "src/components/message-scroller/message-scroller.anchoring.ts:207",
     "`if (applied)` 的 false 侧 = 默认滚动位置未生效（scrollToEnd/Start 返回 false）。属失败路径，用例待补",
   ],
-  [
-    "src/components/questionnaire/useQuestionnaireRoot.ts:167",
-    "`if (!handle) return;`：导航后、focus effect 落地前该项被禁用/卸载的竞态，用例待补",
-  ],
 ]);
 
 /** 源码行里出现这些才说明"这一行真的写了分支" */
