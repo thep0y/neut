@@ -16,7 +16,8 @@
     "test": "vitest run",
     "test:affected": "node .github/scripts/test-affected.mjs",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "check:branches": "node .github/scripts/check-branches.mjs"
   },
   "license": "MIT",
   "devDependencies": {

@@ -61,9 +61,9 @@ export function TimePickerColumn(props: TimePickerColumnProps): JSX.Element {
               id={optionId(option.value)}
               value={option.value}
               selected={selected() === option.value}
-              onSelect={(event) => {
-                if (event) selectOption(option.value, event);
-              }}
+              // event 在类型上必填（Solid 的点击事件一定有事件对象），
+              // 因此不再需要 `if (event)` 这种永远成立的守卫
+              onSelect={(event) => selectOption(option.value, event)}
             >
               {option.label}
             </TimePickerOption>

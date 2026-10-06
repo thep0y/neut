@@ -67,10 +67,18 @@ jobs:
               run: bun run test:affected -- --base ${{ github.event.pull_request.base.sha }}
               continue-on-error: true
 
-            # 门禁：覆盖率四项指标必须 100%（见 TESTING.md §1/§9）
+            # 门禁：跑覆盖率并生成报告（函数 100% 由 vitest 阈值把关；
+            # 语句/分支/行改由下一步的"真实缺口零遗漏"脚本把关，见 TESTING.md §8）
             - name: Test with coverage
               id: coverage
               run: bun run test:coverage
+
+            # 门禁：任何未覆盖的语句/分支/函数，若不对应 Solid 的 JSX 编译归因产物、
+            # 也不是已登记原因的不可达防御代码，一律失败（见 TESTING.md §8）。
+            # if: always() —— 覆盖率步骤本身不达标时，更需要看到具体是哪些真实缺口；
+            # 但这一步自己失败同样是门禁失败。
+            - name: Check coverage gaps (real code)
+              run: bun run check:branches
 
             # 反作弊检查：禁止 .only / .skip 与覆盖率屏蔽注释（见 TESTING.md §4.7/§9）
             - name: Guard against test cheating

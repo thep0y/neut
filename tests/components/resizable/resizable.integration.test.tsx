@@ -1,5 +1,5 @@
 import { fireEvent, render } from "@solidjs/testing-library";
-import { createSignal } from "solid-js";
+import { createSignal, Show } from "solid-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ResizableHandle } from "~/components/resizable/ResizableHandle";
 import { ResizablePanel } from "~/components/resizable/ResizablePanel";
@@ -915,5 +915,49 @@ describe("ResizableHandle - 没有相邻面板（回归）", () => {
     pointerUp(handle);
 
     expect(onLayoutChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("ResizableHandle - 拖拽中途面板卸载（回归）", () => {
+  it("相邻面板在排帧之后卸载时，帧回调里的相邻解析安全早退", async () => {
+    // `setAdjacentSize` 的 `if (!adjacent) return;` 只在"pointerdown 时相邻对还在、
+    // 帧回调执行时已经不在"这一竞态下才可达：拖拽开始前 onPointerDown 已用同一个
+    // resolveAdjacent 把关，Home/End 也先在调用处判过。
+    const [showB, setShowB] = createSignal(true);
+    const result = render(() => (
+      <ResizablePanelGroup>
+        <ResizablePanel id="a" defaultSize={50}>
+          面板 A
+        </ResizablePanel>
+        <ResizableHandle aria-label="调整" />
+        <Show when={showB()}>
+          <ResizablePanel id="b" defaultSize={50}>
+            面板 B
+          </ResizablePanel>
+        </Show>
+      </ResizablePanelGroup>
+    ));
+
+    const group = result.container.querySelector(
+      '[data-slot="resizable-panel-group"]',
+    ) as HTMLElement;
+    Object.defineProperty(group, "clientWidth", { value: 400, configurable: true });
+    Object.defineProperty(group, "clientHeight", { value: 0, configurable: true });
+
+    const handle = result.container.querySelector(
+      '[data-slot="resizable-handle"]',
+    ) as HTMLElement;
+    await flushInit();
+
+    pointerDown(handle);
+    // 排一帧（pending 已写入），但先不执行
+    pointerMove(handle, { clientX: 160 });
+
+    // 面板 B 卸载 → 分隔条不再有相邻对
+    setShowB(false);
+    await flushInit();
+
+    expect(() => flushFrames()).not.toThrow();
+    expect(() => pointerUp(handle)).not.toThrow();
   });
 });

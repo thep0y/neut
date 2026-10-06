@@ -290,3 +290,90 @@ describe("autoUpdate", () => {
     }
   });
 });
+
+describe("autoUpdate - ancestorResize", () => {
+  const originalResizeObserver = globalThis.ResizeObserver;
+
+  beforeEach(() => {
+    FakeResizeObserver.instances = [];
+    globalThis.ResizeObserver =
+      FakeResizeObserver as unknown as typeof ResizeObserver;
+  });
+
+  afterEach(() => {
+    globalThis.ResizeObserver = originalResizeObserver;
+    document.body.innerHTML = "";
+    vi.restoreAllMocks();
+  });
+
+  it("ancestorResize=true 时把可滚动的祖先也交给 ResizeObserver 观察", () => {
+    // 此前只测过 elementResize 与 ancestorResize=false，
+    // `if (ancestorResize) { ancestors.forEach(...) }` 这一侧从未被覆盖。
+    const update = vi.fn();
+    const scroller = document.createElement("div");
+    document.body.appendChild(scroller);
+    const reference = document.createElement("div");
+    reference.getBoundingClientRect = () => asDOMRect(rect(0, 0, 10, 10));
+    scroller.appendChild(reference);
+    const floating = elementWithRect(rect(0, 0, 10, 10));
+
+    const restore = withOverflow(scroller, "auto");
+    try {
+      const cleanup = autoUpdate(reference, floating, update, {
+        ancestorResize: true,
+      });
+      const observer = FakeResizeObserver.instances[0];
+
+      expect(observer.observed).toContain(scroller);
+
+      cleanup();
+    } finally {
+      restore();
+    }
+  });
+});
+
+describe("autoUpdate - elementResize 与 ancestorResize 的组合", () => {
+  const originalResizeObserver = globalThis.ResizeObserver;
+
+  beforeEach(() => {
+    FakeResizeObserver.instances = [];
+    globalThis.ResizeObserver =
+      FakeResizeObserver as unknown as typeof ResizeObserver;
+  });
+
+  afterEach(() => {
+    globalThis.ResizeObserver = originalResizeObserver;
+    document.body.innerHTML = "";
+    vi.restoreAllMocks();
+  });
+
+  it("elementResize=true 而 ancestorResize=false 时不观察祖先", () => {
+    // 两者默认都是 true；已有用例要么都开、要么都关，因此
+    // `if (ancestorResize)` 的 false 侧（在外层条件仍成立时）此前不可达。
+    const update = vi.fn();
+    const scroller = document.createElement("div");
+    document.body.appendChild(scroller);
+    const reference = document.createElement("div");
+    reference.getBoundingClientRect = () => asDOMRect(rect(0, 0, 10, 10));
+    scroller.appendChild(reference);
+    const floating = elementWithRect(rect(0, 0, 10, 10));
+
+    const restore = withOverflow(scroller, "auto");
+    try {
+      const cleanup = autoUpdate(reference, floating, update, {
+        elementResize: true,
+        ancestorResize: false,
+      });
+      const observer = FakeResizeObserver.instances[0];
+
+      expect(observer.observed).toContain(reference);
+      expect(observer.observed).toContain(floating);
+      expect(observer.observed).not.toContain(scroller);
+
+      cleanup();
+    } finally {
+      restore();
+    }
+  });
+});

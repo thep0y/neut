@@ -482,3 +482,20 @@ describe("popover - 触发器上的 Escape（回归）", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });
+
+describe("popover - 打开状态下按其它按键（回归）", () => {
+  it("已打开时在 trigger 上按非 Escape 键不做任何事", () => {
+    // onKeyDown 在"已打开"分支里只处理 Escape；其它按键走 `key === "Escape"`
+    // 的 false 侧（此前没有被覆盖）。这里断言它既不关闭也不重新打开。
+    const onOpenChange = vi.fn();
+    renderPopover({ defaultOpen: true, onOpenChange });
+    const el = trigger();
+    el.focus();
+
+    fireEvent.keyDown(el, { key: "a" });
+    fireEvent.keyDown(el, { key: "ArrowDown" });
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(content()).toBeInTheDocument();
+  });
+});

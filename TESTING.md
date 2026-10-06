@@ -20,17 +20,27 @@
 
 ### 1.1 门槛
 
-对 `src/**` 下的所有源码，下列四项指标**每一项都必须是 100%**：
+门槛分两层，两者都必须通过：
 
-| 指标       | 含义                             |
-| ---------- | -------------------------------- |
-| statements | 语句                             |
-| branches   | 分支（含 `&&` / `                |     | `/`??`/ 三元 / 可选链 /`default`分支 / 提前`return`） |
-| functions  | 函数（含箭头函数、getter、回调） |
-| lines      | 行                               |
+**第一层（vitest 阈值）**：函数覆盖率 **100%**（它是可达的）。
+
+**第二层（真实缺口零遗漏脚本）**：`bun run check:branches` 要求
+「`src/**` 里任何未覆盖的语句 / 分支 / 函数，若不与编译器归因产物重合、
+也不属于已登记原因的不可达防御代码，则失败」。
+
+为什么语句 / 分支 / 行不再用百分比阈值，见 §8：SolidJS 的 JSX 编译会把
+模板提升到模块顶层，V8 覆盖率会把 `solid-js/web` 内部的条件归因到我们的文件上
+（**每个使用 JSX 的模块各一条**，且没有任何源码构造与之对应）；再加上
+文档化的 `ref={el}` 会编译出恒有一侧不可达的三元。"分支 100%"在**保留 Solid
+惯用写法**的前提下结构上不可达，百分比阈值只会逼人去把惯用写法改写成特殊情况
+（本仓库真的这么错过一次，见 §4.1 的补充）。
+
+第二层**比对真实分支要求一个百分比更严格**：它不允许任何一条真实缺口存在，
+并且白名单条目一旦与实际缺口对不上（代码已覆盖或行号漂移）同样失败，
+避免名单腐烂成"随便放行"。
 
 "新增代码"和"既有代码"一视同仁。回归测试与覆盖率提升可以分批提交，但
-**任何一个 PR 都不能让全局数值下降**。
+**任何一个 PR 都不能让真实缺口变多**。
 
 ### 1.2 允许的排除（白名单，必须显式声明理由）
 
@@ -56,11 +66,19 @@ if (weirdEdgeCase) { ... }
 `getBoundingClientRect` 非零值），走 §5.5 的"能力缺口登记"流程，
 而不是静默 `ignore`。
 
-### 1.3 数字下降 = 失败
+### 1.3 真实缺口变多 = 失败
 
-`vitest --coverage` 的阈值设为 100，任一指标低于阈值即退出码非 0。
-不要把阈值调低，不要写 `thresholds: { autoUpdate: true }`（它会把阈值
-悄悄调低到当前值，等于没有门槛）。
+`vitest --coverage` 的 `functions` 阈值设为 100，低于即退出码非 0；
+语句 / 分支 / 行的把关交给 `bun run check:branches`（见 §8）。
+不要把 `functions` 阈值调低，不要写 `thresholds: { autoUpdate: true }`
+（它会把阈值悄悄调低到当前值，等于没有门槛）。
+
+`check:branches` 的放行名单分两张表，**都不允许"顺手"扩大**（§4.6 同样适用）：
+
+- `UNREACHABLE`：已证明在当前环境里结构上不可达的防御代码，每条必须写清原因；
+- `DEFERRED`：确属竞态 / 时序、但**尚未构造出用例**的缺口。它只是不阻塞门禁，
+  每次运行都会打印成技术债——不许把"其实能测、只是没测"的东西塞进
+  `UNREACHABLE` 冒充不可达。
 
 ---
 
@@ -289,8 +307,9 @@ jsdom 无法构造的场景（真实布局、滚动尺寸、`ResizeObserver` 回
 1. 在 setup 文件里提供最小可控 polyfill，让**逻辑分支**可测
    （例如 `ResizeObserver` 手动触发回调）；
 2. 若某个分支确实依赖真实浏览器引擎，在该文件顶部写一段
-   `// 测试能力缺口：<分支> 需要真实布局，无法在 jsdom 断言；已登记于 TESTING.md §8`，
-   并把条目加到本文档 §8 的登记表；
+   `// 测试能力缺口：<分支> 需要真实布局，无法在 jsdom 断言；已登记于 check-branches.mjs`，
+   并把条目加到 `.github/scripts/check-branches.mjs` 的 `UNREACHABLE`（已证明不可达）
+   或 `DEFERRED`（确认是竞态但暂无用例）——**门禁直接读那里**，见 §8；
 3. **不允许**直接 `/* istanbul ignore */` 了事。
 
 ### 5.6 响应式与异步
@@ -394,46 +413,74 @@ it("test handleKeyDown", () => {});
 
 ---
 
-## 8. 测试能力缺口登记表
+## 8. 覆盖率缺口：编译器归因产物与不可达防御代码
 
-按 §5.5 的流程追加。宁可在这里写明"这条分支在 jsdom 里不可达"，
-也不要写一条假装覆盖它的测试。
+这一节替代了原先那张"逐条登记能力缺口"的长表——原因见下：那张表里
+大量条目的前提是错的（把可达的分支写成了"jsdom 不可达"），而且它没有
+任何机械化的执行手段。现在**权威登记处是 `.github/scripts/check-branches.mjs`
+里的 `UNREACHABLE` / `DEFERRED` 两张表**，因为门禁直接读它、并会在条目失效时失败。
 
-| 文件                                              | 无法测的分支                                                  | 原因                                                                                                                                                    | 替代方案                                                                              |
-| ------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `components/dialog/Dialog/Dialog.types.ts`（AlertDialog / Sheet 继承） | 无：这是**能力缺口**而非不可达分支 | `DialogProps.onOpenChange` 是**单参数** `(open: boolean) => void`，没有 `ChangeEventDetails`，调用方无从调用 `details.cancel()`（实测 `mock.calls[0].length === 1`，第二参为 undefined）。drawer / context-menu / combobox / toggle-group 都有 details，Dialog 家族没有——因此本模块**不存在**"cancel() 被忽略"的缺陷，不能写一条永远为绿的 cancel 断言冒充覆盖 | 已在 alert-dialog / sheet 的测试里按现状断言，并在集成用例中标注该缺口；补齐需先给 Dialog 引入 details（实现变更） |
-| `components/questionnaire/questionnaire.utils.ts` | `compareDocumentOrder` 末尾的 `return 0`（两个**已连接**节点既非 FOLLOWING 也非 PRECEDING） | `compareDocumentPosition` 对任意两个不同的已连接节点都会置 FOLLOWING 或 PRECEDING 位（jsdom 与 Chromium 均如此），落到兜底需要两者都不含，实际不可达；把该行改成 `return 1` 后仍全绿（变异测试确认，27 文件 564 条）。注：分离节点现在走上面新增的 `isConnected` 早退分支，那条可达且有专门用例 | 保留为防御性代码；不写假测试 |
-| `hooks/useScrollLock.ts`                          | `if (released) return;`（释放函数幂等守卫）                   | `renderHook().cleanup()` / `root.dispose()` 本身幂等，`onCleanup` 只触发一次，无法从公共 API 调用到第二次；去掉该守卫全部测试仍通过（已用变异测试确认） | 保留为防御性代码；不写假测试。若将来改为暴露 `release()`，再补用例                    |
-| `hooks/useFontLoader.ts`                          | `targetRef ?? document.documentElement` 的 `??` 右侧          | `targetRef` 已在解构默认值里兜底为 `document.documentElement`，运行到此行时永不为 `undefined`；去掉 `??` 右侧全部测试仍通过（已用变异测试确认）         | 保留为防御性代码；已登记，不写假测试                                                  |
-| 样式相关                                          | `getComputedStyle` 对内联 `overflow` 简写的展开               | jsdom 不展开 shorthand，`style.overflowY` 读回 `""`                                                                                                     | stub `getComputedStyle` 返回构造好的声明对象                                          |
-| `components/dropdown-menu`                        | 菜单键盘高亮时的 `scrollIntoView`（"高亮项滚入视野"）          | jsdom 未实现 `Element.prototype.scrollIntoView`，调用即抛 `TypeError`                                                                                    | 在 `vitest.setup.ts` 补空实现；滚动本身在 jsdom 无法验证                              |
-| `components/combobox`                             | ① 输入框缺少 `aria-expanded`/`aria-controls`/`role="combobox"`；② 受控模式下 `inputValue` 与 `props.value` 脱节 | ① 属**无障碍缺口**（非测试能力问题），开关状态没有可断言的 ARIA 出口；② `inputValue` 是根组件里的独立本地信号，`selectItem` 无条件写它 | ① 开关断言改用 `onOpenChange` 回调，并把缺口登记在此；② 用 `[当前行为]` 前缀的用例锁定现状（`aria-selected` 仍正确跟随），修复后改断言 |
-| `components/scroll-area/ScrollBar/useScrollBarInteraction.ts` | （已修复，无遗留缺口） | 原先 `if (event.target.dataset.slot === "scroll-area-thumb") return;` 是不可达的冗余守卫（滑块 handler 会 `stopPropagation()`） | 2026-09 重构时删除；变异测试确认删除后全部用例仍通过 |
-| `components/calendar/Calendar/Calendar.tsx`（重构时删除的冗余守卫） | 原 `selectDay` 里的 `if (isDisabledDay(day)) return;` | 禁用判定已下移到 `CalendarDay`（同一个判定同时决定按钮 `disabled` 与点击是否回调），父级再判一次永远为假；删除后 206 条日历用例仍全绿（变异式确认） | 已删除；如将来有第二个调用方（不经过 `CalendarDay`），需要把守卫移回 `selectDay` |
-| `components/tooltip/TooltipContent/usePresence.ts`（重构时删除的冗余条件） | 原 `else if (!visible) { setMounted(false) }` | 前一个分支已是 `if (visible)`，进入 else 时必然 `!visible`，该条件恒真；改为 `else` 后 33 条 tooltip 用例全绿 | 已删除；`mounted` 的进入/退场/兜底/抢占四条路径均有独立用例 |
-| `components/resizable/useResizablePanelGroup.ts`（真正不可达） | `applySizes` 的 `values[index] !== undefined`（108/115）、`initialize` 的「已初始化」早返回（131）、`typeof window === "undefined"` SSR 守卫（133/142） | 调用路径上不可达：`scheduleInitialize` 已先判 `!initialized`，故 `initialize` 不会二次进入；`applySizes` 的入参长度总与注册面板数一致；jsdom 里 `window` 始终存在（SSR 守卫属测试能力缺口） | 保留为防御性代码/SSR 兜底；不写假测试 |
-| `components/resizable/useResizablePanelGroup.ts`（**下一轮补测**） | 各 `store[id] ?? 0` 兜底（68/191/192/226/237/239/249/252）、`if (!adjacent) return`（205/213/268） | 这些分支只有在「面板已注册、但 `initialize` 的微任务尚未跑完」时才会走到，而现有引擎用例都在 `flushInit()` 之后再操作 | **不靠 §8 免测**：下一轮补「初始化前调用命令式 API」（`collapsePanel`/`expandPanel`/`setPanelSize`/`nudgeAdjacent`）的用例把它们覆盖掉 |
-| `components/questionnaire/questionnaire.aria.ts`（重构时删除的冗余兜底） | `buildItemKeyshortcuts` 末尾的 `\|\| undefined` | 数组首项是常量 `"Meta+Enter Control+Enter"`，`filter(Boolean).join(" ")` 永不为空串，`\|\| undefined` 恒不命中；删除后问卷全量用例仍全绿 | 已删除；非激活题目仍由开头的 `if (!active) return undefined` 返回 undefined |
-| `components/resizable/ResizableHandle/resizable.handle-drag.ts` | `flush` 与 `onPointerUp` 里的 `drag.pending !== null`（67/114） | `frame !== null` 与 `pending` 在同一处赋值，因此「有帧待落地但 pending 为空」不可达；去掉守卫后 resizable 全量用例仍全绿（变异测试确认）；键盘/拖拽拆成独立模块后行号随之变化 | 保留为防御性代码；不写假测试。`flush` 的 `!drag` 守卫与 `hasPointerCapture` 的两个分支已有专门用例（迟到帧、捕获丢失） |
-| `components/resizable/ResizableHandle/ResizableHandle.tsx` | `adjacent()` 里 `el ? … : undefined` 的 `undefined` 侧（34） | Solid 的属性 effect 在 ref 赋值之后才求值，且组件卸载时 effect 先于 ref cleanup 释放，因此该侧不可达；改成 `ctx.resolveAdjacent(el!)` 后 228 条用例仍全绿（变异测试确认） | 保留为防御性代码；不写假测试 |
-| `components/message-scroller/message-scroller.anchoring.ts` | `if (applied)` 的 false 侧（207） | 进入该函数时已由顶部守卫排除「没有视口 / 已应用过 / 会话为空」，而三条分支（start / end / last-anchor）在**有视口**且目标在内容内时都会返回 true，因此 `applied` 恒为 true；改成无条件 `defaultApplied = true; setPendingScroll(false);` 后 message-scroller 全量 220 条用例仍全绿（变异测试确认） | 保留为防御性代码；不写假测试 |
-| `components/message-scroller/message-scroller.anchoring.ts` | `previousFirst ? list.indexOf(previousFirst) : -1` 的 false 侧（300） | `previousCount > 0` 蕴含上一轮的 `firstItem` 非空（`itemCount` 与 `firstItem` 在同一次 `handleContentChange` 里一起赋值），因此 `previousFirst` 不可能为空；改成 `list.indexOf(previousFirst as HTMLElement)` 后 220 条用例仍全绿（变异测试确认） | 保留为防御性代码；不写假测试 |
-| 多处组件的 `disabled` 早退守卫（`AccordionTrigger.tsx:22`、`Checkbox.tsx:98`、`ComboboxInput.tsx:47`、`Popover.tsx:47/56`、`ToggleGroupItem.tsx:96/102`、`TabsTrigger.tsx:75`、`useSelectTrigger.ts:25/34` 等） | 形如 `if (disabled) return;` 的 true 侧 | Solid 的事件委托实现是 `if (handler && !node.disabled)`，被禁用的节点**根本不会进入**委托派发；而 `disabled` 与元素上的 `disabled` 属性来自同一表达式，因此「已禁用却收到事件」在 jsdom 与真实浏览器都到不了。实测：对 disabled 项 `fireEvent.click` 与 `dispatchEvent(new MouseEvent(...))` 两种方式，处理器均不执行（回调 0 次） | 保留为防御性代码；不写假测试 |
-| `components/resizable/*`、`components/popover/Popover/Popover.tsx`、`components/select/SelectTrigger/useSelectTrigger.ts` 等 | 各自 `disabled()` / `if (!adjacent) return;` 的早退侧 | 与上面「disabled 早退守卫」同一成因：Solid 事件委托 `if (handler && !node.disabled)` 不会把事件送给禁用节点；`!adjacent` 侧则需要「拖拽手柄找不到相邻面板」——那要求 DOM 里存在没有相邻面板的孤立手柄，`resolveAdjacent` 的注册规则排除了该情形 | 保留为防御性代码；不写假测试 |
-| `components/select/Select/Select.tsx` | `if (idx !== -1)`（80）的 false 侧（注销时找不到该 value） | `registerItem` 的注销闭包只在 `onCleanup` 里由**同一个** item 触发，而该 item 注册时必然 push 进过同一个列表，因此按 `value` 查找一定命中；在 else 侧插 `console.error` 后跑完 select 全量 11 文件 79 条，一次都没触发 | 保留为防御性代码；不写假测试 |
-| `components/hover-card/HoverCardContent/useHoverCardContent.ts` | `else if (!visible)` 的 else 侧（85） | 能进入该 `else if` 时 `visible` 必为 false，`!visible` 恒真，else 不可达——是真实冗余条件（改成 `else` 行为不变） | 按现状保留；若改为 `else` 则该行消失，届时同步删除本行 |
-| `components/tooltip/TooltipArrow/TooltipArrow.tsx`、`components/dropdown-menu/DropdownMenuTrigger/DropdownMenuTrigger.tsx` 等同类的 `ref={ctx.setXxx}` | `ref` 转译产物里 `typeof ref === "function" ? ref(el) : ref = el` 的非函数侧 | 源码把 ref 硬编码成函数（`setArrowElement` / `setTrigger` 等），非函数侧恒不可达；与 §8 的 `slider/SliderTrack` 同款。要"覆盖"它只能给假 context 传非函数 ref，属假测试 | 保留为防御性代码；不写假测试 |
-| `components/dropdown-menu/DropdownMenuTrigger/useDropdownMenuTrigger.ts` | 无：守卫已补全（**曾是真缺陷**） | 原先只判根状态 `ctx.disabled()`，多态渲染成 div/a 时浏览器不屏蔽点击，禁用的触发器照样打开菜单。已把触发器自身的 disabled 接入守卫并加回归用例，此条仅作记录 | — |
-| `components/combobox/ComboboxInput/ComboboxInput.tsx` | `if (disabled()) return;`（41）的 true 侧 | Solid 的事件委托实现是 `if (handler && !node.disabled)`，会直接跳过被禁用的节点，而 `disabled()` 与传给 input 的 `disabled` 是同一个表达式，因此「input 已禁用却收到 keydown」在 jsdom 与真实浏览器都到不了；把该行换成 `if (false)` 后 combobox 全量 182 条仍全绿（变异测试确认） | 保留为防御性代码；不写假测试 |
-| `components/carousel/CarouselNext/CarouselNext.tsx`、`CarouselPrevious/CarouselPrevious.tsx` | `if (!event) return;`（25）的 true 侧 | `onClick` 由 Solid 的事件委托调用，必然带事件对象；该守卫只是给 `MouseEventHandler<T>` 的可选形参留兜底，把整行删掉后 carousel 全量 100 条仍全绿（变异测试确认） | 保留为防御性代码；不写假测试 |
-| `components/image`（ImageElement / Image.utils） | 若干防御性守卫的短路侧：`handleRef` 的 `if (!img) return;`（ref 回调总是带元素）、`typeof internal.onError !== "function"`（类型已收窄为函数）、`config.unoptimized` / `local.loading === "eager"` 等在与其它条件组合时不会被子集输入命中 | 这些分支要么是类型层面已排除、要么是给未来调用方留的兜底；语句/函数/行都已 100%，未逐个做变异测试（它们是单行早退，删掉不改变任何可达路径） | 保留为防御性代码；不写假测试 |
-| `components/context-menu/ContextMenuTrigger/useContextMenuTrigger.ts` | `if (!press) return;` 的 true 侧（43） | `press` 只在 touch/pen 的 pointerdown 里赋值，而 pointerup/pointercancel 会先清 `press`、紧接着同步 `clearTimeout`；JS 单线程下不存在「press 已清空而定时器仍存活」的时序（分支数据实测 false 侧 4 次、true 侧 0 次） | 保留为防御性代码；不写假测试 |
-| `components/slider/SliderTrack/SliderTrack.tsx` | `ref={ctx.setTrackRef}` 编译产物里 `typeof ref === "function" ? … : …` 的「非函数 ref」侧（16） | 源码硬编码函数 ref，该侧恒不命中；把 ref 换成箭头函数后 slider 全量 89 条用例仍全绿（变异测试确认） | 保留为防御性代码；不写假测试 |
-| `components/time-picker/TimePickerColumn/TimePickerColumn.tsx` | `if (event) selectOption(...)` 的 false 侧（65） | 选项组件永远把 MouseEvent 传给 `onSelect`（`local.onSelect?.(event)`），因此从公共 API 到不了无事件的一侧；去掉守卫后 time-picker 全量 218 条用例仍全绿（变异测试确认） | 保留为防御性代码；不写假测试 |
-| `components/accordion/AccordionTrigger/AccordionTrigger.tsx` | `if (disabled) return;` 的 true 侧（22） | 禁用的 `<button disabled>` 根本不会收到 click（jsdom 与浏览器都不为 disabled 表单控件派发用户点击，Solid 的 JSX `onClick` 又是委托到根节点，因此 `dispatchEvent` 也到不了）；去掉该守卫后 accordion 全量 43 条用例仍全绿（变异测试确认） | 保留为防御性代码；不写假测试 |
-| `components/scroll-area/**`、`components/switch`、`components/checkbox`、`components/toast/Toast/**`、`components/toast/Toaster/Toaster.tsx`、`components/resizable/**` 等 | 组件函数体最后一行（`};`）上的一条隐性分支 | Solid JSX 转译后 `createMemo`/`clsx` 的隐式 else 被 v8 计为分支，与源码逻辑无关（同仓库既有已测组件同样存在 1 条） | 不处理：语句/行/函数三项均为 100%，该条为转译产物 |
+### 8.1 两类"结构性不可达"，与它们为什么不能靠改代码消除
 
----
+**（a）Solid JSX 编译的归因产物（当前 336 条）**
+
+Solid 会把模板提升到模块顶层。V8 覆盖率把 `solid-js/web` 内部的某个条件
+归因到**我们的文件**上，落点是"模块最后一个顶层语句"。
+
+实测证据（`babel-preset-solid` + `v8` 覆盖率）：
+
+- 一个只写 `<Button>hi</Button>` 的模块（连元素模板都不产生），转译结果里
+  **没有任何条件语句**，V8 仍报出一条 `if` 分支；
+- 该分支的位置在没有分支构造的行上（例如组件结尾的 `};`，或
+  `export const ANSWER = 42;`）；
+- 也就是说：**每个使用 JSX 的模块各有一条**，与是否使用 `ref`、写了什么业务逻辑无关。
+
+**（b）Solid `ref` 的三元（当前 11 条）**
+
+[官方文档](https://docs.solidjs.com/concepts/refs) 把变量形式列为 `ref` 的**主用法**：
+
+> To use `ref`, you declare a variable and use it as the `ref` attribute:
+> `let myElement; <p ref={myElement}>` … If access to an element is needed before it
+> is added to the DOM, you can use the callback form
+
+变量形式编译成 `typeof ref === "function" ? ref(el) : el = node`，恒有一侧不可达；
+函数引用形式（`ref={ctx.setEl}`）与 signal setter 形式同样如此。
+**只有内联箭头这个"特殊情况"不产生三元**——为了覆盖率把 11 处主用法改写成特殊情况，
+是在拿工具反向扭曲代码，本仓库不做。
+
+结论：这两类占全部未覆盖分支的绝大多数，且**无法通过修改业务代码消除**，
+除非放弃 Solid 的文档化惯用写法。因此门槛从"分支 100%"改为"真实源码构造零遗漏"。
+
+### 8.2 判定规则（`bun run check:branches`）
+
+对每个未覆盖的**分支**条目：
+
+1. 该行源码里没有任何分支构造（`if` / `?` / `&&` / `||` / `??` / `switch` / `case` / `catch`）
+   → 判为（a）类归因产物，放行；
+2. `cond-expr` 且该行是 `ref={...}` → 判为（b）类，放行；
+3. 命中 `UNREACHABLE` → 放行（必须写明不可达原因）；
+4. 命中 `DEFERRED` → 放行，但每次运行都会打印成技术债；
+5. 其余一律**失败**。
+
+未覆盖的**语句 / 函数**不做归因产物判定（它们一定对应真实源码），只能走 3/4/5。
+
+维护规则：
+
+- 不要为了让它变绿而往名单里加条目（§4.6）；先试着补测试；
+- 条目与实际缺口对不上（代码已覆盖 / 行号漂移）会**失败**，必须清理；
+- `DEFERRED` 是"确认是竞态、但暂时构造不出用例"的显式债务，不是免测通道；
+- 必须针对**全量**覆盖率结果运行（`bun run test:coverage` 之后）；
+  用 `--coverage.include` 收窄过的结果会产生大量"名单失效"误报。
+
+### 8.3 仍然值得单独记录的能力缺口（非分支问题）
+
+这类不是"某条分支测不到"，而是**设计上的缺口**，登记在此以便后续对齐上游：
+
+| 位置 | 缺口 | 说明 |
+| --- | --- | --- |
+| `components/dialog/Dialog/Dialog.types.ts`（AlertDialog / Sheet 继承） | `DialogProps.onOpenChange` 是**单参数** `(open: boolean) => void`，没有 `ChangeEventDetails` | drawer / context-menu / combobox / toggle-group 都有 details，Dialog 家族没有，调用方无从调用 `details.cancel()`（实测 `mock.calls[0].length === 1`）。因此本模块**不存在**"cancel() 被忽略"的缺陷，不能写一条永远为绿的 cancel 断言冒充覆盖。补齐需先给 Dialog 引入 details（属于实现变更） |
+| `components/message-scroller/message-scroller.anchoring.ts:207` | `if (applied)` 的 false 侧（默认滚动位置未生效，`scrollToEnd/Start` 返回 `false`） | 失败路径，用例待补（已登记在 `DEFERRED`） |
+| `components/questionnaire/useQuestionnaireRoot.ts:167` | `if (!handle) return;`：导航后、focus effect 落地前该项被禁用 / 卸载的竞态 | 用例待补（已登记在 `DEFERRED`） |
 
 ## 9. CI 门禁
 
@@ -472,8 +519,10 @@ it("test handleKeyDown", () => {});
 
 门禁规则：
 
-1. 覆盖率四项指标**全部 100%**，否则 `vitest` 退出码非 0、CI 失败
-   （已在本地实测：阈值生效）；
+1. 覆盖率门槛分两层，**两层都要过**（见 §1.1 / §8）：
+    `bun run test:coverage` 把关函数 100%；`bun run check:branches` 把关
+    「真实源码构造零遗漏」——任何未覆盖的语句/分支/函数，若不对应 Solid 的
+    JSX 编译归因产物、也不是已登记原因的不可达防御代码，即失败；
 1.1 组件约定守卫 `node .github/scripts/check-classlist.mjs`：凡在 `splitProps` 里
    拿走 `classList` 的文件，必须在元素上写 `classList={...}`，否则报错——
    `classList` 是 `BaseProps` 的公开 prop，被摘掉却不应用等于**静默丢弃**
@@ -488,7 +537,8 @@ it("test handleKeyDown", () => {});
 
 ```bash
 bun run check          # tsc + biome
-bun run test:coverage  # 必须四项 100%
+bun run test:coverage  # 函数必须 100%（并产出 coverage-final.json）
+bun run check:branches # 真实源码构造零遗漏（见 §8）
 bun run build
 ```
 
@@ -562,7 +612,7 @@ bun run test:affected -- --dry-run       # 只打印将跑哪些文件
 
 提交前逐条打勾，任何一条打不上就是没做完：
 
-- [ ] 新增/修改的每个源文件都在 `tests/` 下有镜像路径的同名 `.test.ts(x)`（源码目录里不放测试），四个覆盖率指标 100%；
+- [ ] 新增/修改的每个源文件都在 `tests/` 下有镜像路径的同名 `.test.ts(x)`（源码目录里不放测试），函数 100%，且 `bun run check:branches` 通过；
 - [ ] 受控/非受控两条路径都有独立用例；
 - [ ] 每个 `data-*` 状态属性都有"设置"与"清除"双向断言；
 - [ ] ARIA 交叉引用成对断言，查询用 `getByRole` 而非 class；
