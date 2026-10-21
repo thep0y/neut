@@ -5,8 +5,7 @@ import type * as HandleLoading from "~/components/image/lib/handle-loading";
  * `handleLoading` 的副作用集中在 decode 之后的微任务里，因此每个用例都要
  * 显式冲刷微任务再断言（TESTING.md §5.6）。
  *
- * `warnOnce` 的缓存是模块级 Set，`vi.resetModules()` + 重新 import 才能让
- * "发警告"的用例不被前一个用例污染。
+ * 每个用例前 `vi.resetModules()` + 重新 import，避免开发期警告/模块级状态互相污染。
  */
 let handleLoading: typeof HandleLoading.handleLoading;
 

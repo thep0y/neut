@@ -6,17 +6,39 @@ import {
 import type * as DevChecks from "~/components/image/lib/dev-checks";
 
 /**
- * `warnOnce` 的缓存是模块级 Set（见 `~/utils/warn-once`），因此每个用例前必须
- * `vi.resetModules()` 并重新 `import` 被测模块，否则前一个用例发过的警告会把
- * 后一个用例的断言"吃掉"（TESTING.md §5.6）。
+ * 警告经由 `logger.hot("image-dev", "warn")` 输出。`hot()` 在**创建时**就绑定了
+ * `console.warn`，而它随模块导入一起创建，所以 spy 必须在 `import` 之前安装。
+ *
+ * `trackImageForLcp` 持有模块级的 `allImgs` / `perfObserver`，每个用例前仍需
+ * `vi.resetModules()` + 重新 `import`（TESTING.md §5.6）。
  */
 let runDevChecks: typeof DevChecks.runDevChecks;
 let isValidLoading: typeof DevChecks.isValidLoading;
 let trackImageForLcp: typeof DevChecks.trackImageForLcp;
 let resetLcpTracking: typeof DevChecks.resetLcpTracking;
 let VALID_LOADING_VALUES: typeof DevChecks.VALID_LOADING_VALUES;
+let warn: ReturnType<typeof vi.spyOn>;
+
+/** hot() 的调用形态是 (format, style, ...messages)，取最后一项 */
+function warningTexts(): string[] {
+  return warn.mock.calls.map((args: unknown[]) => String(args.at(-1)));
+}
+
+function expectWarning(fragment: string): void {
+  expect(warningTexts().some((message) => message.includes(fragment))).toBe(
+    true,
+  );
+}
+
+function expectNoWarning(fragment: string): void {
+  expect(warningTexts().some((message) => message.includes(fragment))).toBe(
+    false,
+  );
+}
 
 beforeEach(async () => {
+  vi.restoreAllMocks();
+  warn = vi.spyOn(console, "warn").mockImplementation(() => {});
   vi.resetModules();
   ({
     runDevChecks,
@@ -288,9 +310,7 @@ describe("runDevChecks - placeholder", () => {
     ).toBe(false);
   });
 
-  it("小图（<1600 像素）+ 占位时发 warnOnce", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-
+  it("小图（<1600 像素）+ 占位时发警告", () => {
     runDevChecks(
       ctx({
         widthInt: 20,
@@ -299,14 +319,10 @@ describe("runDevChecks - placeholder", () => {
       }),
     );
 
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining("is smaller than 40x40"),
-    );
+    expectWarning("is smaller than 40x40");
   });
 
-  it("quality 不在 config.qualities 里时发 warnOnce 并给出建议列表", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-
+  it("quality 不在 config.qualities 里时发警告并给出建议列表", () => {
     runDevChecks(
       ctx({
         qualityInt: 90,
@@ -314,7 +330,7 @@ describe("runDevChecks - placeholder", () => {
       }),
     );
 
-    const messages = warn.mock.calls.map((c) => String(c[0]));
+    const messages = warningTexts();
     expect(
       messages.some(
         (m) => m.includes('is using quality "90"') && m.includes("50, 75, 90"),
@@ -323,8 +339,6 @@ describe("runDevChecks - placeholder", () => {
   });
 
   it("quality 已配置时不发警告", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     runDevChecks(
       ctx({
         qualityInt: 75,
@@ -337,22 +351,16 @@ describe("runDevChecks - placeholder", () => {
 });
 
 describe("runDevChecks - 已废弃属性", () => {
-  it("otherKeys 含 onLoadingComplete 时发 warnOnce", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-
+  it("otherKeys 含 onLoadingComplete 时发警告", () => {
     runDevChecks(ctx({ otherKeys: ["onLoadingComplete"] }));
 
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('deprecated "onLoadingComplete"'),
-    );
+    expectWarning('deprecated "onLoadingComplete"');
   });
 
-  it("legacyProps 有值时逐个发 warnOnce", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-
+  it("legacyProps 有值时逐个发警告", () => {
     runDevChecks(ctx({ legacyProps: { layout: "intrinsic", lazyRoot: "x" } }));
 
-    const messages = warn.mock.calls.map((c) => String(c[0]));
+    const messages = warningTexts();
     expect(messages.some((m) => m.includes('legacy prop "layout"'))).toBe(true);
     expect(messages.some((m) => m.includes('legacy prop "lazyRoot"'))).toBe(
       true,
@@ -360,8 +368,6 @@ describe("runDevChecks - 已废弃属性", () => {
   });
 
   it("legacyProps 全为假值时不发警告", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     runDevChecks(ctx({ legacyProps: { layout: undefined, lazyRoot: "" } }));
 
     expect(warn).not.toHaveBeenCalled();
@@ -369,19 +375,22 @@ describe("runDevChecks - 已废弃属性", () => {
 });
 
 describe("runDevChecks - loader 未实现宽度", () => {
-  it("loader 原样返回 src 时发 warnOnce", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-
+  it("loader 原样返回 src 时发警告", () => {
     runDevChecks(ctx({ loader: ({ src }: { src: string }) => src }));
 
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining("does not implement width"),
-    );
+    expectWarning("does not implement width");
+  });
+
+  it("高频警告按 logger.hot 的窗口上限节流", () => {
+    for (let i = 0; i < 10; i += 1) {
+      runDevChecks(ctx({ loader: ({ src }: { src: string }) => src }));
+    }
+
+    // 默认 windowMs=1000 / maxPerWindow=5：同一窗口内最多 5 条
+    expect(warn).toHaveBeenCalledTimes(5);
   });
 
   it("loader 体现了 width 时不发警告", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     runDevChecks(
       ctx({
         loader: ({ src, width }: { src: string; width: number }) =>
@@ -394,7 +403,6 @@ describe("runDevChecks - loader 未实现宽度", () => {
 
   it("loader 返回非法 URL 时记录错误但仍继续", () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
-    vi.spyOn(console, "warn").mockImplementation(() => {});
 
     runDevChecks(ctx({ loader: () => "not a url" }));
 
@@ -402,29 +410,19 @@ describe("runDevChecks - loader 未实现宽度", () => {
   });
 
   it("loader 返回「pathname 相同且无查询串」时也视为未实现宽度", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     // new URL("/a.jpg") 的 pathname 就是 "/a.jpg" 且没有 search
     runDevChecks(ctx({ loader: () => "http://localhost/a.jpg" }));
 
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining("does not implement width"),
-    );
+    expectWarning("does not implement width");
   });
 
   it("loader 返回「pathname 相同但带查询串」时视为已实现宽度", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     runDevChecks(ctx({ loader: () => "http://localhost/a.jpg?w=640" }));
 
-    expect(warn).not.toHaveBeenCalledWith(
-      expect.stringContaining("does not implement width"),
-    );
+    expectNoWarning("does not implement width");
   });
 
   it("unoptimized 时跳过 loader 宽度检查", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     runDevChecks(
       ctx({ unoptimized: true, loader: ({ src }: { src: string }) => src }),
     );
@@ -475,22 +473,18 @@ describe("trackImageForLcp", () => {
     expect(observe).toHaveBeenCalledTimes(1);
   });
 
-  it("LCP 命中 lazy + empty 的图片时发 warnOnce", () => {
+  it("LCP 命中 lazy + empty 的图片时发警告", () => {
     const { callbacks } = installPerfObserver();
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const href = new URL("/a.jpg", window.location.href).href;
     trackImageForLcp({ src: href, loading: "lazy", placeholder: "empty" });
 
     callbacks[0]({ getEntries: () => [{ element: { src: href } }] });
 
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining("Largest Contentful Paint (LCP)"),
-    );
+    expectWarning("Largest Contentful Paint (LCP)");
   });
 
   it("eager 图片命中 LCP 时不发警告", () => {
     const { callbacks } = installPerfObserver();
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const href = new URL("/a.jpg", window.location.href).href;
     trackImageForLcp({ src: href, loading: "eager", placeholder: "empty" });
 
@@ -501,7 +495,6 @@ describe("trackImageForLcp", () => {
 
   it("占位非 empty 的图片命中 LCP 时不发警告", () => {
     const { callbacks } = installPerfObserver();
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const href = new URL("/a.jpg", window.location.href).href;
     trackImageForLcp({ src: href, loading: "lazy", placeholder: "blur" });
 
@@ -512,7 +505,6 @@ describe("trackImageForLcp", () => {
 
   it("未记录过的图片命中 LCP 时不查表命中", () => {
     const { callbacks } = installPerfObserver();
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     trackImageForLcp({ src: "/a.jpg", loading: "lazy", placeholder: "empty" });
 
     callbacks[0]({
@@ -524,7 +516,6 @@ describe("trackImageForLcp", () => {
 
   it("entry 没有 element 时用空字符串查表（不抛错）", () => {
     const { callbacks } = installPerfObserver();
-    vi.spyOn(console, "warn").mockImplementation(() => {});
     trackImageForLcp({ src: "/a.jpg", loading: "lazy", placeholder: "empty" });
 
     expect(() => callbacks[0]({ getEntries: () => [{}] })).not.toThrow();

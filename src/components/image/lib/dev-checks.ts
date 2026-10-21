@@ -3,18 +3,24 @@
  *
  * 单一职责：仅在 `import.meta.env.DEV` 下运行，负责
  * 1. 把非法用法变成**明确抛错**（缺 width/height、placeholder 冲突等）；
- * 2. 对"能用但有问题"的用法发 `warnOnce`（quality 未配置、旧属性、LCP 等）。
+ * 2. 对"能用但有问题"的用法通过 `logger.hot` 节流发警告（quality 未配置、旧属性、LCP 等）。
  *
  * 生产构建里这些代码会被 `import.meta.env.PROD` 分支裁掉，因此这里所有逻辑
  * 都只服务于开发者体验，不影响运行时语义。
  */
 
-import { warnOnce } from "~/utils";
+import { logger } from "~/utils";
 import type {
   ImageConfig,
   ImageLoaderWithConfig,
   ImageProps,
 } from "../Image.types";
+
+/**
+ * 图片开发期警告是典型的高频热路径（每次渲染/每次 LCP 回调都可能触发），
+ * 用 logger.hot 按时间窗口节流，而不是维护"消息是否已警告过"的集合。
+ */
+const warnDev = logger.hot("image-dev", "warn");
 
 /** `loading` 的合法取值（含"未传"，表示交给 `isLazy` 决定） */
 export const VALID_LOADING_VALUES = ["lazy", "eager", undefined] as const;
@@ -215,7 +221,7 @@ function assertPlaceholder({
     heightInt &&
     widthInt * heightInt < 1600
   ) {
-    warnOnce(
+    warnDev(
       `Image with src "${src}" is smaller than 40x40. Consider removing the "placeholder" property to improve performance.`,
     );
   }
@@ -225,7 +231,7 @@ function assertPlaceholder({
     config.qualities &&
     !config.qualities.includes(qualityInt)
   ) {
-    warnOnce(
+    warnDev(
       `Image with src "${src}" is using quality "${qualityInt}" which is not configured in images.qualities [${config.qualities.join(", ")}]. Please update your config to [${[...config.qualities, qualityInt].sort().join(", ")}].` +
         `\nRead more: https://nextjs.org/docs/messages/next-image-unconfigured-qualities`,
     );
@@ -253,14 +259,14 @@ function warnDeprecatedProps({
   legacyProps,
 }: DevCheckContext): void {
   if (hasOther(otherKeys, "onLoadingComplete")) {
-    warnOnce(
+    warnDev(
       `Image with src "${src}" is using deprecated "onLoadingComplete" property. Please use the "onLoad" property instead.`,
     );
   }
 
   for (const [legacyKey, legacyValue] of Object.entries(legacyProps)) {
     if (legacyValue) {
-      warnOnce(
+      warnDev(
         `Image with src "${src}" has legacy prop "${legacyKey}". Did you forget to run the codemod?` +
           `\nRead more: https://nextjs.org/docs/messages/next-image-upgrade-to-13`,
       );
@@ -292,7 +298,7 @@ function warnLoaderMissingWidth({
     console.error(err);
   }
   if (urlStr === src || (url && url.pathname === src && !url.search)) {
-    warnOnce(
+    warnDev(
       `Image with src "${src}" has a "loader" property that does not implement width. Please implement it or use the "unoptimized" property instead.` +
         `\nRead more: https://nextjs.org/docs/messages/next-image-missing-loader-width`,
     );
@@ -346,7 +352,7 @@ export function trackImageForLcp(entry: {
         !lcpImage.src.startsWith("blob:")
       ) {
         // https://web.dev/lcp/#measure-lcp-in-javascript
-        warnOnce(
+        warnDev(
           `Image with src "${lcpImage.src}" was detected as the Largest Contentful Paint (LCP). Please add the \`loading="eager"\` property if this image is above the fold.` +
             `\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading`,
         );

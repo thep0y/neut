@@ -51,7 +51,7 @@ src/
 ├── components/<name>/       # 一个组件一个目录（kebab-case）
 ├── lib/positioner/          # 自研 floating-ui：createPositioner + middleware
 ├── types/                   # BaseProps / PolymorphicProps 等公共类型
-├── utils/                   # clsx、mergeRefs、logger、getStyleValue、warnOnce
+├── utils/                   # clsx、mergeRefs、logger、getStyleValue
 ├── hooks/                   # 跨组件 hooks
 └── styles/                  # Tailwind 入口、动画、字体
 tests/                       # 全部测试用例：与 src/ 一一镜像（源码目录里禁止放测试）
