@@ -25,6 +25,7 @@
 | 触发器     | `TimePickerTrigger/TimePickerTrigger.tsx`   | 复用 `PopoverTrigger` 的 ARIA 与引用,展示格式化时间                 |
 | 浮层       | `TimePickerContent/TimePickerContent.tsx`   | 复用 `PopoverContent`,按 units 渲染列,打开时聚焦首列                |
 | 单列交互   | `TimePickerColumn/useTimePickerColumn.ts`   | 选项派生、键盘(↑↓/Home/End/←→)、提交、滚动入视                      |
+| 列内纯算法 | `TimePickerColumn/time-picker.column-utils.ts` | 索引环形推进、跨列推进(RTL 取反)、按键到意图的映射(纯函数)          |
 | 单列渲染   | `TimePickerColumn/TimePickerColumn.tsx`     | `role="listbox"` + `aria-activedescendant`                          |
 | 选项       | `TimePickerOption/TimePickerOption.tsx`     | `role="option"` + data-* 状态                                       |
 
@@ -83,7 +84,7 @@ interface TimePickerProps extends ParentProps {
 - `TimePickerContextValue` 暴露 `value` / `setUnitValue` / `units` / `getOptions`
   / `getUnitValue` / `getUnitLabel` / `activeUnit` / 列注册表,供自定义子组件复用。
 
-## 4. 状态管理(`TimePicker.context.ts`)
+## 4. 状态管理(`TimePicker/TimePicker.context.ts`)
 
 - **受控/非受控**:`props.value !== undefined` 即受控(只回调、不写内部),否则写内部 signal
   并照常回调;与 `DatePicker` 完全一致。
@@ -143,7 +144,9 @@ interface TimePickerProps extends ParentProps {
 - **P1(已完成)**:utils + 根状态/Context + 按钮触发 + Popover 滚动列 + Option + dev 示例。
 - **P2(待做)**:`min`/`max` 时间界(禁用越界选项)、清空、可键入的 `TimePickerInput`
   (`parseTime` + `InputGroup`)、表单隐藏 input(`name`/`required`)。
-- **P3(待做)**:`parseTime`、`DESIGN.md` 补充、纯算法单测、a11y 走查、可选 `ToggleGroup` 版 AM/PM。
+- **P3(待做)**:`parseTime`、可选的 `ToggleGroup` 版 AM/PM、a11y 真机走查。
+- **测试现状**:`tests/components/time-picker/` 已覆盖单列交互、列内纯算法、事件详情、
+  Context、Trigger/Content/Option 与整机集成；P2 的键入/范围能力仍未实现。
 
 ## 9. 使用示例
 

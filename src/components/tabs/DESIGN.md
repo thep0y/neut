@@ -21,11 +21,11 @@
 
 | 关注点 | 归属文件 | 职责 |
 | --- | --- | --- |
-| 类型契约 | `Tabs.types.ts` / `TabsTrigger.types.ts` / `TabsContent.types.ts` / `TabsList.types.ts` | 只声明 props 类型,不含实现 |
+| 类型契约 | `Tabs/Tabs.types.ts` / `TabsList/TabsList.types.ts` / `TabsTrigger/TabsTrigger.types.ts` / `TabsContent/TabsContent.types.ts` | 只声明 props 类型,不含实现 |
 | 根状态 | `Tabs/Tabs.context.tsx` | 激活值(受控/非受控)、高亮值、注册表、id 关联 + Provider + `useTabsContext` |
 | 列表状态 | `TabsList/TabsList.context.ts` | `activateOnFocus` 传递 + `useTabsListContext` |
 | 交互算法 | `Tabs/useTabsKeyboard.ts` | 纯函数式键盘导航(方向键/Home/End/loop/rtl/disabled 跳过),可独立单测 |
-| 事件组合 | `Tabs/call-event-handler.ts` | 调用用户事件处理器(兼容函数/数组),组件内事件与用户事件不互相覆盖 |
+| 事件组合 | `src/utils/call-event-handler.ts` | 调用用户事件处理器(兼容 Solid bound handler),组件内事件与用户事件不互相覆盖 |
 | 根渲染 | `Tabs/Tabs.tsx` | 组装 Provider、输出根 DOM、`data-orientation`/`dir`/`data-vertical` 等 |
 | 列表语义 | `TabsList/TabsList.tsx` | `role="tablist"`、`aria-orientation`、挂载键盘事件、variant 样式、提供 ListContext |
 | 触发器语义 | `TabsTrigger/TabsTrigger.tsx` | `role="tab"`、激活态、高亮态、roving tabindex、点击激活、ARIA 关联 |
@@ -42,8 +42,7 @@ src/components/tabs/
 │   ├── Tabs.tsx               # 根容器 + Provider 组装(不含状态逻辑)
 │   ├── Tabs.types.ts          # 类型契约
 │   ├── Tabs.context.tsx       # 唯一状态源(受控/非受控 + 高亮 + 注册表 + id 关联)
-│   ├── useTabsKeyboard.ts     # 键盘导航纯逻辑
-│   └── call-event-handler.ts  # 事件处理器调用工具(函数/数组)
+│   └── useTabsKeyboard.ts     # 键盘导航纯逻辑(事件组合复用 ~/utils)
 ├── TabsList/
 │   ├── index.ts
 │   ├── TabsList.tsx           # tablist 容器 + 键盘事件绑定 + ListContext Provider
@@ -194,7 +193,7 @@ tabIndex = disabled ? -1
 
 ## 10. 测试计划
 
-项目当前无测试设施,建议最小引入 `vitest` + `solid-testing-library` + `jsdom`,覆盖:
+测试位于 `tests/components/tabs/`（与源码镜像），使用 `vitest` + `@solidjs/testing-library` + `jsdom`，覆盖:
 
 - **激活时机**:鼠标 click 激活、mousedown 不激活;Enter/Space 激活;`activateOnFocus` 开关。
 - **键盘导航**:方向映射(horizontal/vertical、ltr/rtl/auto)、Home/End、loop、跳过 disabled;方向键不激活(默认)。

@@ -87,4 +87,5 @@ const table = createTable<Payment>({
 - faceted 过滤(多选过滤)、全局过滤、服务端(手动)分页/排序。
 - `createColumnHelper`、`flexRender` 独立函数、受控 state 切片。
 - `indeterminate` 头部勾选;`Table` 的 caption 语义补全。
-- 引擎纯函数单测(过滤/排序/分页/选择)、a11y 走查。
+- 引擎纯函数单测已覆盖过滤/排序/分页/选择（`tests/components/data-table/create*.test.ts`）；
+  仍需真机 a11y 与大数据量下的手动走查。

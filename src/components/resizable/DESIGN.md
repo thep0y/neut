@@ -31,11 +31,16 @@ Solid 做了「按 id 的细粒度更新」:尺寸存在 `createStore` 的 `{ [i
 | **约束代数(纯)** | `resizable.constraints.ts`(`effectiveMin`/`isCollapsedSize`/`constraintBounds`/`pairConstraintsOf`) |
 | **面板注册表** | `resizable.registry.ts`(`createPanelRegistry`:注册顺序、跳过非面板节点解析相邻、前后邻居) |
 | **布局持久化(纯)** | `resizable.storage.ts`(`storageKey`/`resolveStorage`/`persistLayout`/`readSavedLayout`) |
+| **尺寸账目** | `resizable.sizes.ts`(`createPanelSizes`:按 id 的 store、`applyAll`、`sizeOf`) |
+| **生命周期** | `resizable.lifecycle.ts`(注册/注销、首次初始化、动态新增归一化) |
+| **对外汇报** | `resizable.reporting.ts`(`snapshot`/`notify`/持久化提交) |
+| **命令式操作** | `resizable.commands.ts`(`collapsePanel`/`expandPanel`/`setPanelSize`/`isPanelCollapsed`) |
+| **折叠决策** | `resizable.collapse.ts`(`createCollapseMemory`/`nextCollapseAction`) |
 | context | `resizable.context.ts` |
-| 布局引擎 | `useResizablePanelGroup.ts`(注册副作用、尺寸分配、拖拽/键盘编排、命令式、调用上面的纯模块与注册表) |
-| 根部件 | `ResizablePanelGroup/`(Provider + 框架) |
-| 面板部件 | `ResizablePanel/`(注册 meta、映射 flex-grow、panelRef) |
-| 分隔条部件 | `ResizableHandle/`(`useResizableHandle.ts` 指针/键盘、`.styles.ts` 类名) |
+| 布局引擎 | `useResizablePanelGroup.ts`(注册副作用、拖拽/键盘编排、命令式、调用上面的纯模块与注册表) |
+| 根部件 | `ResizablePanelGroup/`(Provider + 框架；`useDragCursor.ts` 全局光标) |
+| 面板部件 | `ResizablePanel/`(`useResizablePanel.ts` 注册 meta、映射 flex-grow、panelRef) |
+| 分隔条部件 | `ResizableHandle/`(`useResizableHandle.ts` 组装；`resizable.handle-drag.ts` 指针拖拽；`resizable.handle-keys.ts` 键盘；`.styles.ts` 类名) |
 
 > 2026-09 重构:把原先内联在 `useResizablePanelGroup.ts`(403 行)里的
 > 「相邻面板约束 + 折叠吸附」「storage 持久化」两块抽成纯模块。
@@ -48,6 +53,12 @@ Solid 做了「按 id 的细粒度更新」:尺寸存在 `createStore` 的 `{ [i
 > `resizable.registry.ts` 只维护「元素 → meta + 注册顺序」(尺寸经 `getSize` 注入)。
 > 引擎由 367 行降到 320 行;注册时的副作用(首次初始化 / 动态新增归一化 / 卸载清理)
 > 仍是引擎自己的职责。
+>
+> 2026-10 三次重构:继续把「尺寸账目 / 生命周期 / 对外汇报 / 命令式操作」抽成
+> `resizable.sizes.ts` / `resizable.lifecycle.ts` / `resizable.reporting.ts` /
+> `resizable.commands.ts`,分隔条的指针拖拽与键盘调整也拆成
+> `ResizableHandle/resizable.handle-drag.ts` / `resizable.handle-keys.ts`。
+> 引擎现在只做编排;每个纯模块都有独立用例。
 
 ## 3. 已实现行为
 

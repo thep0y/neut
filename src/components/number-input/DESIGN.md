@@ -78,7 +78,7 @@ interface NumberInputProps extends BaseProps {
 - **P3**
   - `NumberInputScrubArea`:拖拽调节(对齐 base-ui NumberField.ScrubArea)。
   - `format`/`parse` 的默认实现迁到 `Intl`,并支持 `Intl.NumberFormatOptions`。
-  - 纯算法单测(clamp / roundToStep / parse)、a11y 走查、dev 示例补全。
+  - 真机 a11y 走查（`tests/components/number-input/` 已覆盖算法与部件，dev 示例已存在）。
 
 ## 8. 使用示例
 

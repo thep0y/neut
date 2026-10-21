@@ -74,14 +74,14 @@ Sheet                # = Dialog(open/defaultOpen/onOpenChange/lockScroll)
 
 | 能力 | 上游来源 | 现状 | 未来实现 |
 | --- | --- | --- | --- |
-| 焦点陷阱与初始/最终焦点(`initialFocus`/`finalFocus`) | Base UI Dialog | 无,`DialogSurface` 只渲染隐藏哨兵节点 | 在 DialogSurface 内实现焦点循环 + 记录触发元素并在关闭时还原 |
-| Escape 关闭(`closeOnEscape`) | Base UI Dialog | 无 | 面板 `keydown` 处理 Escape → `setOpen(false)` |
-| 背景惰性化(其余内容 `inert` / `aria-hidden`) | Base UI Dialog | 无,仅用滚动锁定 | 打开时给根内容加 `inert`/`aria-hidden`,关闭时还原 |
+| 焦点陷阱与最终焦点(`initialFocus`/`finalFocus`) | Base UI Dialog | 打开时 `DialogSurface` 用 rAF 把焦点移入面板；**尚未实现焦点陷阱与关闭后还原触发元素** | 在 DialogSurface 内实现焦点循环 + 记录触发元素并在关闭时还原 |
+| Escape 关闭(`closeOnEscape`) | Base UI Dialog | **已实现**：`Dialog` 的 `dismissOnEscape`（默认 true），Sheet 继承 | — |
+| 背景惰性化(其余内容 `inert` / `aria-hidden`) | Base UI Dialog | `aria-modal="true"` + 滚动锁定；**未把背景内容设为 inert** | 打开时给根内容加 `inert`/`aria-hidden`,关闭时还原 |
 | `onOpenChangeComplete`、`disablePointerDismissal` 等细粒度 API | Base UI Dialog | 仅 `open`/`defaultOpen`/`onOpenChange`/`lockScroll` | 按需在 Dialog 上扩展 |
 | 嵌套 Dialog 栈、Portal 容器、`keepMounted` | Base UI Dialog | 未特殊处理 | 引入 dialog 栈与可配置 portal 容器 |
 
-> 结论:Sheet 的贴边、关闭按钮、滚动锁定、进出场动画、ARIA 已在本仓库内实现,
-> **未新增任何运行时依赖**;上表的焦点/键盘/背景惰性化属于本仓库 Dialog 的既有缺口,
+> 结论:Sheet 的贴边、关闭按钮、Escape 关闭、滚动锁定、进出场动画、ARIA 已在本仓库内实现,
+> **未新增任何运行时依赖**;上表剩余的焦点陷阱/焦点还原/背景惰性化属于本仓库 Dialog 的既有缺口,
 > 未来优先在 Dialog 层补齐。
 
 ## 6. 示例

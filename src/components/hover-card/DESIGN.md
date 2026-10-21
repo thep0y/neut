@@ -28,10 +28,11 @@ HoverCard              # 根:open/defaultOpen/onOpenChange + delay/closeDelay,�
 | --- | --- |
 | 类型契约 | `hover-card.types.ts` |
 | context | `hover-card.context.ts` |
-| side/align → placement、transform-origin | `hover-card.utils.ts` |
+| side/align → placement、transform-origin | `src/lib/positioner`（`toPlacement` / `getTransformOrigin` / `getSide` / `getAlignment`） |
 | 根状态与延迟计时 | `HoverCard/HoverCard.tsx` |
-| Trigger 事件 | `HoverCardTrigger/`(`useHoverCardTrigger.ts`) |
-| 定位与挂载生命周期 | `HoverCardContent/`(`useHoverCardContent.ts`) |
+| Trigger 事件 | `HoverCardTrigger/HoverCardTrigger.tsx` + `useHoverCardTrigger.ts` |
+| 定位与挂载生命周期 | `HoverCardContent/HoverCardContent.tsx` + `useHoverCardContent.ts` |
+| 类型 / context | `hover-card.types.ts` / `hover-card.context.ts` |
 
 ## 3. 已实现行为
 
@@ -44,6 +45,7 @@ HoverCard              # 根:open/defaultOpen/onOpenChange + delay/closeDelay,�
 - **定位**:`side`(默认 bottom)、`align`(默认 center)、`sideOffset`(4)、
   `alignOffset`(4)、`collisionPadding`(8);管线 = offset → flip → shift → hide →
   containingBlockOffset,贴合 trigger 放不下时翻转/贴边,reference 被裁掉时隐藏。
+  这些纯函数现在位于 `src/lib/positioner/utils/floating.ts`，Tooltip/Popover/HoverCard 共用。
 - **进出场**:打开延迟一帧再切 `data-state=open`(保证 transform-origin 已按最终
   placement 算好);关闭靠 `animationend`(带 300ms 兜底)卸载,退场动画播完再移除。
   动画用本仓库既有的 `animate-in/out` + `fade/zoom` + 方向 `slide-in-from-*`。
@@ -75,7 +77,8 @@ outside-pointerdown 的逻辑、并放弃退场动画;这比按语义单独实�
 纯函数原先在 Tooltip / Popover 里各存一份,这次已抽到
 `src/lib/positioner/utils/floating.ts`(`toPlacement` / `getTransformOrigin` /
 `createFloatingMiddleware`),**Popover、Tooltip、HoverCard 现在共用同一份**,
-各自的 `.utils.ts` 只保留向后兼容的薄封装。后续 Select/Combobox 也可迁移过来。
+HoverCard 不再单独维护 `hover-card.utils.ts`，只通过 `~/lib` 的公开函数取用。
+后续 Select/Combobox 也可迁移到同一组纯函数。
 
 ## 5. 与上游的差异
 
