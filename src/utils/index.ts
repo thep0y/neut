@@ -1,7 +1,6 @@
 export { clsx } from "./clsx";
 export * from "./logger";
 export * from "./ref";
-export { warnOnce } from "./warn-once";
 export { callEventHandler } from "./call-event-handler";
 export { createChangeEventDetails } from "./create-change-event-details";
 export type { ChangeEventDetails } from "./create-change-event-details";

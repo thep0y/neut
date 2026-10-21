@@ -132,7 +132,7 @@ if (weirdEdgeCase) { ... }
    现在测试整体位于 `tests/`（不在 `src/` 下），library 入口与 dts 都扫不到它们；
    `vite.config.ts` 的 `dts()` 仍保留 `exclude` 作为兜底——**不要**把测试文件放回 `src/`。
 3. `vi.stubEnv("DEV", ...)` **确实能作用于 `import.meta.env.DEV`**（已实测），
-   所以 `logger.ts` / `warn-once.ts` 的两个分支都能真测，不需要排除它们。
+   所以 `logger.ts` 的 DEV/PROD 两个分支都能真测，不需要排除它。
 
 > 注意：本仓库原先"临时搭环境自测完删掉"的做法从本文件生效起作废——
 > 测试是常驻资产，脚手架要提交。**但**测试文件不进 `dist`
@@ -192,7 +192,7 @@ tests/components/tabs/
 | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
 | `tests/utils/clsx.test.ts`                             | 纯函数测试、`toHaveAttribute` 之外的普通断言                                                         |
 | `tests/utils/ref.test.ts`                              | 函数 ref 合并、调用顺序断言                                                                          |
-| `tests/utils/warn-once.test.ts`                        | `vi.stubEnv` 切 DEV/PROD、`vi.resetModules()` 重载模块级状态                                         |
+| `tests/utils/logger.test.ts`                           | `vi.stubEnv` 切 DEV/PROD、`vi.resetModules()` 重载模块级状态、在 import 前装 console spy               |
 | `tests/components/tabs/TabsTrigger/TabsTrigger.test.tsx` | Solid 组件渲染、`getByRole` 查询、ARIA 交叉引用、`data-*` 双向断言、`user-event` 点击、disabled 分支 |
 
 ---
@@ -308,10 +308,10 @@ expect(focusSpy).toHaveBeenCalledWith(triggers[0]);
 
 ### 5.4 `import.meta.env` 分支
 
-`utils/logger.ts`、`utils/warn-once.ts` 里有 `import.meta.env.DEV` / `PROD`
+`utils/logger.ts` 里有 `import.meta.env.DEV` / `PROD`
 分支，这是**构建期**常量。测试里用 `vi.stubEnv("DEV", false)`（或
 `vi.stubGlobal`）分别跑两个用例，不要在 `coverage.exclude` 里整体排除
-这两个文件——它们有真实的运行时语义。
+这个文件——它有真实的运行时语义。
 
 `vi.stubEnv` 之后必须 `vi.unstubAllEnvs()`（放 `afterEach`）。
 
@@ -341,7 +341,7 @@ jsdom 无法构造的场景（真实布局、滚动尺寸、`ResizeObserver` 回
 - 计时相关（动画、节流、toast 自动关闭）用 `vi.useFakeTimers()` +
   `vi.advanceTimersByTime()`，并在 `afterEach` 里 `vi.useRealTimers()`；
 - 每个测试之间必须清理 DOM 与全局状态（`useScrollLock` 有模块级引用计数、
-  `warnOnce` 有模块级 `Set`）——在 setup 里 `afterEach(cleanup)` +
+  `logger.hot` 有节流状态）——在 setup 里 `afterEach(cleanup)` +
   必要时 `vi.resetModules()` 重新 import 模块，避免测试互相污染。
   这类**模块级可变状态**是最容易产生"顺序相关失败"的地方，必须显式重置。
 
@@ -368,7 +368,6 @@ it("test handleKeyDown", () => {});
 | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `utils/clsx`                           | 过滤 `undefined`/`false`、`twMerge` 解冲突                                                                           | ✅ `clsx.test.ts`                                                                                          |
 | `utils/ref`                            | `mergeRefs` 依次调用、跳过非函数项、保持顺序                                                                         | ✅ `ref.test.ts`                                                                                           |
-| `utils/warn-once`                      | 同消息只警告一次、DEV/PROD 两套行为                                                                                  | ✅ `warn-once.test.ts`                                                                                     |
 | `utils/logger`                         | DEV/PROD、`hot()` 节流上限与"跳过 N 条"、惰性求值、`child()`                                                         | ✅ `logger.test.ts`                                                                                        |
 | `utils/get-style`                      | 驼峰/连字符、参数校验、环境缺失、异常兜底                                                                            | ✅ `get-style.test.ts`                                                                                     |
 | `utils/string`                         | camelCase→kebab、`--custom`、`float`、厂商前缀                                                                       | ✅ `string.test.ts`                                                                                        |
