@@ -33,10 +33,10 @@
 注意事项：
 
 - **不要用 `npx`**：`npx biome` 会解析到 npm 上同名的无关包 `biome`（不是 Biome 本体），
-  `check --write` 会静默跳过、漏掉 lint/a11y 报错。仓库 Biome 直接用 PATH 里的 `biome`，
-  或 `bunx @biomejs/biome`。
-- Biome 不在 `devDependencies` 中，CI 通过 `biomejs/setup-biome` 提供。本地需要时用
-  `biome`（PATH 里已有）或 `bunx @biomejs/biome check --write src tests`。
+  `check --write` 会静默跳过、漏掉 lint/a11y 报错。仓库 Biome 是 devDependency
+  （`@biomejs/biome@2.6.4`），直接用 `bun run check` 或 `./node_modules/.bin/biome`。
+- 不要在本地或 CI 额外安装全局 Biome：版本会和 `package.json` 里的不一致，
+  格式化结果随之漂移。
 - 只做快速类型检查：`bunx tsc --noEmit`。
 - 已知噪声：`lucide-solid@1.47` 的类型声明引用了未安装的 `@lucide/shared/types`，会报
   `TS2307`（位于 `node_modules` 内，与本仓库源码无关）。过滤掉它再判断是否有自己引入的错误。
@@ -142,12 +142,12 @@ button/
   `src/components/toast/Toast/Toast.tsx` 对应 `tests/components/toast/Toast/Toast.test.tsx`；
   跨子组件的组合行为放 `<component>.integration.test.tsx`。命名、分层、别名与必测清单见 `TESTING.md` §3/§5.3。
 - 重构必须"小步、可验证、可回滚"：
-    - 先补/确认用例，再动结构——覆盖率就是重构的安全网；
-    - 一步只做一件事（拆一个函数、搬一个文件、改一处引用），做完立刻`bunx tsc -b`、`bunx biome check src`，并跑相关用例；
-    - 每步通过后**单独提交**；跑不绿就 `git checkout` 回滚，绝不留半成品；
-    - **不要用正则/脚本去切源码结构**（按名字找函数、按花括号配平）：名字会重复、
-      签名里会有对象类型、相邻函数容易被一起吃掉。要手工改，或用带 `assert` 的一次性脚本，并在写回前核对（例如断言抽取结果里关键标识只出现一次）；
-    - 批量改写导入后逐条核对 `tsc` 报错。
+  - 先补/确认用例，再动结构——覆盖率就是重构的安全网；
+  - 一步只做一件事（拆一个函数、搬一个文件、改一处引用），做完立刻`bunx tsc -b`、`bunx biome check src`，并跑相关用例；
+  - 每步通过后**单独提交**；跑不绿就 `git checkout` 回滚，绝不留半成品；
+  - **不要用正则/脚本去切源码结构**（按名字找函数、按花括号配平）：名字会重复、
+    签名里会有对象类型、相邻函数容易被一起吃掉。要手工改，或用带 `assert` 的一次性脚本，并在写回前核对（例如断言抽取结果里关键标识只出现一次）；
+  - 批量改写导入后逐条核对 `tsc` 报错。
 
 ## 编码约定
 
@@ -161,9 +161,9 @@ button/
   `useXxxContext("组件名")` 消费；缺失时抛出中文错误（`<X> 必须渲染在 <Y> 内部`）。
 - 属性拆分用 `splitProps`，默认值合并用 `mergeProps`。
 - 事件绑定有两种既定写法，按是否需要暴露同名 prop 选择：
-    - 组件**不**暴露该事件 prop：用 `addEventListener`（在 ref 回调里绑定，`onCleanup` 解绑），
-      这样调用方自己的 `onClick`/`onContextMenu` 不会被覆盖。
-    - 组件**要**暴露该事件 prop：显式 `splitProps` 出来并在内部调用用户回调，避免双触发。
+  - 组件**不**暴露该事件 prop：用 `addEventListener`（在 ref 回调里绑定，`onCleanup` 解绑），
+    这样调用方自己的 `onClick`/`onContextMenu` 不会被覆盖。
+  - 组件**要**暴露该事件 prop：显式 `splitProps` 出来并在内部调用用户回调，避免双触发。
 
 ### 多态组件
 
@@ -172,7 +172,7 @@ button/
 
 ```ts
 export type ContextMenuTriggerProps<T extends ValidComponent = "div"> =
-    PolymorphicProps<T>;
+  PolymorphicProps<T>;
 ```
 
 ```tsx
@@ -224,9 +224,9 @@ export type ContextMenuTriggerProps<T extends ValidComponent = "div"> =
   `src/hooks/index.ts`、`src/utils/index.ts` 作为入口，`preserveModules` 输出，
   由 `unplugin-dts` 生成 `.d.ts`。
 - 因此**新增一个顶层组件后**：
-    1. 建立 `src/components/<name>/index.ts` 作为公开出口；
-    2. 在 `src/index.ts` 增加 `export * from "~/components/<name>";`；
-    3. 无需改 `vite.config.ts`（入口会自动发现）。
+  1. 建立 `src/components/<name>/index.ts` 作为公开出口；
+  2. 在 `src/index.ts` 增加 `export * from "~/components/<name>";`；
+  3. 无需改 `vite.config.ts`（入口会自动发现）。
 - `package.json` 的 `exports` 提供 `@neut/ui`、`/hooks`、`/hooks/*`、`/utils`、`/utils/*`、
   `/components/*`。
 - `dist/` 是生成物，不要手改，也不要提交（已在 `.gitignore`）。
