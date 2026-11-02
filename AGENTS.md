@@ -18,17 +18,17 @@
 包管理器是 **bun**（见 `bun.lock`）。**所有命令一律用 `bun` / `bunx`，禁止 `npx` / `npm` /
 `yarn` / `pnpm`**。
 
-| 命令                    | 用途                                                                   |
-| ----------------------- | ---------------------------------------------------------------------- |
-| `bun install`           | 安装依赖                                                               |
-| `bun run dev`           | 启动 dev playground（等价 `vite ./dev`，端口 **7789**）                 |
-| `bun run build`         | 构建组件库到 `dist/`（含 `.d.ts`）                                     |
-| `bun run serve`         | 预览构建产物                                                           |
-| `bun run check`         | `tsc --noEmit && biome check --write src tests`，提交前必须通过        |
-| `bun run test`          | 跑单元测试（vitest）                                                   |
-| `bun run test:affected` | 只跑受改动影响的测试（快速反馈，不校验覆盖率）                          |
-| `bun run test:coverage` | 跑全量测试并校验百分比地板（见 `TESTING.md` §1.1）                     |
-| `bun run check:branches` | 精确覆盖率门禁：不允许任何一条真实未覆盖缺口（提交前必须通过）          |
+| 命令                     | 用途                                                            |
+| ------------------------ | --------------------------------------------------------------- |
+| `bun install`            | 安装依赖                                                        |
+| `bun run dev`            | 启动 dev playground（等价 `vite ./dev`，端口 **7789**）         |
+| `bun run build`          | 构建组件库到 `dist/`（含 `.d.ts`）                              |
+| `bun run serve`          | 预览构建产物                                                    |
+| `bun run check`          | `tsc --noEmit && biome check --write src tests`，提交前必须通过 |
+| `bun run test`           | 跑单元测试（vitest）                                            |
+| `bun run test:affected`  | 只跑受改动影响的测试（快速反馈，不校验覆盖率）                  |
+| `bun run test:coverage`  | 跑全量测试并校验百分比地板（见 `TESTING.md` §1.1）              |
+| `bun run check:branches` | 精确覆盖率门禁：不允许任何一条真实未覆盖缺口（提交前必须通过）  |
 
 注意事项：
 
@@ -44,6 +44,27 @@
   `vitest.setup.ts`）。**写测试前必须先读 [`TESTING.md`](./TESTING.md)**——它规定了
   两层覆盖率门禁、必测场景清单，以及禁止"为过测试而改实现 / 把实现抄进测试 /
   空洞断言 / 快照替代行为测试"等作弊行为的硬性条款。`dev/` playground 仍是交互的手动验证面。
+
+## 分支与提交
+
+- `main` 是唯一的长期分支，也是发布分支。**所有改动都从最新的 `main` 切出功能分支**，PR 一律合回 `main`。
+- **禁止直接向 `main` 提交或推送**。`dev` 是历史遗留的集成分支，后续会删除，不再接受新提交。
+- 一个分支只做一件事：
+
+| 前缀        | 用途             | 示例                          |
+| ----------- | ---------------- | ----------------------------- |
+| `feat/`     | 新功能           | `feat/toast-variants`         |
+| `fix/`      | 缺陷修复         | `fix/toggle-group-test-types` |
+| `refactor/` | 不改变行为的重构 | `refactor/resizable-engine`   |
+| `docs/`     | 文档             | `docs/user-docs`              |
+| `chore/`    | 依赖、工具、CI   | `chore/biome-2.6.4`           |
+| `test/`     | 只改测试         | `test/tabs-coverage`          |
+
+- 分支内的提交也按职责拆分（实现 / 测试 / 文档可以放在同一个分支，但不要塞进同一个提交）。
+- PR 的目标分支是 `main`。
+- 有依赖关系的改动用 stacked PR：后一个 PR 的 base 指向被依赖的分支，前一个合并后 GitHub 会自动把 base 改成 `main`。
+- 合并前必须通过 `bun run check`、`bun run test:coverage`、`bun run check:branches`；不要绕过 PR 直接 push。
+- 提交信息用 Conventional Commits（`feat(...)` / `fix(...)` / `docs(...)` 等），破坏性变更加 `!`。
 
 ## 目录结构
 
