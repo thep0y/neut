@@ -2,9 +2,11 @@
 
 > **SolidJS 原生组件库 —— 不依赖任何上游组件库运行时**
 
-Neut 的灵感来自 [shadcn/ui](https://ui.shadcn.com)，但完全用 SolidJS 从头实现。和 shadcn 不同，Neut **不依赖任何上游组件库运行时**（例如 `@radix-ui`、`@base-ui`、Kobalte）。
+Neut 是 [shadcn/ui](https://ui.shadcn.com) 的 SolidJS 从零实现。和 shadcn 不同，Neut **不依赖任何上游组件库运行时**（例如 `@radix-ui`、`@base-ui`、Kobalte）。
 
-它只使用 shadcn 项目本来也会安装的几个小工具：`class-variance-authority`（变体）、`lucide-solid`（图标）和 `cn`（类名合并）。
+它只依赖 shadcn 项目本来就会安装的几个包：`solid-js`、`class-variance-authority`、`lucide-solid`、`cn`；样式使用 Tailwind CSS v4。
+
+**状态：** pre-1.0 · 60 个组件 · 活跃开发中。
 
 **优点**
 
@@ -14,7 +16,7 @@ Neut 的灵感来自 [shadcn/ui](https://ui.shadcn.com)，但完全用 SolidJS �
 
 **缺点也要说清楚**
 
-坦白讲，因为没有依赖更成熟的上游组件库，Neut 在一些边缘场景上覆盖不够，会有一些能修但还没修的缺陷，比如 Bug、无障碍支持等。所以**不建议用在大型项目或对质量要求严格的场景**。
+因为没有依赖更成熟的上游组件库，Neut 在一些边缘场景上覆盖不够，会有一些能修但还没修的缺陷，比如 Bug、无障碍支持等。所以**不建议用在大型项目或对质量要求严格的场景**。
 
 > [!WARNING]
 >
@@ -26,17 +28,18 @@ Neut 的灵感来自 [shadcn/ui](https://ui.shadcn.com)，但完全用 SolidJS �
 
 ## 📚 文档
 
-| 文档 | 内容 |
-| :--- | :--- |
-| [文档索引](./docs/README.md) | 使用者与贡献者文档的全貌 |
-| [快速上手](./docs/getting-started.md) | 安装、Tailwind v4 配置、主题 token、暗色模式、复制源码 |
-| [组件目录](./docs/components.md) | 所有导出组件及其子部件 |
-| [自研组件用法](./docs/components/README.md) | 复杂/自研组件的详细 API 与用法 |
-| [架构说明](./docs/architecture.md) | 受控/非受控、事件详情、多态、样式约定 |
-| [定位器](./docs/positioner.md) | 自研浮层定位引擎 |
-| [Hooks](./docs/hooks.md) / [Utils](./docs/utils.md) | 公开 hooks 与工具函数 |
-| [设计文档索引](./docs/README.md#设计文档索引) | 各复杂组件的设计说明 |
-| [TESTING.md](./TESTING.md) | 测试目录、覆盖率门禁与贡献规则 |
+| 文档                                                | 内容                                                   |
+| :-------------------------------------------------- | :----------------------------------------------------- |
+| [文档索引](./docs/README.md)                        | 使用者与贡献者文档的全貌                               |
+| [快速上手](./docs/getting-started.md)               | 安装、Tailwind v4 配置、主题 token、暗色模式、复制源码 |
+| [组件目录](./docs/components.md)                    | 所有导出组件及其子部件                                 |
+| [自研组件用法](./docs/components/README.md)         | 复杂/自研组件的详细 API 与用法                         |
+| [架构说明](./docs/architecture.md)                  | 受控/非受控、事件详情、多态、样式约定                  |
+| [定位器](./docs/positioner.md)                      | 自研浮层定位引擎                                       |
+| [Hooks](./docs/hooks.md) / [Utils](./docs/utils.md) | 公开 hooks 与工具函数                                  |
+| [设计文档索引](./docs/README.md#设计文档索引)       | 各复杂组件的设计说明                                   |
+| [TESTING.md](./TESTING.md)                          | 测试目录、覆盖率门禁与贡献规则                         |
+| [AGENTS.md](./AGENTS.md)                            | 仓库约定与分支/PR 流程                                 |
 
 > 内部设计/测试文档使用中文；README 保持中英双份。
 
@@ -46,23 +49,29 @@ Neut 的灵感来自 [shadcn/ui](https://ui.shadcn.com)，但完全用 SolidJS �
 
 Neut 采用 **“复制即用”** 的模式（类似 shadcn），也可以作为普通依赖安装。
 
-### 1. 准备工作
+### 1. 环境要求
+
+- **Bun**（仓库脚本使用；使用方可以用任意包管理器）
+- SolidJS `^1.9.15`
+- Tailwind CSS v4
+
+### 2. 安装
 
 ```bash
-# 运行时 peer dependencies
-bun i solid-js class-variance-authority lucide-solid cn
+# 组件库 + 运行时 peer dependencies
+bun i @neut/ui solid-js class-variance-authority lucide-solid cn
 
 # Tailwind CSS v4
 bun i -D tailwindcss @tailwindcss/vite
 ```
 
-| 依赖 | 用途 | 版本 |
-| :--- | :--- | :--- |
-| **solid-js** | 运行时 | `^1.9.15` |
-| **class-variance-authority** | 样式变体 | `^0.7.1` |
-| **lucide-solid** | 图标 | `^1.51.0` |
-| **cn** | 类名合并（替代 `clsx` + `tailwind-merge`） | `^0.4.0` |
-| **tailwindcss** | 样式引擎 | `^4` |
+| 依赖                         | 用途                                       | 版本      |
+| :--------------------------- | :----------------------------------------- | :-------- |
+| **solid-js**                 | 运行时                                     | `^1.9.15` |
+| **class-variance-authority** | 样式变体                                   | `^0.7.1`  |
+| **lucide-solid**             | 图标                                       | `^1.51.0` |
+| **cn**                       | 类名合并（替代 `clsx` + `tailwind-merge`） | `^0.4.0`  |
+| **tailwindcss**              | 样式引擎                                   | `^4`      |
 
 **配置 Vite**
 
@@ -73,7 +82,7 @@ import solid from "vite-plugin-solid";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-    plugins: [solid(), tailwindcss()],
+  plugins: [solid(), tailwindcss()],
 });
 ```
 
@@ -99,17 +108,25 @@ export default defineConfig({
 
 完整 token 列表与可选的字体/多语言配置见 [快速上手](./docs/getting-started.md#主题-token)。
 
-### 2. 方式 A：复制源码（推荐）
+### 3. 包导出
+
+| 入口                         | 内容                       |
+| :--------------------------- | :------------------------- |
+| `@neut/ui`                   | 全部组件、hooks 与工具函数 |
+| `@neut/ui/hooks`             | 公开 hooks                 |
+| `@neut/ui/utils`             | 公开工具函数               |
+| `@neut/ui/components/<name>` | 单个组件入口               |
+| `@neut/ui/dist/ui.css`       | 编译后的样式文件           |
+
+### 4. 方式 A：复制源码（推荐）
 
 1. 把需要的组件目录（例如 `src/components/button/`）复制到你的项目。
-2. 同时复制它依赖的共享模块：`src/utils/`、`src/types/`，浮层组件还需要 `src/lib/positioner/`。
-3. 保留 `~/*` 别名（或改写 import），让 `~/utils`、`~/types`、`~/lib` 能解析。
-4. 复制或引入样式：源码方式用 `src/styles/index.css`，安装包方式用 `@neut/ui/dist/ui.css`。
-   缺少设计 token 与动画工具类时，组件仍能渲染，但会丢失主题色/动效。
+2. 同时复制它依赖的共享模块：`src/utils/`、`src/types/`、`src/hooks/`，浮层组件还需要 `src/lib/positioner/`。
+3. 少数组件会在内部组合其他组件（例如 `AlertDialog` → `Dialog`、`DatePicker` → `Calendar`/`Popover`/`Button`）；这些依赖也要一起复制，或直接使用包入口。
+4. 保留 `~/*` 别名（或改写 import），让 `~/utils`、`~/types`、`~/hooks`、`~/lib` 能解析。
+5. 复制或引入样式：源码方式用 `src/styles/index.css`，安装包方式用 `@neut/ui/dist/ui.css`。缺少设计 token 与动画工具类时，组件仍能渲染，但会丢失主题色/动效。
 
-组件之间有意保持独立，因此功能有重叠的组件（例如 `AlertDialog` 与 `Dialog`）可以分开使用。
-
-### 3. 方式 B：作为依赖安装
+### 5. 方式 B：作为依赖安装
 
 ```bash
 bun i @neut/ui
@@ -121,7 +138,7 @@ bun i @neut/ui
 import { Button } from "@neut/ui";
 
 function App() {
-    return <Button>Neut Button</Button>;
+  return <Button>Neut Button</Button>;
 }
 ```
 
@@ -148,13 +165,27 @@ function App() {
 ```bash
 bun install
 bun run dev             # playground：http://localhost:7789
-bun run test            # 单元测试
-bun run test:coverage   # 覆盖率门禁
-bun run check           # tsc + biome
-bun run build           # 构建到 dist/
+bun run build           # 构建到 dist/（JS + d.ts + ui.css）
+bun run serve           # 预览生产构建
+bun run check           # tsc + Biome（2.6.4，来自 devDependencies）
+bun run test            # 全量单元测试
+bun run test:affected   # 只跑受当前改动影响的测试
+bun run test:coverage   # 覆盖率百分比门禁
+bun run check:branches  # 精确分支覆盖率门禁（不允许真实未覆盖缺口）
 ```
 
-仓库约定见 [AGENTS.md](./AGENTS.md)；写测试前必须先读 [TESTING.md](./TESTING.md)。
+改动 playground 后，用 `bunx vite build ./dev` 确认能构建。
+
+---
+
+## 🤝 贡献
+
+- **从 `main` 切分支，PR 合回 `main`**。`main` 是唯一长期分支，不要直接向它提交或推送。
+- 一个改动一个功能分支，分支和提交都保持单一职责：`feat/`、`fix/`、`refactor/`、`docs/`、`chore/`、`test/`。
+- 有依赖关系的改动用 stacked PR：后一个 PR 的 base 指向被依赖的分支，前一个合并后 GitHub 会自动把 base 改成 `main`。
+- 测试放在 `tests/` 下、与 `src/` 镜像；写测试前先读 [TESTING.md](./TESTING.md)。
+- 合并前必须通过 `bun run check`、`bun run test:coverage`、`bun run check:branches`。
+- 完整约定见 [AGENTS.md](./AGENTS.md)。
 
 ---
 
