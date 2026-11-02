@@ -1,10 +1,12 @@
 # Neut
 
-> **SolidJS Native Component Library — no component-library runtime**
+> **SolidJS native component library — no upstream component runtime**
 
-Neut is inspired by [shadcn/ui](https://ui.shadcn.com), but reimplemented from scratch in SolidJS. Unlike shadcn, Neut does **not** depend on any upstream component runtime such as `@radix-ui`, `@base-ui`, or Kobalte.
+Neut is a from-scratch SolidJS implementation of the [shadcn/ui](https://ui.shadcn.com) model. Unlike shadcn, it does **not** depend on `@radix-ui`, `@base-ui`, Kobalte, or any other component runtime.
 
-It only uses small, framework-agnostic utilities that you would normally install in a shadcn project anyway (`class-variance-authority`, `lucide-solid`, and `cn`).
+It only relies on the small set of packages a shadcn project already installs — `solid-js`, `class-variance-authority`, `lucide-solid`, and `cn` — and uses Tailwind CSS v4 for styling.
+
+**Status:** pre-1.0 · 60 components · under active development.
 
 **Advantages**
 
@@ -26,17 +28,18 @@ Because Neut does not build on a mature upstream component library, some edge ca
 
 ## 📚 Documentation
 
-| Document | Contents |
-| :--- | :--- |
-| [Documentation index](./docs/README.md) | Map of all user and contributor docs |
-| [Getting Started](./docs/getting-started.md) | Install, Tailwind v4 setup, theme tokens, dark mode, copying source |
-| [Component Catalog](./docs/components.md) | Every exported component and its parts |
-| [Custom component guides](./docs/components/README.md) | Detailed APIs for the self-built/complex components |
-| [Architecture](./docs/architecture.md) | Controlled/uncontrolled state, change-event details, polymorphism, styling rules |
-| [Positioner](./docs/positioner.md) | The built-in floating positioning engine |
-| [Hooks](./docs/hooks.md) / [Utils](./docs/utils.md) | Public hooks and utilities |
-| [Design notes](./docs/README.md#设计文档索引) | Index of per-component design documents (Chinese) |
-| [TESTING.md](./TESTING.md) | Test layout, coverage gates, contribution rules |
+| Document                                               | Contents                                                                         |
+| :----------------------------------------------------- | :------------------------------------------------------------------------------- |
+| [Documentation index](./docs/README.md)                | Map of all user and contributor docs                                             |
+| [Getting Started](./docs/getting-started.md)           | Install, Tailwind v4 setup, theme tokens, dark mode, copying source              |
+| [Component Catalog](./docs/components.md)              | Every exported component and its parts                                           |
+| [Custom component guides](./docs/components/README.md) | Detailed APIs for the self-built/complex components                              |
+| [Architecture](./docs/architecture.md)                 | Controlled/uncontrolled state, change-event details, polymorphism, styling rules |
+| [Positioner](./docs/positioner.md)                     | The built-in floating positioning engine                                         |
+| [Hooks](./docs/hooks.md) / [Utils](./docs/utils.md)    | Public hooks and utilities                                                       |
+| [Design notes](./docs/README.md#设计文档索引)          | Index of per-component design documents (Chinese)                                |
+| [TESTING.md](./TESTING.md)                             | Test layout, coverage gates, contribution rules                                  |
+| [AGENTS.md](./AGENTS.md)                               | Repository conventions and branch/PR workflow                                    |
 
 > The internal design and testing documents are written in Chinese; the README is kept in both English and Chinese.
 
@@ -46,23 +49,29 @@ Because Neut does not build on a mature upstream component library, some edge ca
 
 Neut follows a **"copy-paste, then use"** pattern (like shadcn), and can also be installed as a regular dependency.
 
-### 1. Prerequisites
+### 1. Requirements
+
+- **Bun** for repository scripts; consumers may use any package manager.
+- SolidJS `^1.9.15`.
+- Tailwind CSS v4.
+
+### 2. Install
 
 ```bash
-# runtime peer dependencies
-bun i solid-js class-variance-authority lucide-solid cn
+# library + runtime peer dependencies
+bun i @neut/ui solid-js class-variance-authority lucide-solid cn
 
 # Tailwind CSS v4
 bun i -D tailwindcss @tailwindcss/vite
 ```
 
-| Dependency | Purpose | Version |
-| :--- | :--- | :--- |
-| **solid-js** | Runtime | `^1.9.15` |
-| **class-variance-authority** | Variants | `^0.7.1` |
-| **lucide-solid** | Icons | `^1.51.0` |
-| **cn** | Class-name merging (replaces `clsx` + `tailwind-merge`) | `^0.4.0` |
-| **tailwindcss** | Styling engine | `^4` |
+| Dependency                   | Purpose                                                 | Version   |
+| :--------------------------- | :------------------------------------------------------ | :-------- |
+| **solid-js**                 | Runtime                                                 | `^1.9.15` |
+| **class-variance-authority** | Variants                                                | `^0.7.1`  |
+| **lucide-solid**             | Icons                                                   | `^1.51.0` |
+| **cn**                       | Class-name merging (replaces `clsx` + `tailwind-merge`) | `^0.4.0`  |
+| **tailwindcss**              | Styling engine                                          | `^4`      |
 
 **Configure Vite**
 
@@ -73,7 +82,7 @@ import solid from "vite-plugin-solid";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-    plugins: [solid(), tailwindcss()],
+  plugins: [solid(), tailwindcss()],
 });
 ```
 
@@ -97,18 +106,27 @@ Design tokens are CSS custom properties (`--background`, `--primary`, `--border`
 <html data-theme="dark">
 ```
 
-See [Getting Started](./docs/getting-started.md) for the full token list and for the optional language/font setup.
+See [Getting Started](./docs/getting-started.md) for the full token list and the optional language/font setup.
 
-### 2. Method A: Copy the source (recommended)
+### 3. Package exports
+
+| Entry                        | Contents                             |
+| :--------------------------- | :----------------------------------- |
+| `@neut/ui`                   | All components, hooks, and utilities |
+| `@neut/ui/hooks`             | Public hooks                         |
+| `@neut/ui/utils`             | Public utilities                     |
+| `@neut/ui/components/<name>` | A single component entry             |
+| `@neut/ui/dist/ui.css`       | Compiled stylesheet                  |
+
+### 4. Method A: Copy the source (recommended)
 
 1. Copy the component directory you need, for example `src/components/button/`, into your project.
-2. Copy the shared modules it imports: `src/utils/`, `src/types/`, and — for any floating component — `src/lib/positioner/`.
-3. Keep the `~/*` alias (or rewrite the imports) so `~/utils`, `~/types`, and `~/lib` resolve.
-4. Copy or import the styles: `src/styles/index.css` (source copy) or `@neut/ui/dist/ui.css` (package). Without the design tokens and animation utilities, components render but lose theme colors/motion.
+2. Copy the shared modules it imports: `src/utils/`, `src/types/`, `src/hooks/`, and — for any floating component — `src/lib/positioner/`.
+3. A few components compose others internally (for example `AlertDialog` → `Dialog`, `DatePicker` → `Calendar`/`Popover`/`Button`). Copy those dependencies too, or use the package entry.
+4. Keep the `~/*` alias (or rewrite the imports) so `~/utils`, `~/types`, `~/hooks`, and `~/lib` resolve.
+5. Copy or import the styles: `src/styles/index.css` (source copy) or `@neut/ui/dist/ui.css` (package). Without the design tokens and animation utilities, components render but lose theme colors/motion.
 
-Components are intentionally independent of one another, so overlapping components (for example `AlertDialog` and `Dialog`) can be used separately.
-
-### 3. Method B: Install as a dependency
+### 5. Method B: Install as a dependency
 
 ```bash
 bun i @neut/ui
@@ -120,7 +138,7 @@ Import the stylesheet as shown above, then use components:
 import { Button } from "@neut/ui";
 
 function App() {
-    return <Button>Neut Button</Button>;
+  return <Button>Neut Button</Button>;
 }
 ```
 
@@ -147,13 +165,27 @@ Neut currently ships **60 components**. The full catalog, including parts and ke
 ```bash
 bun install
 bun run dev             # playground at http://localhost:7789
-bun run test            # unit tests
-bun run test:coverage   # coverage gates
-bun run check           # tsc + biome
-bun run build           # library build to dist/
+bun run build           # library build to dist/ (JS + d.ts + ui.css)
+bun run serve           # preview the production build
+bun run check           # tsc + Biome (2.6.4 via devDependencies)
+bun run test            # full unit test suite
+bun run test:affected   # only tests affected by current changes
+bun run test:coverage   # coverage percentage floors
+bun run check:branches  # exact branch-coverage gate (no uncovered real gaps)
 ```
 
-See [AGENTS.md](./AGENTS.md) for the repository conventions and [TESTING.md](./TESTING.md) before writing tests.
+After changing the playground, verify it builds with `bunx vite build ./dev`.
+
+---
+
+## 🤝 Contributing
+
+- **Branch from `main`, PR back to `main`.** `main` is the only long-lived branch; do not commit or push to it directly.
+- Use a feature branch per change and keep one responsibility per branch and commit: `feat/`, `fix/`, `refactor/`, `docs/`, `chore/`, `test/`.
+- Use stacked PRs when changes depend on each other: point the dependent PR's base at the prerequisite branch; GitHub retargets it to `main` after the prerequisite merges.
+- Put tests under `tests/` mirroring `src/`, and read [TESTING.md](./TESTING.md) before writing them.
+- Required before merge: `bun run check`, `bun run test:coverage`, and `bun run check:branches`.
+- Full conventions live in [AGENTS.md](./AGENTS.md).
 
 ---
 

@@ -132,6 +132,7 @@ function App() {
 2. 复制共享依赖：
    - `src/utils/`（`clsx`、`mergeRefs`、`callEventHandler` 等）
    - `src/types/`（`BaseProps`、`PolymorphicProps`）
+   - `src/hooks/`（`useScrollLock`、`useScrollEdges` 等，组件实际 import 到的 hook）
    - `src/lib/positioner/`（仅浮层组件需要）
 3. 配置 `~/*` 别名：
 
@@ -150,7 +151,7 @@ resolve: { alias: { "~": path.resolve(__dirname, "./src") } }
    `@import "../node_modules/@neut/ui/dist/ui.css"`。缺少 token/动画工具类时组件仍能渲染，
    但主题色、圆角与进出场动效会缺失。
 
-组件之间有意保持独立：`AlertDialog` 复用 `Dialog` 的内部实现，但不需要同时复制其他无关组件。
+组件各有独立入口，可以单独使用；少数组件内部会复用其他组件（例如 `AlertDialog` 复用 `Dialog` 的内部实现），复制源码时把被复用的组件一起复制即可，不需要带上无关组件。
 
 ## 方式二：从 `@neut/ui` 导入
 
