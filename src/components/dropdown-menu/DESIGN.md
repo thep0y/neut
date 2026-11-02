@@ -11,17 +11,17 @@ Base UI 里 `Menu`(DropdownMenu)与 `ContextMenu` 共用同一套菜单机制。
 子菜单联动、checkbox/radio 项。因此 DropdownMenu **直接复用这套运行时**,只提供
 自己的根状态与触发器:
 
-| 复用的内部 | 来源 |
-| --- | --- |
-| 浮层运行时 `createContextMenuPopupRuntime` | `context-menu/ContextMenuContent/useContextMenuContent.ts` |
-| 展示骨架 `ContextMenuPopupSurface` | `context-menu/ContextMenuContent/ContextMenuPopupSurface.tsx` |
-| 菜单项注册/高亮 `useContextMenuEntry` | `context-menu/context-menu.entry.ts` |
-| popup / submenu / radio / group context | `context-menu/context-menu.context.ts` |
-| 事件详情、定位工具 | `context-menu/context-menu.utils.ts` |
-| 子菜单状态容器 `ContextMenuSub` | `context-menu/ContextMenuSub` |
+| 复用的内部                                 | 来源                                                                         |
+| ------------------------------------------ | ---------------------------------------------------------------------------- |
+| 浮层运行时 `createContextMenuPopupRuntime` | `src/components/context-menu/ContextMenuContent/useContextMenuContent.ts`    |
+| 展示骨架 `ContextMenuPopupSurface`         | `src/components/context-menu/ContextMenuContent/ContextMenuPopupSurface.tsx` |
+| 菜单项注册/高亮 `useContextMenuEntry`      | `src/components/context-menu/context-menu.entry.ts`                          |
+| popup / submenu / radio / group context    | `src/components/context-menu/context-menu.context.ts`                        |
+| 事件详情、定位工具                         | `src/components/context-menu/context-menu.utils.ts`                          |
+| 子菜单状态容器 `ContextMenuSub`            | `src/components/context-menu/ContextMenuSub`                                 |
 
 交互模型与 context-menu 一致:焦点落在 popup 上,高亮项用 `aria-activedescendant`
-+ `data-highlighted` 表达(而不是把焦点在项之间搬)。
+- `data-highlighted` 表达(而不是把焦点在项之间搬)。
 
 ## 2. 与 ContextMenu 的差异
 
@@ -55,4 +55,4 @@ Base UI 里 `Menu`(DropdownMenu)与 `ContextMenu` 共用同一套菜单机制。
 - DropdownMenuContent 的**锚点宽度对齐**(shadcn 的 `w-(--anchor-width)`):需要
   positioner 增加 matchWidth 中间件。
 - 长按重复、`DropdownMenuCheckboxItem` 的 indeterminate 等细节。
-- dev 示例补全 + 交互/单测走查。
+- a11y/交互的真机走查（jsdom 已覆盖部件与组合，测试见 `tests/components/dropdown-menu/`）。

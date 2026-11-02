@@ -34,10 +34,10 @@ AttachmentGroup            # 横向滚动、吸附的附件行
 
 ## 3. 复用
 
-| 需要 | 复用 |
-| --- | --- |
-| 操作按钮 | `Button`(默认 `ghost` + `xs`,仅图标时要求 `aria-label`) |
-| 多态触发器 | `~/types` 的 `PolymorphicProps` + `Dynamic`(默认 `button`,可换 `a` 等) |
+| 需要               | 复用                                                                            |
+| ------------------ | ------------------------------------------------------------------------------- |
+| 操作按钮           | `Button`(默认 `ghost` + `xs`,仅图标时要求 `aria-label`)                         |
+| 多态触发器         | `~/types` 的 `PolymorphicProps` + `Dynamic`(默认 `button`,可换 `a` 等)          |
 | 圆角/卡片色/状态色 | 现有主题 token(`bg-card`、`text-card-foreground`、`bg-muted`、`destructive` 等) |
 
 ## 4. 两个自实现工具类(`src/styles/effects.css`)
@@ -46,9 +46,9 @@ shadcn 的 `shimmer` / `scroll-fade-x` 随其 `shadcn` 包提供,本仓库没有
 
 - **`shimmer`**:`background-clip: text` + 横向移动的高光带(`currentColor` 为底色,
   `color-mix` 出高光),`@keyframes tw-shimmer`。上传/处理中标题使用。
-- **`scroll-fade-x`**:横向滚动容器两端 `mask-image` 渐隐。**当前是静态双边缘渐隐**,
-  是 shadcn 在不支持滚动驱动动画时的降级形态;滚动感知版(scroll-driven animations)
-  列为后续待实现。
+- **`scroll-fade-x`**:横向滚动容器两端 `mask-image` 渐隐。支持
+  `animation-timeline: scroll()` 的浏览器里随滚动进度显现/收起；不支持时退化为静态双边缘渐隐
+  （`src/styles/effects.css` 的 `@supports` 分支）。
 
 ## 5. 无障碍
 
@@ -61,11 +61,10 @@ shadcn 的 `shimmer` / `scroll-fade-x` 随其 `shadcn` 包提供,本仓库没有
 
 ## 6. 后续待实现
 
-- `scroll-fade-x` 的滚动感知版本(CSS scroll-driven animations)。
 - `shimmer` 的完整参数(`shimmer-color` / `-duration` / `-spread` / `-angle` / `-reverse` /
-  `-once` / `-none`)与 RTL/reduced-motion 细化。
+  `-once` / `-none`)与 RTL 细化（`prefers-reduced-motion` 已有兜底）。
 - 纯展示场景的可聚焦 group 辅助(可选封装)。
-- dev 示例补全 + 单测/交互走查。
+- 真机交互/a11y 走查（`tests/components/attachment/` 已覆盖全部部件与组合，dev 示例也已存在）。
 
 ## 7. 使用示例
 
@@ -83,5 +82,5 @@ shadcn 的 `shimmer` / `scroll-fade-x` 随其 `shadcn` 包提供,本仓库没有
       <X />
     </AttachmentAction>
   </AttachmentActions>
-</Attachment>
+</Attachment>;
 ```

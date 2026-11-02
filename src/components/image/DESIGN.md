@@ -16,17 +16,17 @@ URL 生成、blur SVG、开发校验、性能观察器彼此交织。本次按 S
 
 ## 2. SRP 分工
 
-| 关注点 | 归属文件 | 职责 |
-| --- | --- | --- |
-| 类型契约 | `Image.types.ts` | props / config / 回调 / `ImgProps` 等纯类型，无实现 |
-| 默认配置 | `Image.config.ts` | 默认值 + Context + `resolveConfig` 派生字段 |
-| **编排** | `Image.utils.ts` | `getImgProps` 的流程：合并默认值 → 规范化 config → 静态导入 → unoptimized/lazy → 校验 → 样式 → 属性组装 |
-| 静态导入识别 | `lib/static-import.ts` | `isStaticRequire` / `isStaticImageData` / `isStaticImport` / `getInt` |
-| URL 与 srcSet | `lib/loader.ts` | `defaultLoader` / `getWidths` / `generateImgAttrs` |
-| blur 占位 | `lib/blur.ts` | `getImageBlurSvg` + `getPlaceholderStyle` |
-| 开发期校验 | `lib/dev-checks.ts` | 全部 `!import.meta.env.PROD` 分支：非法用法抛错、可优化项走 `logger.hot` 节流、LCP 观察器 |
-| 加载完成副作用 | `lib/handle-loading.ts` | decode → 回调 → 清 blur → fill/宽高比开发警告 |
-| 加载门面 | `Image.tsx` / `ImageElement.tsx` / `ImagePreload.tsx` | 渲染与 Solid 生命周期 |
+| 关注点         | 归属文件                                              | 职责                                                                                                    |
+| -------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| 类型契约       | `Image.types.ts`                                      | props / config / 回调 / `ImgProps` 等纯类型，无实现                                                     |
+| 默认配置       | `Image.config.ts`                                     | 默认值 + Context + `resolveConfig` 派生字段                                                             |
+| **编排**       | `Image.utils.ts`                                      | `getImgProps` 的流程：合并默认值 → 规范化 config → 静态导入 → unoptimized/lazy → 校验 → 样式 → 属性组装 |
+| 静态导入识别   | `lib/static-import.ts`                                | `isStaticRequire` / `isStaticImageData` / `isStaticImport` / `getInt`                                   |
+| URL 与 srcSet  | `lib/loader.ts`                                       | `defaultLoader` / `getWidths` / `generateImgAttrs`                                                      |
+| blur 占位      | `lib/blur.ts`                                         | `getImageBlurSvg` + `getPlaceholderStyle`                                                               |
+| 开发期校验     | `lib/dev-checks.ts`                                   | 全部 `!import.meta.env.PROD` 分支：非法用法抛错、可优化项走 `logger.hot` 节流、LCP 观察器               |
+| 加载完成副作用 | `lib/handle-loading.ts`                               | decode → 回调 → 清 blur → fill/宽高比开发警告                                                           |
+| 加载门面       | `Image.tsx` / `ImageElement.tsx` / `ImagePreload.tsx` | 渲染与 Solid 生命周期                                                                                   |
 
 ### 文件结构
 
@@ -68,18 +68,18 @@ src/components/image/
 
 ## 4. 测试计划
 
-| 文件 | 覆盖内容 |
-| --- | --- |
-测试位于 `tests/components/image/`（与源码镜像）：
+| 文件                                               | 覆盖内容 |
+| -------------------------------------------------- | -------- |
+| 测试位于 `tests/components/image/`（与源码镜像）： |
 
-| 文件 | 覆盖内容 |
-| --- | --- |
-| `tests/components/image/Image.utils.test.ts` | `getImgProps` 端到端：基础属性、loading/preload、srcSet/sizes、fill、静态导入、placeholder、参数校验、style 合并 |
-| `tests/components/image/lib/static-import.test.ts` | `getInt` 的 undefined/NaN/字符串分支；三种静态导入判定 |
-| `tests/components/image/lib/loader.test.ts` | `defaultLoader`（DEV 抛错 / PROD 不抛）、`getWidths`（sizes/vw/x 描述符）、`generateImgAttrs`（unoptimized / kind=w/x） |
-| `tests/components/image/lib/blur.test.ts` | blur SVG 的 viewBox / preserveAspectRatio 分支；占位样式回退链 |
-| `tests/components/image/lib/dev-checks.test.ts` | 全部抛错分支、`logger.hot` 节流分支、loader 宽度检测、LCP 观察器（含 SSR / observe 抛错） |
-| `tests/components/image/lib/handle-loading.test.ts` | 回调、blurComplete、幂等、卸载、decode 失败、fill 警告、宽高比警告 |
-| `tests/components/image/ImageElement/ImageElement.test.tsx`、`Image/Image.test.tsx`、`ImagePreload/ImagePreload.test.tsx` | 渲染、preload、blur 状态 |
+| 文件                                                                                                                      | 覆盖内容                                                                                                                |
+| ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `tests/components/image/Image.utils.test.ts`                                                                              | `getImgProps` 端到端：基础属性、loading/preload、srcSet/sizes、fill、静态导入、placeholder、参数校验、style 合并        |
+| `tests/components/image/lib/static-import.test.ts`                                                                        | `getInt` 的 undefined/NaN/字符串分支；三种静态导入判定                                                                  |
+| `tests/components/image/lib/loader.test.ts`                                                                               | `defaultLoader`（DEV 抛错 / PROD 不抛）、`getWidths`（sizes/vw/x 描述符）、`generateImgAttrs`（unoptimized / kind=w/x） |
+| `tests/components/image/lib/blur.test.ts`                                                                                 | blur SVG 的 viewBox / preserveAspectRatio 分支；占位样式回退链                                                          |
+| `tests/components/image/lib/dev-checks.test.ts`                                                                           | 全部抛错分支、`logger.hot` 节流分支、loader 宽度检测、LCP 观察器（含 SSR / observe 抛错）                               |
+| `tests/components/image/lib/handle-loading.test.ts`                                                                       | 回调、blurComplete、幂等、卸载、decode 失败、fill 警告、宽高比警告                                                      |
+| `tests/components/image/ImageElement/ImageElement.test.tsx`、`Image/Image.test.tsx`、`ImagePreload/ImagePreload.test.tsx` | 渲染、preload、blur 状态                                                                                                |
 
 覆盖率：`lib/` 下 5 个模块**语句/分支/函数三项均 100%**。

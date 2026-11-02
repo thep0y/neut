@@ -5,7 +5,7 @@ import { toastSections } from "../examples/toast";
 export default function ToastPage() {
   return (
     <>
-      <Toaster position="bottom-right" theme="system" richColors closeButton />
+      <Toaster position="bottom-right" closeButton />
       <ComponentPage
         id="toast"
         title="Toast"

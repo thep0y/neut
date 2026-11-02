@@ -85,7 +85,7 @@ describe("ToastIcon", () => {
 
     const icon = container.querySelector('[data-slot="toast-icon"]');
     expect(icon).not.toBeNull();
-    expect(icon).toHaveClass("text-emerald-500");
+    expect(icon).toHaveClass("text-success");
   });
 
   it("classes.icon 追加到容器", () => {

@@ -56,6 +56,7 @@ export const Toaster: Component<ToasterProps> = (props) => {
                 closeButton={merged.closeButton}
                 duration={merged.duration}
                 icons={merged.icons}
+                variant={merged.variant}
                 richColors={merged.richColors}
                 toastOptions={merged.toastOptions}
                 onExpandChange={setExpanded}

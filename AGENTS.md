@@ -21,12 +21,14 @@
 | 命令                    | 用途                                                                   |
 | ----------------------- | ---------------------------------------------------------------------- |
 | `bun install`           | 安装依赖                                                               |
-| `bun run dev`           | 启动 dev playground（等价 `vite ./dev`，默认 <http://localhost:5173>） |
+| `bun run dev`           | 启动 dev playground（等价 `vite ./dev`，端口 **7789**）                 |
 | `bun run build`         | 构建组件库到 `dist/`（含 `.d.ts`）                                     |
 | `bun run serve`         | 预览构建产物                                                           |
 | `bun run check`         | `tsc --noEmit && biome check --write src tests`，提交前必须通过        |
 | `bun run test`          | 跑单元测试（vitest）                                                   |
-| `bun run test:coverage` | 跑测试并强制覆盖率 100%，提交前必须通过                                |
+| `bun run test:affected` | 只跑受改动影响的测试（快速反馈，不校验覆盖率）                          |
+| `bun run test:coverage` | 跑全量测试并校验百分比地板（见 `TESTING.md` §1.1）                     |
+| `bun run check:branches` | 精确覆盖率门禁：不允许任何一条真实未覆盖缺口（提交前必须通过）          |
 
 注意事项：
 
@@ -40,7 +42,7 @@
   `TS2307`（位于 `node_modules` 内，与本仓库源码无关）。过滤掉它再判断是否有自己引入的错误。
 - 单元测试栈是 **vitest + jsdom + `@solidjs/testing-library`**（配置见 `vitest.config.ts`、
   `vitest.setup.ts`）。**写测试前必须先读 [`TESTING.md`](./TESTING.md)**——它规定了
-  100% 覆盖率门槛、必测场景清单，以及禁止"为过测试而改实现 / 把实现抄进测试 /
+  两层覆盖率门禁、必测场景清单，以及禁止"为过测试而改实现 / 把实现抄进测试 /
   空洞断言 / 快照替代行为测试"等作弊行为的硬性条款。`dev/` playground 仍是交互的手动验证面。
 
 ## 目录结构
@@ -51,14 +53,17 @@ src/
 ├── components/<name>/       # 一个组件一个目录（kebab-case）
 ├── lib/positioner/          # 自研 floating-ui：createPositioner + middleware
 ├── types/                   # BaseProps / PolymorphicProps 等公共类型
-├── utils/                   # clsx、mergeRefs、logger、getStyleValue
-├── hooks/                   # 跨组件 hooks
-└── styles/                  # Tailwind 入口、动画、字体
+├── utils/                   # clsx、mergeRefs、logger、getStyleValue、
+│                            # callEventHandler、createChangeEventDetails、clamp、
+│                            # toKebabCase、roving-navigation
+├── hooks/                   # 跨组件 hooks（useScrollLock / useScrollEdges / useFontLoader）
+└── styles/                  # Tailwind 入口、动画、效果、i18n 字体
 tests/                       # 全部测试用例：与 src/ 一一镜像（源码目录里禁止放测试）
+docs/                        # 使用者/贡献者文档：上手、架构、组件目录、定位器、自定义组件
 dev/                         # Solid Router playground：examples + pages + routes.ts
 example/                     # 独立的消费者示例工程（依赖已发布的 @neut/ui），不参与根检查
 dist/                        # 构建产物，gitignored，不要手改
-vitest.config.ts             # 测试与覆盖率门槛配置（100%）
+vitest.config.ts             # 测试与覆盖率门槛（百分比地板 + check:branches 精确门禁）
 vitest.setup.ts              # jsdom polyfill + 每个用例后的清理
 TESTING.md                   # 测试撰写规则（强制）：覆盖率、必测清单、反作弊条款
 ```
@@ -108,10 +113,13 @@ button/
 - 函数也只能承担一个职责；
 - 函数体一般不能超过 20 行，如果必须写 20 行以上的函数需要在函数注释中说明不可拆分的理由。
 - 非平凡组件请在组件目录下补一份 `DESIGN.md`（格式参考 `src/components/tabs/DESIGN.md`：状态、移植目标、SRP 分工表、文件结构）。
-- 测试覆盖率达到 100%，测试撰写规则见项目根目录的 `TESTING.md`。**测试用例一律放在 `tests/`
-  下、与 `src/` 镜像的路径里，源码目录中不得出现任何测试文件**：`src/components/toast/Toast/Toast.tsx`
-  对应 `tests/components/toast/Toast/Toast.test.tsx`；跨子组件的组合行为放
-  `<component>.integration.test.tsx`。命名、分层、别名与必测清单见 `TESTING.md` §3/§5.3。
+  面向使用者的 API 说明放 `docs/`（`docs/components.md` 或 `docs/components/<name>.md`）；两者都要随实现更新。
+- 覆盖率采用**两层门禁**（细则见 `TESTING.md` §1.1/§1.3）：`bun run test:coverage` 的百分比阈值
+  是粗筛（functions 100%，statements/lines 99.8%，branches 92.5%，为 Solid JSX 归因产物留余量）；
+  `bun run check:branches` 才是精确门禁，不允许任何一条真实源码缺口。
+  **测试用例一律放在 `tests/` 下、与 `src/` 镜像的路径里，源码目录中不得出现任何测试文件**：
+  `src/components/toast/Toast/Toast.tsx` 对应 `tests/components/toast/Toast/Toast.test.tsx`；
+  跨子组件的组合行为放 `<component>.integration.test.tsx`。命名、分层、别名与必测清单见 `TESTING.md` §3/§5.3。
 - 重构必须"小步、可验证、可回滚"：
     - 先补/确认用例，再动结构——覆盖率就是重构的安全网；
     - 一步只做一件事（拆一个函数、搬一个文件、改一处引用），做完立刻`bunx tsc -b`、`bunx biome check src`，并跑相关用例；
@@ -156,11 +164,11 @@ export type ContextMenuTriggerProps<T extends ValidComponent = "div"> =
 
 ### 样式
 
-- Tailwind v4（`@tailwindcss/vite`），工具函数是 `clsx`（`~/utils`，基于 `tailwind-merge`），
-  **不要**改名为 shadcn 的 `cn`。
+- Tailwind v4（`@tailwindcss/vite`），工具函数是 `clsx`（`~/utils`，re-export `cn` 包，
+  即 shadcn 的 `clsx` + `tailwind-merge` 替代品），**不要**改名为 shadcn 的 `cn`。
 - 多变体组件用 `class-variance-authority`；较大的样式常量抽到 `Xxx.styles.ts`。
-- 每个渲染元素都带 `data-slot="<component>-<part>"`，命名与 shadcn 对齐
-  （如 `context-menu-content`、`tooltip-trigger`）。
+- 组件的公开/主要渲染元素按约定带 `data-slot="<component>-<part>"`，命名与 shadcn 对齐
+  （如 `context-menu-content`、`tooltip-trigger`）；少数内部辅助元素可以没有 `data-slot`。
 - 状态样式统一走 `data-*` 变体：`data-open:`、`data-closed:`、`data-highlighted:`、
   `data-disabled:`、`data-inset:`、`data-[variant=destructive]:` 等。
   本实现常把 shadcn 的 `focus:` 换成 `data-highlighted:`（焦点留在浮层上、用
@@ -218,9 +226,9 @@ export type ContextMenuTriggerProps<T extends ValidComponent = "div"> =
 ## 常见任务清单
 
 - **新增组件**：建目录 → 写 `types/context/useXxx/Xxx.tsx/index.ts` → 更新 `src/index.ts`
-  → 加 dev 示例与路由 → **在 `tests/` 的镜像路径下按 `TESTING.md` 写测试并跑到 100% 覆盖率**
-  → `bun run check`
-    - `bun run build`。
+  → 加 dev 示例与路由 → **在 `tests/` 的镜像路径下按 `TESTING.md` 写测试并跑绿两层覆盖率门禁**
+  → 更新 `docs/components.md`（复杂组件再加 `docs/components/<name>.md` 与 `DESIGN.md`）
+  → `bun run check` → `bun run build`。
 - **修改公开 API**：同步更新 `*.types.ts`、组件注释里的 `@example`、`index.ts` 导出、
   dev 示例、测试；破坏性变更在提交信息里用 `!` 标注（仓库历史有先例，如
   `feat(toggle-group)!:`）。
@@ -233,9 +241,10 @@ export type ContextMenuTriggerProps<T extends ValidComponent = "div"> =
 
 ```bash
 bunx tsc --noEmit     # 或 bun run check（含 biome）
-bun run test:coverage # 四项覆盖率必须 100%（测试在 tests/，覆盖率只扫 src/），见 TESTING.md
+bun run test:coverage # 百分比地板（functions 100%，其余按可达值留余量），见 TESTING.md §1.1
+bun run check:branches # 精确门禁：不允许任何一条真实覆盖缺口
 bun run build         # 库构建 + d.ts
-bun run dev           # 手动过一遍受影响的交互
+bun run dev           # http://localhost:7789，手动过一遍受影响的交互
 ```
 
 涉及 dev 的改动额外用 `vite build ./dev` 确认能构建。

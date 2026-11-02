@@ -8,6 +8,14 @@ export type ToastTypes =
   | "loading"
   | "default";
 
+/**
+ * 表面样式：
+ * - `popover`（默认）：shadcn 默认样式，popover 底 + popover-foreground 文字，只有图标染色；
+ * - `semantic`：当前风格，把 10% 状态色混进 popover 做浅底，标题跟随语义色；
+ * - `colored`：实色状态底 + 对应的 `*-foreground` 文字（Sonner richColors 那种）。
+ */
+export type ToastVariant = "popover" | "semantic" | "colored";
+
 export type Position =
   | "top-left"
   | "top-right"
@@ -75,6 +83,11 @@ export interface ToastT {
   type?: ToastTypes;
   icon?: JSXElement;
   jsx?: JSXElement;
+  /** 表面样式，默认 `popover`；单条优先于 Toaster */
+  variant?: ToastVariant;
+  /**
+   * @deprecated 使用 `variant`。为兼容保留：`true` 等价于 `variant="semantic"`。
+   */
   richColors?: boolean;
   invert?: boolean;
   closeButton?: boolean;
@@ -109,6 +122,8 @@ export interface ToastProps {
   class?: string;
   icons?: ToastIcons;
   closeButtonAriaLabel?: string;
+  /** Toaster 级的表面样式（`variant` 已显式指定时忽略） */
+  variant?: ToastVariant;
   defaultRichColors?: boolean;
   onRemove: (id: string) => void;
   index: number;

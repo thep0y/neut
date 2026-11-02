@@ -17,15 +17,15 @@ BubbleGroup            # 同一发送者的连续气泡分组
 
 ## 2. SRP 分工
 
-| 关注点 | 文件 |
-| --- | --- |
-| 变体/对齐样式 | `Bubble/Bubble.styles.ts`(cva,7 个 variant) |
-| 根容器 | `Bubble/Bubble.tsx`(输出 `data-variant` / `data-align`) |
-| 内容样式 | `BubbleContent/BubbleContent.styles.ts` |
-| 多态内容 | `BubbleContent/BubbleContent.tsx`(`PolymorphicProps` + `Dynamic`,默认 `div`) |
-| 反应样式 | `BubbleReactions/BubbleReactions.styles.ts`(cva,side/align) |
-| 反应容器 | `BubbleReactions/BubbleReactions.tsx` |
-| 分组 | `BubbleGroup/BubbleGroup.tsx` |
+| 关注点        | 文件                                                                         |
+| ------------- | ---------------------------------------------------------------------------- |
+| 变体/对齐样式 | `Bubble/Bubble.styles.ts`(cva,7 个 variant)                                  |
+| 根容器        | `Bubble/Bubble.tsx`(输出 `data-variant` / `data-align`)                      |
+| 内容样式      | `BubbleContent/BubbleContent.styles.ts`                                      |
+| 多态内容      | `BubbleContent/BubbleContent.tsx`(`PolymorphicProps` + `Dynamic`,默认 `div`) |
+| 反应样式      | `BubbleReactions/BubbleReactions.styles.ts`(cva,side/align)                  |
+| 反应容器      | `BubbleReactions/BubbleReactions.tsx`                                        |
+| 分组          | `BubbleGroup/BubbleGroup.tsx`                                                |
 
 ## 3. 关键点
 

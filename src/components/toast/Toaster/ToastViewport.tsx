@@ -1,7 +1,12 @@
 import { For, type JSX } from "solid-js";
 import { clsx } from "~/utils";
 import { Toast } from "../Toast";
-import type { Position, ToastIcons, ToastT } from "../Toast/Toast.types";
+import type {
+  Position,
+  ToastIcons,
+  ToastT,
+  ToastVariant,
+} from "../Toast/Toast.types";
 import { toasterContainerClass } from "./Toaster.styles";
 import type { Offset, ToastOptions } from "./Toaster.types";
 import {
@@ -26,6 +31,8 @@ export interface ToastViewportProps {
   closeButton?: boolean;
   duration?: number;
   icons?: ToastIcons;
+  /** Toaster 级表面样式（toastOptions.variant 优先） */
+  variant?: ToastVariant;
   richColors?: boolean;
   toastOptions?: ToastOptions;
   /** 展开态变化（悬停进入/离开） */
@@ -82,6 +89,7 @@ export function ToastViewport(props: ToastViewportProps) {
             class={props.toastOptions?.class}
             icons={props.icons}
             closeButtonAriaLabel={props.toastOptions?.closeButtonAriaLabel}
+            variant={props.toastOptions?.variant ?? props.variant}
             defaultRichColors={props.richColors}
             onRemove={props.onRemove}
           />

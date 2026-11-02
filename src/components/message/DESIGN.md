@@ -7,7 +7,7 @@
 ## 1. 概述
 
 一条消息的行布局：负责头像、对齐、header、footer，**不负责消息外观**——
-可见的消息面用 `Bubble` 渲染，滚动容器用 `MessageScroller`（未实现）。
+可见的消息面用 `Bubble` 渲染，滚动容器用 `MessageScroller`（已实现）。
 
 ```
 MessageGroup            # 同一发送者的连续消息
@@ -21,8 +21,8 @@ MessageGroup            # 同一发送者的连续消息
 
 ## 2. SRP 分工
 
-每个部件一个目录(`MessageXxx/MessageXxx.tsx` + `.types.ts` + `index.ts`)。
-本组件无状态、无浮层,全部是纯展示的 div + `data-*` 状态钩子。
+每个部件一个目录（`src/components/message/MessageXxx/`：`MessageXxx.tsx` + `.types.ts` + `index.ts`），
+共享类型在 `Message/Message.types.ts`。本组件无状态、无浮层，全部是纯展示的 div + `data-*` 状态钩子。
 
 ## 3. 关键点
 
@@ -42,4 +42,5 @@ MessageGroup            # 同一发送者的连续消息
 
 ## 5. 后续
 
-- `MessageScroller`(会话滚动容器)。
+- 已完成：`MessageScroller`（会话滚动容器）位于 `src/components/message-scroller/`，
+  其设计见 [MessageScroller DESIGN](../message-scroller/DESIGN.md)。

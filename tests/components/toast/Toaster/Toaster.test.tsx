@@ -319,6 +319,33 @@ describe("Toaster 配置下发", () => {
     expect(renderedToasts()[0]).toHaveAttribute("data-rich-colors", "true");
   });
 
+  it("根级 variant 下发给 toast", () => {
+    toastApi.success("一");
+
+    render(() => <Toaster variant="colored" />);
+
+    expect(renderedToasts()[0]).toHaveAttribute("data-variant", "colored");
+    expect(renderedToasts()[0]).toHaveClass("bg-success");
+  });
+
+  it("toastOptions.variant 优先于根级 variant", () => {
+    toastApi.success("一");
+
+    render(() => (
+      <Toaster variant="colored" toastOptions={{ variant: "popover" }} />
+    ));
+
+    expect(renderedToasts()[0]).toHaveAttribute("data-variant", "popover");
+  });
+
+  it("单条 toast 的 variant 优先于根级配置", () => {
+    toastApi.success("一", { variant: "semantic" });
+
+    render(() => <Toaster variant="colored" />);
+
+    expect(renderedToasts()[0]).toHaveAttribute("data-variant", "semantic");
+  });
+
   it("icons 按类型下发给 toast", () => {
     toastApi.success("一");
 

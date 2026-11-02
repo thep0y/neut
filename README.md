@@ -1,110 +1,120 @@
 # Neut
 
-> **SolidJS Native Component Library, Zero External Dependencies**
+> **SolidJS Native Component Library — no component-library runtime**
 
-Neut is inspired by [shadcn/ui](https://ui.shadcn.com), but reimplemented entirely from scratch with SolidJS. Unlike shadcn, Neut **does not depend on any upstream component library** (like `@radix-ui` or `@base-ui`).
+Neut is inspired by [shadcn/ui](https://ui.shadcn.com), but reimplemented from scratch in SolidJS. Unlike shadcn, Neut does **not** depend on any upstream component runtime such as `@radix-ui`, `@base-ui`, or Kobalte.
 
-**Advantages:**
+It only uses small, framework-agnostic utilities that you would normally install in a shadcn project anyway (`class-variance-authority`, `lucide-solid`, and `cn`).
 
-- **Fully Controllable**: All component source code lives in your project — modify them however you want.
-- **No Upstream Limitations**: You won't get blocked by third-party component bugs (styling or logic). Fix issues without waiting for a release.
-- **SolidJS Native**: Leverages SolidJS's fine-grained reactivity for better performance.
+**Advantages**
 
-**Let's be clear about the downsides:**
+- **Fully controllable**: every component lives in your project — change anything you want.
+- **No upstream limitations**: third-party component bugs (styling or behavior) no longer block you.
+- **SolidJS native**: fine-grained reactivity instead of a virtual DOM.
 
-To be honest, because Neut doesn't rely on more mature upstream component libraries, it may not cover all edge cases. There will be fixable but still unresolved issues — such as bugs, accessibility gaps, etc. Therefore, **it is not recommended for large projects or scenarios with strict quality requirements**.
+**Known trade-offs**
+
+Because Neut does not build on a mature upstream component library, some edge cases and accessibility details may still be missing. It is **not recommended for large projects or products with strict quality requirements** yet.
 
 > [!WARNING]
 >
 > **Under active development — use with caution**
 >
-> The project is still evolving rapidly, APIs may change. **Do not use in production yet.**
+> APIs may change between releases. **Do not use in production yet.**
+
+---
+
+## 📚 Documentation
+
+| Document | Contents |
+| :--- | :--- |
+| [Documentation index](./docs/README.md) | Map of all user and contributor docs |
+| [Getting Started](./docs/getting-started.md) | Install, Tailwind v4 setup, theme tokens, dark mode, copying source |
+| [Component Catalog](./docs/components.md) | Every exported component and its parts |
+| [Custom component guides](./docs/components/README.md) | Detailed APIs for the self-built/complex components |
+| [Architecture](./docs/architecture.md) | Controlled/uncontrolled state, change-event details, polymorphism, styling rules |
+| [Positioner](./docs/positioner.md) | The built-in floating positioning engine |
+| [Hooks](./docs/hooks.md) / [Utils](./docs/utils.md) | Public hooks and utilities |
+| [Design notes](./docs/README.md#设计文档索引) | Index of per-component design documents (Chinese) |
+| [TESTING.md](./TESTING.md) | Test layout, coverage gates, contribution rules |
+
+> The internal design and testing documents are written in Chinese; the README is kept in both English and Chinese.
 
 ---
 
 ## 🚀 Quick Start
 
-Neut follows a **"copy-paste, then use"** pattern (similar to shadcn), though you can also install it as a regular dependency.
+Neut follows a **"copy-paste, then use"** pattern (like shadcn), and can also be installed as a regular dependency.
 
-### 1. Prerequisites (Peer Dependencies)
+### 1. Prerequisites
 
-Before using any components, make sure these dependencies are installed in your project:
+```bash
+# runtime peer dependencies
+bun i solid-js class-variance-authority lucide-solid cn
 
-| Dependency                   | Purpose                  | Install Command                  |
-| :--------------------------- | :----------------------- | :------------------------------- |
-| **Tailwind CSS**             | Styling engine           | `bun i -D tailwindcss`           |
-| **Lucide Solid**             | Icon library             | `bun i lucide-solid`             |
-| **Tailwind Merge**           | Style merging tool       | `bun i tailwind-merge`           |
-| **Class Variance Authority** | Style variant definition | `bun i class-variance-authority` |
-
-**Configure your stylesheet**
-
-In your main stylesheet (e.g., `index.css` or `globals.css`), import in this order:
-
-```css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Neut built-in styles (from animate.css and toast.css) */
-@import "./styles/animate.css";
-@import "./styles/toast.css";
+# Tailwind CSS v4
+bun i -D tailwindcss @tailwindcss/vite
 ```
 
-**Create a utility function**
+| Dependency | Purpose | Version |
+| :--- | :--- | :--- |
+| **solid-js** | Runtime | `^1.9.15` |
+| **class-variance-authority** | Variants | `^0.7.1` |
+| **lucide-solid** | Icons | `^1.51.0` |
+| **cn** | Class-name merging (replaces `clsx` + `tailwind-merge`) | `^0.4.0` |
+| **tailwindcss** | Styling engine | `^4` |
 
-Write a style merging function in `src/lib/utils/clsx.ts`:
+**Configure Vite**
 
 ```ts
-import { twMerge } from "tailwind-merge";
+// vite.config.ts
+import { defineConfig } from "vite";
+import solid from "vite-plugin-solid";
+import tailwindcss from "@tailwindcss/vite";
 
-export const clsx = (...classes: (string | undefined | false)[]): string => {
-    return twMerge(classes.filter(Boolean));
-};
+export default defineConfig({
+    plugins: [solid(), tailwindcss()],
+});
+```
+
+**Import the stylesheet**
+
+In your application entry stylesheet, import Tailwind first, then Neut's compiled styles:
+
+```css
+@import "tailwindcss";
+@import "../node_modules/@neut/ui/dist/ui.css";
 ```
 
 > [!NOTE]
-> **About the stylesheet files**
-> `toast.css` is currently a temporary solution (ported from Sonner). We will rewrite the styles later to remove this external dependency.
+> Neut ships one compiled stylesheet, `dist/ui.css`. It contains the design tokens, dark theme, animations, scroll-fade helpers, and the i18n font/line-height rules. There is no separate `toast.css` or `animate.css` to import.
 
-### 2. Method A: Copy the source code (recommended)
+**Theme and dark mode**
 
-This is the most flexible approach. Non-primitive components may have overlapping functionality (e.g., `AlertDialog` and `Dialog`), but they are standalone and independent.
+Design tokens are CSS custom properties (`--background`, `--primary`, `--border`, ...). Override them in `:root`, and switch dark mode with `data-theme="dark"` on `<html>` (not a `.dark` class):
 
-1.  Check the component source code in the [GitHub repo - Components](https://github.com/thep0y/neut).
-2.  Copy the directory of the component you need (e.g., `button`) into your project.
-
-**Example directory structure:**
-
-```bash
-src/
-└── components/
-    └── button/
-        ├── Button.styles.ts   # Styling logic
-        ├── Button.tsx         # Component implementation
-        ├── Button.types.ts    # Type definitions
-        └── index.ts           # Export entry
+```html
+<html data-theme="dark">
 ```
 
+See [Getting Started](./docs/getting-started.md) for the full token list and for the optional language/font setup.
+
+### 2. Method A: Copy the source (recommended)
+
+1. Copy the component directory you need, for example `src/components/button/`, into your project.
+2. Copy the shared modules it imports: `src/utils/`, `src/types/`, and — for any floating component — `src/lib/positioner/`.
+3. Keep the `~/*` alias (or rewrite the imports) so `~/utils`, `~/types`, and `~/lib` resolve.
+4. Copy or import the styles: `src/styles/index.css` (source copy) or `@neut/ui/dist/ui.css` (package). Without the design tokens and animation utilities, components render but lose theme colors/motion.
+
+Components are intentionally independent of one another, so overlapping components (for example `AlertDialog` and `Dialog`) can be used separately.
+
 ### 3. Method B: Install as a dependency
-
-If you prefer version management, you can also install via a package manager.
-
-**Install:**
 
 ```bash
 bun i @neut/ui
 ```
 
-**Import styles:**
-
-Add this to your root stylesheet:
-
-```css
-@import "../node_modules/@neut/ui/dist/ui.css";
-```
-
-**Use components:**
+Import the stylesheet as shown above, then use components:
 
 ```tsx
 import { Button } from "@neut/ui";
@@ -114,15 +124,43 @@ function App() {
 }
 ```
 
-**Full example:** [Neut Example Project](https://github.com/thep0y/neut/tree/main/example)
+A complete consumer project lives in [`example/`](./example).
+
+---
+
+## 🧩 Components
+
+Neut currently ships **60 components**. The full catalog, including parts and key props, is in [`docs/components.md`](./docs/components.md).
+
+- **Layout & structure**: Accordion, AspectRatio, Card, Carousel, Collapsible, Resizable, ScrollArea, Separator, Sidebar, Tabs, Table
+- **Forms & input**: Button, ButtonGroup, Calendar, Checkbox, Combobox, DatePicker, Field, Input, InputGroup, Label, NumberInput, Questionnaire, RadioGroup, Select, Slider, Switch, Textarea, TimePicker, Toggle, ToggleGroup
+- **Overlays**: AlertDialog, ContextMenu, Dialog, Drawer, DropdownMenu, HoverCard, Popover, Sheet, Tooltip
+- **Feedback & status**: Alert, Badge, Empty, Item, Kbd, Marker, Progress, Skeleton, Spinner, Toast
+- **Data display**: Avatar, Breadcrumb, DataTable, Pagination
+- **Chat & AI**: Attachment, Bubble, Message, MessageScroller
+- **Media & utilities**: Image, ScrollArrows
+
+---
+
+## 🛠 Development
+
+```bash
+bun install
+bun run dev             # playground at http://localhost:7789
+bun run test            # unit tests
+bun run test:coverage   # coverage gates
+bun run check           # tsc + biome
+bun run build           # library build to dist/
+```
+
+See [AGENTS.md](./AGENTS.md) for the repository conventions and [TESTING.md](./TESTING.md) before writing tests.
 
 ---
 
 ## 📚 References & Acknowledgements
 
-The project's design and inspiration come from these great projects:
-
 - **shadcn/ui**: [Installation Guide](https://ui.shadcn.com/docs/installation)
+- **Base UI**: [Documentation](https://base-ui.com/)
 - **Sonner**: [Getting Started](https://sonner.emilkowal.ski/getting-started)
 - **SolidJS**: [Official Website](https://www.solidjs.com/)
 
@@ -130,8 +168,8 @@ The project's design and inspiration come from these great projects:
 
 ## 💡 Why this pattern?
 
-Neut follows the philosophy of **"headless components"** and **"building your own blocks"**. That means:
+Neut follows the **"headless components"** and **"build your own blocks"** philosophy:
 
-1.  **No overhead**: Only the code you actually include is used.
-2.  **Freely customizable styles**: Tailwind classes are right in front of you — tweak them anytime.
-3.  **Leverage SolidJS strengths**: Compared to React, SolidJS's fine-grained reactivity gives you high-performance components with less code and cleaner logic.
+1. **No runtime overhead**: only the code you actually use is included.
+2. **Styles you can actually edit**: Tailwind classes are right in front of you.
+3. **SolidJS strengths**: fine-grained reactivity keeps components fast while keeping the source readable.

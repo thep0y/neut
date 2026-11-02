@@ -4,6 +4,7 @@ import type {
   SwipeDirection,
   ToastIcons,
   ToastClassnames,
+  ToastVariant,
 } from "../Toast/Toast.types";
 
 export type Offset =
@@ -18,6 +19,8 @@ export type Offset =
 
 export interface ToastOptions {
   class?: string;
+  /** 覆盖 Toaster 级的表面样式 */
+  variant?: ToastVariant;
   closeButton?: boolean;
   descriptionClass?: string;
   style?: JSX.CSSProperties;
@@ -36,6 +39,9 @@ export interface ToasterProps {
   theme?: "light" | "dark" | "system";
   position?: Position;
   hotkey?: string[];
+  /** 表面样式，默认 `popover`；单条 toast 可用 `variant` 覆盖 */
+  variant?: ToastVariant;
+  /** @deprecated 使用 `variant`；`true` 等价于 `variant="semantic"` */
   richColors?: boolean;
   expand?: boolean;
   duration?: number;

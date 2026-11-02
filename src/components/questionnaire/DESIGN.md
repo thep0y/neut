@@ -31,20 +31,38 @@ Questionnaire (form)              # Root:激活项、进度、导航、校验、
 
 ## 2. SRP 分工
 
-| 关注点 | 文件 |
-| --- | --- |
-| 类型契约 | `questionnaire.types.ts` |
-| context(Root / Item) | `questionnaire.context.ts` |
-| 纯函数(快捷键/文档序/输入判定) | `questionnaire.utils.ts` |
-| Root 状态机 | `useQuestionnaireRoot.ts` |
-| Item 状态机 | `useQuestionnaireItem.ts` |
-| Choice / Input 引擎 | `QuestionnaireChoice/useQuestionnaireChoice.ts`、`QuestionnaireInput/useQuestionnaireInput.ts` |
-| 各部件的渲染/ARIA | `Questionnaire*/` 各自目录 |
+| 关注点                         | 文件                                                                                                                                                |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 类型契约                       | `questionnaire.types.ts`                                                                                                                            |
+| context(Root / Item)           | `questionnaire.context.ts`                                                                                                                          |
+| Root 状态机                    | `useQuestionnaireRoot.ts`（组装注册表/视图/键盘）                                                                                                   |
+| Item 状态机                    | `useQuestionnaireItem.ts`（组装答案账目/ARIA/校验/焦点）                                                                                            |
+| 题目注册表                     | `questionnaire.registry.ts`（按元素去重替换、注销）                                                                                                 |
+| 题目视图(派生状态)             | `questionnaire.item-view.ts`（DOM 顺序、激活项、进度、首尾）                                                                                        |
+| DOM 顺序观察                   | `questionnaire.dom-watch.ts`（MutationObserver 版本号，SSR 退化）                                                                                   |
+| 答案账目                       | `questionnaire.answers.ts`（选中集合、默认值、touched/skipped/reset）                                                                               |
+| ARIA 文本                      | `questionnaire.aria.ts`（describedby id 合并、keyshortcuts）                                                                                        |
+| 键盘派发                       | `questionnaire.keys.ts`（纯映射，不读信号）                                                                                                         |
+| 快捷键推导                     | `questionnaire.shortcuts.ts`（定义 choices / 已注册答案）                                                                                           |
+| 校验判定                       | `questionnaire.validation.ts`（invalid / satisfied / 原生首个错误）                                                                                 |
+| 题目内焦点                     | `questionnaire.focus.ts`（聚焦首选答案、上下移动）                                                                                                  |
+| 纯函数(输入判定/字母表/文档序) | `questionnaire.utils.ts`                                                                                                                            |
+| Choice / Input 引擎            | `QuestionnaireChoice/useQuestionnaireChoice.ts`、`QuestionnaireChoice/questionnaire-choice.utils.ts`、`QuestionnaireInput/useQuestionnaireInput.ts` |
+| 各部件的渲染/ARIA              | `Questionnaire*/` 各自目录                                                                                                                          |
+
+> 2026-10 重构：根 hook 原先同时负责注册、排序、键盘、焦点与答案账目（约 500 行）。
+> 现在按纯函数边界拆成上表的后 9 个模块：`answers / aria / dom-watch / focus /
+> item-view / keys / registry / shortcuts / validation`。Root 只保留信号、effect 与
+> context 组装；每个纯模块都有独立用例（见 `tests/components/questionnaire/`）。
+> 拆分时固化了两个易错点：题目注册按 **DOM 元素去重替换**（受控 props 变化会重复
+> 注册同一 fieldset），以及初始挂载必须用 DOM 版本号触发一次排序（ref 在插入文档
+> 之前执行，MutationObserver 观察不到首次挂载）。
 
 ## 3. 已实现行为
 
-- **题目注册与排序**:Item 在 ref 里把命令式句柄注册到 Root,Root 按 `compareDocumentPosition`
-  排序;`MutationObserver` 监听动态增删。
+- **题目注册与排序**:Item 在 ref 里把命令式句柄注册到 `questionnaire.registry`（同一元素重复注册会替换）;
+  `questionnaire.item-view` 按 `compareDocumentPosition` 排序，`questionnaire.dom-watch` 用
+  `MutationObserver` + 首次挂载版本号触发重排。
 - **激活项**:`defaultItem` / 受控 `item` + `onItemChange`;不可用时回退到第一个可用项。
 - **导航**:上一题/下一题(先校验,失败则聚焦首个无效控件)/跳过(可选题目)/提交;
   Enter 或 Mod+Enter 提交。
@@ -92,13 +110,13 @@ Questionnaire (form)              # Root:激活项、进度、导航、校验、
 
 上游及示例涉及、而本仓库**没有引入**的依赖,以及现状/替代:
 
-| 依赖 | 用在哪 | 现状 | 未来实现 |
-| --- | --- | --- | --- |
-| `@shadcn/react/questionnaire`(headless) | 全部行为 | 手写 `useQuestionnaireRoot/Item/Choice/Input` 复刻核心语义 | 若要对齐边界情况,可对照其测试用例补 |
-| `cn-questionnaire-*`(主题 token) | 全部样式 | 内联 Tailwind 类 | 引入主题 token 后迁移 |
-| `zod` | Custom Validation 示例 | dev 示例改为手写校验(等价逻辑) | 需要 schema 校验时由使用方接入 |
-| `sonner`(toast) | 各示例提交反馈 | dev 用内联 `role="status"` 结果行替代 | 挂载 Toaster 后可换成 toast |
-| `NativeSelect` | Shortcuts 示例的模式选择 | dev 用原生 `<select>` 替代 | 需要统一外观时用仓库 Select |
+| 依赖                                    | 用在哪                   | 现状                                                       | 未来实现                            |
+| --------------------------------------- | ------------------------ | ---------------------------------------------------------- | ----------------------------------- |
+| `@shadcn/react/questionnaire`(headless) | 全部行为                 | 手写 `useQuestionnaireRoot/Item/Choice/Input` 复刻核心语义 | 若要对齐边界情况,可对照其测试用例补 |
+| `cn-questionnaire-*`(主题 token)        | 全部样式                 | 内联 Tailwind 类                                           | 引入主题 token 后迁移               |
+| `zod`                                   | Custom Validation 示例   | dev 示例改为手写校验(等价逻辑)                             | 需要 schema 校验时由使用方接入      |
+| `sonner`(toast)                         | 各示例提交反馈           | dev 用内联 `role="status"` 结果行替代                      | 挂载 Toaster 后可换成 toast         |
+| `NativeSelect`                          | Shortcuts 示例的模式选择 | dev 用原生 `<select>` 替代                                 | 需要统一外观时用仓库 Select         |
 
 > 结论:问卷的完整交互与无障碍已在本仓库内实现,**未新增任何运行时依赖**;
 > 上表是文字/样式层面的替代,不改变组件行为。

@@ -19,18 +19,18 @@
 
 单一职责原则的落点:**一个文件只负责一件事;渲染、状态、交互算法、ARIA 语义互相解耦**。
 
-| 关注点 | 归属文件 | 职责 |
-| --- | --- | --- |
-| 类型契约 | `Tabs.types.ts` / `TabsTrigger.types.ts` / `TabsContent.types.ts` / `TabsList.types.ts` | 只声明 props 类型,不含实现 |
-| 根状态 | `Tabs/Tabs.context.tsx` | 激活值(受控/非受控)、高亮值、注册表、id 关联 + Provider + `useTabsContext` |
-| 列表状态 | `TabsList/TabsList.context.ts` | `activateOnFocus` 传递 + `useTabsListContext` |
-| 交互算法 | `Tabs/useTabsKeyboard.ts` | 纯函数式键盘导航(方向键/Home/End/loop/rtl/disabled 跳过),可独立单测 |
-| 事件组合 | `Tabs/call-event-handler.ts` | 调用用户事件处理器(兼容函数/数组),组件内事件与用户事件不互相覆盖 |
-| 根渲染 | `Tabs/Tabs.tsx` | 组装 Provider、输出根 DOM、`data-orientation`/`dir`/`data-vertical` 等 |
-| 列表语义 | `TabsList/TabsList.tsx` | `role="tablist"`、`aria-orientation`、挂载键盘事件、variant 样式、提供 ListContext |
-| 触发器语义 | `TabsTrigger/TabsTrigger.tsx` | `role="tab"`、激活态、高亮态、roving tabindex、点击激活、ARIA 关联 |
-| 面板语义 | `TabsContent/TabsContent.tsx` | `role="tabpanel"`、显隐控制、惰性渲染 |
-| 样式 | `TabsList.styles.ts`、`TabsTrigger.styles.ts` | class 字符串与 tsx 分离,与组件逻辑解耦 |
+| 关注点     | 归属文件                                                                                                                      | 职责                                                                               |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| 类型契约   | `Tabs/Tabs.types.ts` / `TabsList/TabsList.types.ts` / `TabsTrigger/TabsTrigger.types.ts` / `TabsContent/TabsContent.types.ts` | 只声明 props 类型,不含实现                                                         |
+| 根状态     | `Tabs/Tabs.context.tsx`                                                                                                       | 激活值(受控/非受控)、高亮值、注册表、id 关联 + Provider + `useTabsContext`         |
+| 列表状态   | `TabsList/TabsList.context.ts`                                                                                                | `activateOnFocus` 传递 + `useTabsListContext`                                      |
+| 交互算法   | `Tabs/useTabsKeyboard.ts`                                                                                                     | 纯函数式键盘导航(方向键/Home/End/loop/rtl/disabled 跳过),可独立单测                |
+| 事件组合   | `src/utils/call-event-handler.ts`                                                                                             | 调用用户事件处理器(兼容 Solid bound handler),组件内事件与用户事件不互相覆盖        |
+| 根渲染     | `Tabs/Tabs.tsx`                                                                                                               | 组装 Provider、输出根 DOM、`data-orientation`/`dir`/`data-vertical` 等             |
+| 列表语义   | `TabsList/TabsList.tsx`                                                                                                       | `role="tablist"`、`aria-orientation`、挂载键盘事件、variant 样式、提供 ListContext |
+| 触发器语义 | `TabsTrigger/TabsTrigger.tsx`                                                                                                 | `role="tab"`、激活态、高亮态、roving tabindex、点击激活、ARIA 关联                 |
+| 面板语义   | `TabsContent/TabsContent.tsx`                                                                                                 | `role="tabpanel"`、显隐控制、惰性渲染                                              |
+| 样式       | `TabsList.styles.ts`、`TabsTrigger.styles.ts`                                                                                 | class 字符串与 tsx 分离,与组件逻辑解耦                                             |
 
 ### 文件结构
 
@@ -42,8 +42,7 @@ src/components/tabs/
 │   ├── Tabs.tsx               # 根容器 + Provider 组装(不含状态逻辑)
 │   ├── Tabs.types.ts          # 类型契约
 │   ├── Tabs.context.tsx       # 唯一状态源(受控/非受控 + 高亮 + 注册表 + id 关联)
-│   ├── useTabsKeyboard.ts     # 键盘导航纯逻辑
-│   └── call-event-handler.ts  # 事件处理器调用工具(函数/数组)
+│   └── useTabsKeyboard.ts     # 键盘导航纯逻辑(事件组合复用 ~/utils)
 ├── TabsList/
 │   ├── index.ts
 │   ├── TabsList.tsx           # tablist 容器 + 键盘事件绑定 + ListContext Provider
@@ -68,17 +67,18 @@ src/components/tabs/
 export type TabsValue = string | number;
 
 interface BaseTabsProps extends BaseProps {
-  defaultValue?: TabsValue;              // 非受控初始激活值
-  value?: TabsValue;                     // 受控激活值
+  defaultValue?: TabsValue; // 非受控初始激活值
+  value?: TabsValue; // 受控激活值
   onValueChange?: (value: TabsValue) => void;
   orientation?: "horizontal" | "vertical"; // 默认 "horizontal"
-  loop?: boolean;                        // 方向键循环,默认 true
+  loop?: boolean; // 方向键循环,默认 true
 }
 
 // TabsList/TabsList.types.ts(新增)
-type BaseTabsListProps = BaseProps & VariantProps<typeof tabsListVariants> & {
-  activateOnFocus?: boolean;             // 聚焦是否激活,默认 false(base-ui 语义)
-};
+type BaseTabsListProps = BaseProps &
+  VariantProps<typeof tabsListVariants> & {
+    activateOnFocus?: boolean; // 聚焦是否激活,默认 false(base-ui 语义)
+  };
 
 // TabsTrigger/TabsTrigger.types.ts
 type BaseTabsTriggerProps = BaseProps & {
@@ -90,7 +90,7 @@ type BaseTabsTriggerProps = BaseProps & {
 // TabsContent/TabsContent.types.ts
 type BaseTabsContentProps = BaseProps & {
   value: TabsValue;
-  forceMount?: boolean;                  // true 时始终挂载 DOM(仅隐藏)
+  forceMount?: boolean; // true 时始终挂载 DOM(仅隐藏)
 };
 ```
 
@@ -120,13 +120,13 @@ interface TabsContextValue {
 
 ## 5. 激活与焦点模型(base-ui 语义)
 
-| 交互 | 行为 |
-| --- | --- |
-| 鼠标点击 | `onClick` 激活(鼠标抬起后;mousedown 触发的 focus 不激活) |
-| Enter / Space | button 原生 click → 激活 |
-| 键盘方向键 / Home / End | 只移动焦点(更新高亮),**不激活** |
-| 聚焦(`activateOnFocus=false`,默认) | 只更新高亮 |
-| 聚焦(`activateOnFocus=true`) | 聚焦即激活(由 `TabsTrigger.onFocus` 处理) |
+| 交互                               | 行为                                                     |
+| ---------------------------------- | -------------------------------------------------------- |
+| 鼠标点击                           | `onClick` 激活(鼠标抬起后;mousedown 触发的 focus 不激活) |
+| Enter / Space                      | button 原生 click → 激活                                 |
+| 键盘方向键 / Home / End            | 只移动焦点(更新高亮),**不激活**                          |
+| 聚焦(`activateOnFocus=false`,默认) | 只更新高亮                                               |
+| 聚焦(`activateOnFocus=true`)       | 聚焦即激活(由 `TabsTrigger.onFocus` 处理)                |
 
 实现要点:
 
@@ -151,11 +151,14 @@ loop=false 边界停止,loop=true 环绕;跳过 disabled
 **roving tabindex**(`TabsTrigger` 内计算):
 
 ```ts
-tabIndex = disabled ? -1
-         : highlighted === value && isUsable(value) ? 0                    // 焦点所在且可用
-         : (highlighted === undefined || !isUsable(highlighted))           // 高亮缺失/不可用
-           && isFirstEnabled(value) ? 0                                    // 回退首个可用起点
-         : -1;
+tabIndex = disabled
+  ? -1
+  : highlighted === value && isUsable(value)
+    ? 0 // 焦点所在且可用
+    : (highlighted === undefined || !isUsable(highlighted)) && // 高亮缺失/不可用
+        isFirstEnabled(value)
+      ? 0 // 回退首个可用起点
+      : -1;
 ```
 
 - 高亮优先;高亮为空或指向 disabled/已卸载 trigger 时,首个可用 tab 持 0,避免 tablist 键盘不可达。
@@ -163,15 +166,15 @@ tabIndex = disabled ? -1
 
 ## 7. 无障碍(ARIA)
 
-| 元素 | 属性 | 值 |
-| --- | --- | --- |
-| `TabsList` | `role` / `aria-orientation` | `"tablist"` / vertical 时 `"vertical"` |
-| `TabsTrigger` | `role` | `"tab"` |
-| `TabsTrigger` | `id` | 生成的 `triggerId` |
-| `TabsTrigger` | `aria-selected` / `aria-controls` / `aria-disabled` | `isSelected` / contentId / disabled |
-| `TabsTrigger` | `tabindex` | 见 roving tabindex |
-| `TabsTrigger` | `disabled` | 原生 disabled(阻止点击/聚焦) |
-| `TabsContent` | `role` / `id` / `aria-labelledby` / `tabindex` | `"tabpanel"` / contentId / triggerId / `0` |
+| 元素          | 属性                                                | 值                                         |
+| ------------- | --------------------------------------------------- | ------------------------------------------ |
+| `TabsList`    | `role` / `aria-orientation`                         | `"tablist"` / vertical 时 `"vertical"`     |
+| `TabsTrigger` | `role`                                              | `"tab"`                                    |
+| `TabsTrigger` | `id`                                                | 生成的 `triggerId`                         |
+| `TabsTrigger` | `aria-selected` / `aria-controls` / `aria-disabled` | `isSelected` / contentId / disabled        |
+| `TabsTrigger` | `tabindex`                                          | 见 roving tabindex                         |
+| `TabsTrigger` | `disabled`                                          | 原生 disabled(阻止点击/聚焦)               |
+| `TabsContent` | `role` / `id` / `aria-labelledby` / `tabindex`      | `"tabpanel"` / contentId / triggerId / `0` |
 
 激活元素输出 `data-active`,与现有样式(`data-active:bg-background` 等)接通。
 
@@ -194,7 +197,7 @@ tabIndex = disabled ? -1
 
 ## 10. 测试计划
 
-项目当前无测试设施,建议最小引入 `vitest` + `solid-testing-library` + `jsdom`,覆盖:
+测试位于 `tests/components/tabs/`（与源码镜像），使用 `vitest` + `@solidjs/testing-library` + `jsdom`，覆盖:
 
 - **激活时机**:鼠标 click 激活、mousedown 不激活;Enter/Space 激活;`activateOnFocus` 开关。
 - **键盘导航**:方向映射(horizontal/vertical、ltr/rtl/auto)、Home/End、loop、跳过 disabled;方向键不激活(默认)。
@@ -217,5 +220,5 @@ tabIndex = disabled ? -1
   </TabsList>
   <TabsContent value="account">账号设置</TabsContent>
   <TabsContent value="password">密码设置</TabsContent>
-</Tabs>
+</Tabs>;
 ```

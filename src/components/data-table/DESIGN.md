@@ -26,17 +26,17 @@ src/components/table/
 
 引擎按职责拆分,`createTable.ts` 只做组装:
 
-| 关注点 | 文件 | 职责 |
-| --- | --- | --- |
-| 类型契约 | `data-table.types.ts` | ColumnDef / Column / Row / Cell / Header / DataTable / state 类型 |
-| 纯工具 | `data-table.utils.ts` | 默认比较、默认过滤 |
-| 状态切片 | `createTableState.ts` | 排序/过滤/显隐/选择/分页 signal + setter + onChange |
-| 列 | `createTableColumns.ts` | 列对象 + accessor/comparator/filterFn 的按 id 映射 + 可见列 |
-| 行 | `createTableRows.ts` | Row 构建与缓存、单元格渲染 |
-| 行模型 | `createRowModel.ts` | core→filtered→sorted→page 记忆化流水线 + 页码收敛 |
-| 选择 | `createTableSelection.ts` | 全选/半选/批量切换 |
-| 表头 | `createTableHeaders.ts` | 表头分组与 header 渲染 |
-| 组装 | `createTable.ts` | 拼装 DataTable API、组装 `state` getter |
+| 关注点   | 文件                      | 职责                                                              |
+| -------- | ------------------------- | ----------------------------------------------------------------- |
+| 类型契约 | `data-table.types.ts`     | ColumnDef / Column / Row / Cell / Header / DataTable / state 类型 |
+| 纯工具   | `data-table.utils.ts`     | 默认比较、默认过滤                                                |
+| 状态切片 | `createTableState.ts`     | 排序/过滤/显隐/选择/分页 signal + setter + onChange               |
+| 列       | `createTableColumns.ts`   | 列对象 + accessor/comparator/filterFn 的按 id 映射 + 可见列       |
+| 行       | `createTableRows.ts`      | Row 构建与缓存、单元格渲染                                        |
+| 行模型   | `createRowModel.ts`       | core→filtered→sorted→page 记忆化流水线 + 页码收敛                 |
+| 选择     | `createTableSelection.ts` | 全选/半选/批量切换                                                |
+| 表头     | `createTableHeaders.ts`   | 表头分组与 header 渲染                                            |
+| 组装     | `createTable.ts`          | 拼装 DataTable API、组装 `state` getter                           |
 
 dev:`dev/examples/data-table.tsx`(payments 示例)。
 
@@ -55,7 +55,7 @@ dev:`dev/examples/data-table.tsx`(payments 示例)。
 ```ts
 const table = createTable<Payment>({
   columns,
-  data: () => payments,       // Solid 惯用法:传 accessor
+  data: () => payments, // Solid 惯用法:传 accessor
   getRowId: (row) => row.id,
 });
 ```
@@ -87,4 +87,5 @@ const table = createTable<Payment>({
 - faceted 过滤(多选过滤)、全局过滤、服务端(手动)分页/排序。
 - `createColumnHelper`、`flexRender` 独立函数、受控 state 切片。
 - `indeterminate` 头部勾选;`Table` 的 caption 语义补全。
-- 引擎纯函数单测(过滤/排序/分页/选择)、a11y 走查。
+- 引擎纯函数单测已覆盖过滤/排序/分页/选择（`tests/components/data-table/create*.test.ts`）；
+  仍需真机 a11y 与大数据量下的手动走查。

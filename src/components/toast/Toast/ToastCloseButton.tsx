@@ -17,7 +17,7 @@ export function ToastCloseButton(props: {
       data-slot="toast-close"
       aria-label={props.ariaLabel ?? "Close toast"}
       class={clsx(
-        "absolute top-2.5 right-2.5 flex size-5 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground",
+        "absolute top-1.5 right-1.5 flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring/50",
         props.class,
       )}
       onClick={(): void => props.onClose()}

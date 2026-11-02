@@ -102,7 +102,7 @@ function ToastCustom() {
         onClick={() =>
           toast.custom((id) => (
             <div class="flex items-center gap-2">
-              <span class="size-2 rounded-full bg-emerald-500" />
+              <span class="size-2 rounded-full bg-success" />
               Custom toast #{id}
             </div>
           ))
@@ -110,6 +110,48 @@ function ToastCustom() {
       >
         Show custom toast
       </Button>
+    </div>
+  );
+}
+
+const variants = ["popover", "semantic", "colored"] as const;
+
+function ToastVariants() {
+  return (
+    <div class="flex flex-col items-center gap-3">
+      <For each={variants}>
+        {(variant) => (
+          <div class="flex flex-wrap items-center justify-center gap-2">
+            <span class="w-20 text-right text-xs text-muted-foreground">
+              {variant}
+            </span>
+            <Button
+              variant="outline"
+              onClick={() => toast.success("Saved", { variant })}
+            >
+              Success
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => toast.error("Failed", { variant })}
+            >
+              Error
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => toast.info("Update", { variant })}
+            >
+              Info
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => toast.warning("Careful", { variant })}
+            >
+              Warning
+            </Button>
+          </div>
+        )}
+      </For>
     </div>
   );
 }
@@ -165,6 +207,13 @@ export const toastSections: Section[] = [
     title: "Custom",
     description: "Render custom JSX inside a toast.",
     component: ToastCustom,
+  },
+  {
+    id: "toast-variants",
+    title: "Variants",
+    description:
+      "popover (shadcn default), semantic tint, or solid colored surface.",
+    component: ToastVariants,
   },
   {
     id: "toast-positions",

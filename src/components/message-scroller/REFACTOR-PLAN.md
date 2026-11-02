@@ -12,35 +12,35 @@
 
 ### 0.1 规模与覆盖率（实测）
 
-| 文件 | 行数 | 语句 | 分支 | 函数 | 行 |
-| --- | --- | --- | --- | --- | --- |
-| `useMessageScrollerEngine.ts` | 797 | 57.08 | **39.93** | 58.62 | 59.86 |
-| `message-scroller.anchors.ts` | 48 | 100 | 100 | 100 | 100 |
-| `message-scroller.measure.ts` | 44 | 100 | 100 | 100 | 100 |
-| `message-scroller.scroll-target.ts` | 82 | 100 | 100 | 100 | 100 |
-| `useMessageScroller.ts` / `…Scrollable` / `…Visibility` | — | 100 | 100 | 100 | 100 |
-| `MessageScroller*.tsx`（六个部件） | — | **0** | 0 | 0 | 0 |
+| 文件                                                    | 行数 | 语句  | 分支      | 函数  | 行    |
+| ------------------------------------------------------- | ---- | ----- | --------- | ----- | ----- |
+| `useMessageScrollerEngine.ts`                           | 797  | 57.08 | **39.93** | 58.62 | 59.86 |
+| `message-scroller.anchors.ts`                           | 48   | 100   | 100       | 100   | 100   |
+| `message-scroller.measure.ts`                           | 44   | 100   | 100       | 100   | 100   |
+| `message-scroller.scroll-target.ts`                     | 82   | 100   | 100       | 100   | 100   |
+| `useMessageScroller.ts` / `…Scrollable` / `…Visibility` | —    | 100   | 100       | 100   | 100   |
+| `MessageScroller*.tsx`（六个部件）                      | —    | **0** | 0         | 0     | 0     |
 
 2026-09 那一轮已经把「CSS 解析 / 锚点查找 / 对齐算法」三块纯计算拆出去了（见 DESIGN.md §2），
 所以**引擎里剩下的全是"读 DOM + 驱动状态"的脏逻辑**，而恰恰是这部分几乎没有测试。
 
 ### 0.2 未覆盖区间（按关注点归类，实测 lcov）
 
-| 关注点 | 未覆盖行 | 说明 |
-| --- | --- | --- |
-| DOM 几何测量 | 112-114, 123, 131, 147, 154-159 | `itemOffsetTop` / `itemTopInViewport` 的部分守卫、`contentBottom` 循环、`maxScrollTop`、`setSpacerHeight` |
-| 滚动状态机 | 187-193, 219, 224-226, 228, 232 | anchored/settling 不被抢回、visibility 帧、`applyAutoscrolling` 定时器 |
-| 命令与 spacer | 249, 289-291, 304-319 | `setScrollTop` 容差分支、`targetTopFor`、`scrollToElement` 主体（spacer + prependAnchor + mode） |
-| 重锚定 | 323-325 | `reanchorToAnchoredMessage` |
-| 初始定位 | 333-358 | `applyDefaultScrollPosition` 三条路径全未覆盖 |
-| 排队 | 367-404 | `flushPendingScrollToMessage` / `schedulePendingFlush` / `scrollToMessage` 已挂载分支 |
-| prepend 保位 | 415-434 | `capturePrependAnchor` / `restorePrependAnchor` |
-| 内容变化编排 | 439-530 | `handleContentChange`（93 行）几乎所有分支 |
-| resize | 533-545 | `handleResize` 四条路径 |
-| 让位 | 556-562 | `releaseFollow` |
-| 可见性 | 567-653 | `computeVisibility` + 观察器 start/stop/subscribe |
-| 注册 | 662-681 | `registerMessage` / `registerItem` |
-| effect 接线 | 705, 717-718, 740, 751-752 | anchorMutation / resize 帧 / keydown |
+| 关注点        | 未覆盖行                        | 说明                                                                                                      |
+| ------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| DOM 几何测量  | 112-114, 123, 131, 147, 154-159 | `itemOffsetTop` / `itemTopInViewport` 的部分守卫、`contentBottom` 循环、`maxScrollTop`、`setSpacerHeight` |
+| 滚动状态机    | 187-193, 219, 224-226, 228, 232 | anchored/settling 不被抢回、visibility 帧、`applyAutoscrolling` 定时器                                    |
+| 命令与 spacer | 249, 289-291, 304-319           | `setScrollTop` 容差分支、`targetTopFor`、`scrollToElement` 主体（spacer + prependAnchor + mode）          |
+| 重锚定        | 323-325                         | `reanchorToAnchoredMessage`                                                                               |
+| 初始定位      | 333-358                         | `applyDefaultScrollPosition` 三条路径全未覆盖                                                             |
+| 排队          | 367-404                         | `flushPendingScrollToMessage` / `schedulePendingFlush` / `scrollToMessage` 已挂载分支                     |
+| prepend 保位  | 415-434                         | `capturePrependAnchor` / `restorePrependAnchor`                                                           |
+| 内容变化编排  | 439-530                         | `handleContentChange`（93 行）几乎所有分支                                                                |
+| resize        | 533-545                         | `handleResize` 四条路径                                                                                   |
+| 让位          | 556-562                         | `releaseFollow`                                                                                           |
+| 可见性        | 567-653                         | `computeVisibility` + 观察器 start/stop/subscribe                                                         |
+| 注册          | 662-681                         | `registerMessage` / `registerItem`                                                                        |
+| effect 接线   | 705, 717-718, 740, 751-752      | anchorMutation / resize 帧 / keydown                                                                      |
 
 **结论：在把代码搬走之前，必须先补测试网。** 否则搬 400 行未覆盖逻辑，等于把风险从"看得见的大文件"变成"看不见的四个小文件"。
 
@@ -50,13 +50,13 @@
 
 保留一个"编排核心"，抽出三块独立职责（外加一块共享的几何测量）：
 
-| 新模块 | 关注点 | 输入 | 输出（副作用） | **不做什么** |
-| --- | --- | --- | --- | --- |
-| `message-scroller.dom-measure.ts` | DOM 几何测量 | viewport / content / spacer 元素 | 无（只读） | 不读 options、不改任何状态 |
-| `message-scroller.visibility.ts`（块 D） | 可见性与阅读锚点 | 上述测量、`options`、IO | `visibleMessageIds` / `currentAnchorId`；按需建/断 IO | 不改 scrollTop、不决定锚定 |
-| `message-scroller.scroll-state.ts`（块 A） | 模式状态机 | `options`、测量、滚动事件 | `scrollableStart/End`、`autoscrolling`、`mode` | 不直接写 scrollTop（只提供 mode 迁移） |
-| `message-scroller.commands.ts`（块 B） | 滚动命令与 spacer | 命令参数、测量、状态机 | 写 `scrollTop`、写 spacer、迁移 mode | 不监听事件、不决定"何时滚" |
-| `message-scroller.anchoring.ts`（块 C） | 锚定与保位 | content 子元素变化、resize、排队请求 | 调用块 B 的命令 | 不碰 IO、不拼 ctx |
+| 新模块                                     | 关注点            | 输入                                 | 输出（副作用）                                        | **不做什么**                           |
+| ------------------------------------------ | ----------------- | ------------------------------------ | ----------------------------------------------------- | -------------------------------------- |
+| `message-scroller.dom-measure.ts`          | DOM 几何测量      | viewport / content / spacer 元素     | 无（只读）                                            | 不读 options、不改任何状态             |
+| `message-scroller.visibility.ts`（块 D）   | 可见性与阅读锚点  | 上述测量、`options`、IO              | `visibleMessageIds` / `currentAnchorId`；按需建/断 IO | 不改 scrollTop、不决定锚定             |
+| `message-scroller.scroll-state.ts`（块 A） | 模式状态机        | `options`、测量、滚动事件            | `scrollableStart/End`、`autoscrolling`、`mode`        | 不直接写 scrollTop（只提供 mode 迁移） |
+| `message-scroller.commands.ts`（块 B）     | 滚动命令与 spacer | 命令参数、测量、状态机               | 写 `scrollTop`、写 spacer、迁移 mode                  | 不监听事件、不决定"何时滚"             |
+| `message-scroller.anchoring.ts`（块 C）    | 锚定与保位        | content 子元素变化、resize、排队请求 | 调用块 B 的命令                                       | 不碰 IO、不拼 ctx                      |
 
 依赖方向（无环）：
 
@@ -76,31 +76,31 @@ dom-measure ──┬──> scroll-state ──> commands ──> anchoring
 
 ## 2. 需要评审拍板的边界决策
 
-| # | 决策 | 建议 | 理由 |
-| --- | --- | --- | --- |
-| D1 | `mode` 的归属 | 唯一住在 `scroll-state`，只暴露语义化迁移：`setFollowing()` / `setFree()` / `settleJump()` / `anchorTo(el)` | 现状 `mode` 被三处直接赋值（状态机、命令、`releaseFollow`），是"看不见的耦合"；收敛后块 B/C 无法越权改模式 |
-| D2 | `spacerHeight` / `spacerGap` | 住在 `commands`，对外读 `spacerHeight()` | anchoring 的 `handleResize` 需要比较"重锚定前后 spacer 是否归零" |
-| D3 | `pendingScroll` / `defaultApplied` | 住在 `anchoring` | 它们只服务"首次定位 + 排队"，且 `pendingScroll` 要透出给 ctx |
-| D4 | 行注册表 `messageElements` | 留在引擎 | 避免 `anchoring ↔ visibility` 直接互相依赖（注册时要"若在排队该 id 则 flush"+"observe"） |
-| D5 | 注册表与可见性的桥 | 引擎在 `registerItem` 里显式调用 `anchoring.notifyMessageAppeared(id)` 与 `visibility.registerElement/unregisterElement` | 让依赖方向单向、可见 |
-| D6 | DOM 几何测量放新文件还是并入 `measure.ts` | **新文件** `message-scroller.dom-measure.ts` | `measure.ts` 的文档定位是"CSS 尺寸测量（纯）"，而这块要读 viewport/content 元素；合在一起会让"纯模块 100% 覆盖"的保证变脆 |
-| D7 | 帧调度（rAF/timeout） | 每个模块持有自己的句柄，引擎在卸载时逐个 `dispose()` | 现状四个 `*Frame` + 一个 `timer` 全散在引擎作用域，卸载清理容易漏 |
-| D8 | 每步是否允许顺手改行为 | **不允许**。发现行为问题就单独开提交："先写失败用例 → 修 → 保留回归用例"（TESTING.md §7） | 搬迁与修 bug 混在一起会让"覆盖率变化"无法解释 |
+| #   | 决策                                      | 建议                                                                                                                     | 理由                                                                                                                      |
+| --- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| D1  | `mode` 的归属                             | 唯一住在 `scroll-state`，只暴露语义化迁移：`setFollowing()` / `setFree()` / `settleJump()` / `anchorTo(el)`              | 现状 `mode` 被三处直接赋值（状态机、命令、`releaseFollow`），是"看不见的耦合"；收敛后块 B/C 无法越权改模式                |
+| D2  | `spacerHeight` / `spacerGap`              | 住在 `commands`，对外读 `spacerHeight()`                                                                                 | anchoring 的 `handleResize` 需要比较"重锚定前后 spacer 是否归零"                                                          |
+| D3  | `pendingScroll` / `defaultApplied`        | 住在 `anchoring`                                                                                                         | 它们只服务"首次定位 + 排队"，且 `pendingScroll` 要透出给 ctx                                                              |
+| D4  | 行注册表 `messageElements`                | 留在引擎                                                                                                                 | 避免 `anchoring ↔ visibility` 直接互相依赖（注册时要"若在排队该 id 则 flush"+"observe"）                                  |
+| D5  | 注册表与可见性的桥                        | 引擎在 `registerItem` 里显式调用 `anchoring.notifyMessageAppeared(id)` 与 `visibility.registerElement/unregisterElement` | 让依赖方向单向、可见                                                                                                      |
+| D6  | DOM 几何测量放新文件还是并入 `measure.ts` | **新文件** `message-scroller.dom-measure.ts`                                                                             | `measure.ts` 的文档定位是"CSS 尺寸测量（纯）"，而这块要读 viewport/content 元素；合在一起会让"纯模块 100% 覆盖"的保证变脆 |
+| D7  | 帧调度（rAF/timeout）                     | 每个模块持有自己的句柄，引擎在卸载时逐个 `dispose()`                                                                     | 现状四个 `*Frame` + 一个 `timer` 全散在引擎作用域，卸载清理容易漏                                                         |
+| D8  | 每步是否允许顺手改行为                    | **不允许**。发现行为问题就单独开提交："先写失败用例 → 修 → 保留回归用例"（TESTING.md §7）                                | 搬迁与修 bug 混在一起会让"覆盖率变化"无法解释                                                                             |
 
 ---
 
 ## 3. 迁移顺序（每步一个提交，2..6 步都不改行为）
 
-| 步骤 | 动作 | 引擎行数（预估） | 该步必须新增的测试 | 验收信号 |
-| --- | --- | --- | --- | --- |
-| **0** | 补测试网 + 抽测试脚手架 | 不变（797） | §4 全部（≈46 条），拆成 4-5 个小提交 | 引擎分支 ≥ 80%；`tests/components/message-scroller` 全绿 |
-| **0.5** | 把 `measured/setScrollMetrics/setupDom/addRow/addRowAtOffset/renderEngine/flushState` 搬到 `tests/components/message-scroller/test-utils.ts` | 不变 | 无（纯搬迁） | 用例数与断言一字不改、全绿 |
-| **1** | 抽 `dom-measure` | −50 | 测量 4 组直接单测（§4 a） | 新模块四项 100% |
-| **2** | 抽 `visibility`（块 D） | −120 | §4 e 全部（12 条） | 新模块四项 100%；`useMessageScrollerVisibility` 仍 100% |
-| **3** | 抽 `scroll-state`（块 A） | −90 | §4 b 全部（9 条）+ 迁移"可滚动状态"既有用例 | 新模块四项 100% |
-| **4** | 抽 `commands`（块 B） | −110 | §4 c 全部（8 条）+ 迁移"滚动方法"既有用例 | 新模块四项 100% |
-| **5** | 抽 `anchoring`（块 C） | −250 | §4 d 全部（13 条） | 新模块四项 100%；引擎 ≤ 200 行 |
-| **6** | 文档收尾 | — | 无 | DESIGN.md §2 表格 + "2026-10 重构"说明；TESTING.md §6 新增一行 |
+| 步骤    | 动作                                                                                                                                         | 引擎行数（预估） | 该步必须新增的测试                          | 验收信号                                                       |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ------------------------------------------- | -------------------------------------------------------------- |
+| **0**   | 补测试网 + 抽测试脚手架                                                                                                                      | 不变（797）      | §4 全部（≈46 条），拆成 4-5 个小提交        | 引擎分支 ≥ 80%；`tests/components/message-scroller` 全绿       |
+| **0.5** | 把 `measured/setScrollMetrics/setupDom/addRow/addRowAtOffset/renderEngine/flushState` 搬到 `tests/components/message-scroller/test-utils.ts` | 不变             | 无（纯搬迁）                                | 用例数与断言一字不改、全绿                                     |
+| **1**   | 抽 `dom-measure`                                                                                                                             | −50              | 测量 4 组直接单测（§4 a）                   | 新模块四项 100%                                                |
+| **2**   | 抽 `visibility`（块 D）                                                                                                                      | −120             | §4 e 全部（12 条）                          | 新模块四项 100%；`useMessageScrollerVisibility` 仍 100%        |
+| **3**   | 抽 `scroll-state`（块 A）                                                                                                                    | −90              | §4 b 全部（9 条）+ 迁移"可滚动状态"既有用例 | 新模块四项 100%                                                |
+| **4**   | 抽 `commands`（块 B）                                                                                                                        | −110             | §4 c 全部（8 条）+ 迁移"滚动方法"既有用例   | 新模块四项 100%                                                |
+| **5**   | 抽 `anchoring`（块 C）                                                                                                                       | −250             | §4 d 全部（13 条）                          | 新模块四项 100%；引擎 ≤ 200 行                                 |
+| **6**   | 文档收尾                                                                                                                                     | —                | 无                                          | DESIGN.md §2 表格 + "2026-10 重构"说明；TESTING.md §6 新增一行 |
 
 ### 每步统一的回归策略
 
@@ -191,14 +191,14 @@ dom-measure ──┬──> scroll-state ──> commands ──> anchoring
 
 ## 5. 风险与对策
 
-| 风险 | 对策 |
-| --- | --- |
-| 测试网本身写错（把当前 bug 固化成期望） | 每条断言前先确认 DESIGN.md §3 的"已实现行为"是权威；发现实现与文档不符 → 当 bug 处理（单独提交 + 文档同步），不写"迎合实现"的断言 |
-| `mode` 语义在搬迁中被改掉 | Step 3 之前先补 §4 b 的模式迁移矩阵；Step 3 只做"把赋值换成语义化方法" |
-| 循环依赖导致 import 混乱 | 按 §1 的依赖方向；循环苗头（anchoring ↔ visibility）一律通过引擎注入回调处理 |
-| jsdom 无布局导致"测了个寂寞" | 继续用可控坐标系（`measured` + `setScrollMetrics`）；不引入真实浏览器依赖 |
-| 四块新模块"都 100% 但组合起来坏了" | 引擎层的组合用例（§4 d/f）保留在集成测试文件里，不迁走；每步跑定向 + 全量 |
-| 拆完行数没降（接口变多） | 以"模块可独立 100% 覆盖"为收益判据，不以行数为唯一指标；若某块拆完 < 60 行且无独立语义，就不拆（评估后 `dom-measure` 是边界情况，已按 §D6 决策） |
+| 风险                                    | 对策                                                                                                                                             |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 测试网本身写错（把当前 bug 固化成期望） | 每条断言前先确认 DESIGN.md §3 的"已实现行为"是权威；发现实现与文档不符 → 当 bug 处理（单独提交 + 文档同步），不写"迎合实现"的断言                |
+| `mode` 语义在搬迁中被改掉               | Step 3 之前先补 §4 b 的模式迁移矩阵；Step 3 只做"把赋值换成语义化方法"                                                                           |
+| 循环依赖导致 import 混乱                | 按 §1 的依赖方向；循环苗头（anchoring ↔ visibility）一律通过引擎注入回调处理                                                                     |
+| jsdom 无布局导致"测了个寂寞"            | 继续用可控坐标系（`measured` + `setScrollMetrics`）；不引入真实浏览器依赖                                                                        |
+| 四块新模块"都 100% 但组合起来坏了"      | 引擎层的组合用例（§4 d/f）保留在集成测试文件里，不迁走；每步跑定向 + 全量                                                                        |
+| 拆完行数没降（接口变多）                | 以"模块可独立 100% 覆盖"为收益判据，不以行数为唯一指标；若某块拆完 < 60 行且无独立语义，就不拆（评估后 `dom-measure` 是边界情况，已按 §D6 决策） |
 
 ---
 

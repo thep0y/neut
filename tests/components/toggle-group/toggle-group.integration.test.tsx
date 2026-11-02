@@ -27,28 +27,41 @@ function renderGroup(
     disabledValues?: string[];
   } = {},
 ) {
-  return render(() => (
-    <ToggleGroup
-      multiple={props.multiple}
-      defaultValue={
-        (props.multiple
-          ? props.defaultValueMultiple
-          : props.defaultValue) as never
-      }
-      value={(props.multiple ? undefined : props.value) as never}
-      onValueChange={props.onValueChange as never}
-      orientation={props.orientation}
-      loopFocus={props.loopFocus}
-      disabled={props.disabled}
-      dir={props.dir}
-    >
-      {["bold", "italic", "underline"].map((v) => (
-        <ToggleGroupItem value={v} disabled={props.disabledValues?.includes(v)}>
-          {v}
-        </ToggleGroupItem>
-      ))}
-    </ToggleGroup>
-  ));
+  /** 单选 / 多选是判别联合：`multiple` 必须落到字面量 true / false 上 */
+  const items = () =>
+    ["bold", "italic", "underline"].map((v) => (
+      <ToggleGroupItem value={v} disabled={props.disabledValues?.includes(v)}>
+        {v}
+      </ToggleGroupItem>
+    ));
+
+  const common = {
+    onValueChange: props.onValueChange as never,
+    orientation: props.orientation,
+    loopFocus: props.loopFocus,
+    disabled: props.disabled,
+    dir: props.dir,
+  };
+
+  return render(() =>
+    props.multiple ? (
+      <ToggleGroup
+        {...common}
+        multiple
+        defaultValue={props.defaultValueMultiple as never}
+      >
+        {items()}
+      </ToggleGroup>
+    ) : (
+      <ToggleGroup
+        {...common}
+        defaultValue={props.defaultValue as never}
+        value={props.value as never}
+      >
+        {items()}
+      </ToggleGroup>
+    ),
+  );
 }
 
 function items(): HTMLButtonElement[] {

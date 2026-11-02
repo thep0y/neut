@@ -24,14 +24,15 @@ HoverCard              # 根:open/defaultOpen/onOpenChange + delay/closeDelay,�
 
 ## 2. SRP 分工
 
-| 关注点 | 文件 |
-| --- | --- |
-| 类型契约 | `hover-card.types.ts` |
-| context | `hover-card.context.ts` |
-| side/align → placement、transform-origin | `hover-card.utils.ts` |
-| 根状态与延迟计时 | `HoverCard/HoverCard.tsx` |
-| Trigger 事件 | `HoverCardTrigger/`(`useHoverCardTrigger.ts`) |
-| 定位与挂载生命周期 | `HoverCardContent/`(`useHoverCardContent.ts`) |
+| 关注点                                   | 文件                                                                                      |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 类型契约                                 | `hover-card.types.ts`                                                                     |
+| context                                  | `hover-card.context.ts`                                                                   |
+| side/align → placement、transform-origin | `src/lib/positioner`（`toPlacement` / `getTransformOrigin` / `getSide` / `getAlignment`） |
+| 根状态与延迟计时                         | `HoverCard/HoverCard.tsx`                                                                 |
+| Trigger 事件                             | `HoverCardTrigger/HoverCardTrigger.tsx` + `useHoverCardTrigger.ts`                        |
+| 定位与挂载生命周期                       | `HoverCardContent/HoverCardContent.tsx` + `useHoverCardContent.ts`                        |
+| 类型 / context                           | `hover-card.types.ts` / `hover-card.context.ts`                                           |
 
 ## 3. 已实现行为
 
@@ -44,6 +45,7 @@ HoverCard              # 根:open/defaultOpen/onOpenChange + delay/closeDelay,�
 - **定位**:`side`(默认 bottom)、`align`(默认 center)、`sideOffset`(4)、
   `alignOffset`(4)、`collisionPadding`(8);管线 = offset → flip → shift → hide →
   containingBlockOffset,贴合 trigger 放不下时翻转/贴边,reference 被裁掉时隐藏。
+  这些纯函数现在位于 `src/lib/positioner/utils/floating.ts`，Tooltip/Popover/HoverCard 共用。
 - **进出场**:打开延迟一帧再切 `data-state=open`(保证 transform-origin 已按最终
   placement 算好);关闭靠 `animationend`(带 300ms 兜底)卸载,退场动画播完再移除。
   动画用本仓库既有的 `animate-in/out` + `fade/zoom` + 方向 `slide-in-from-*`。
@@ -58,14 +60,14 @@ HoverCard              # 根:open/defaultOpen/onOpenChange + delay/closeDelay,�
 `Popover` 与 `HoverCard` 表面相似(Root 都有 `open`/`onOpenChange`/reference/floating,
 Content 都用同一个 positioner 管线),但**交互模型不同**,直接组合会互相打架:
 
-| 维度 | Popover | HoverCard |
-| --- | --- | --- |
-| 打开方式 | 点击/键盘 Enter/Space **toggle** | **悬停延迟**打开;focus 立即打开 |
-| 关闭方式 | 点击外部(pointerdown capture)、Escape | pointerleave 延迟、Escape;内容可移入保持 |
-| 滚动 | 默认 `useScrollLock` 锁定页面 | 不锁 |
-| 面板形态 | `modal` 语义,`role="dialog"` + `aria-expanded`/`aria-controls` | 预览卡片,trigger `aria-describedby` |
-| 卸载 | `open=false` 立即卸载(无退场等待) | 退场动画播完(`animationend`)再卸载 |
-| trigger 默认 | `Button` | 无样式 `<a>` |
+| 维度         | Popover                                                        | HoverCard                                |
+| ------------ | -------------------------------------------------------------- | ---------------------------------------- |
+| 打开方式     | 点击/键盘 Enter/Space **toggle**                               | **悬停延迟**打开;focus 立即打开          |
+| 关闭方式     | 点击外部(pointerdown capture)、Escape                          | pointerleave 延迟、Escape;内容可移入保持 |
+| 滚动         | 默认 `useScrollLock` 锁定页面                                  | 不锁                                     |
+| 面板形态     | `modal` 语义,`role="dialog"` + `aria-expanded`/`aria-controls` | 预览卡片,trigger `aria-describedby`      |
+| 卸载         | `open=false` 立即卸载(无退场等待)                              | 退场动画播完(`animationend`)再卸载       |
+| trigger 默认 | `Button`                                                       | 无样式 `<a>`                             |
 
 如果 HoverCard 套 Popover,就需要一路关掉 scroll lock/modal、绕开它 toggle 与
 outside-pointerdown 的逻辑、并放弃退场动画;这比按语义单独实现更脆弱。
@@ -75,7 +77,8 @@ outside-pointerdown 的逻辑、并放弃退场动画;这比按语义单独实�
 纯函数原先在 Tooltip / Popover 里各存一份,这次已抽到
 `src/lib/positioner/utils/floating.ts`(`toPlacement` / `getTransformOrigin` /
 `createFloatingMiddleware`),**Popover、Tooltip、HoverCard 现在共用同一份**,
-各自的 `.utils.ts` 只保留向后兼容的薄封装。后续 Select/Combobox 也可迁移过来。
+HoverCard 不再单独维护 `hover-card.utils.ts`，只通过 `~/lib` 的公开函数取用。
+后续 Select/Combobox 也可迁移到同一组纯函数。
 
 ## 5. 与上游的差异
 
@@ -92,14 +95,14 @@ outside-pointerdown 的逻辑、并放弃退场动画;这比按语义单独实�
 上游运行时,复用 `src/lib/positioner` 自研实现。以下 Base UI 能力**目前未实现**,需要
 第三方或后续补齐(若补齐,建议做成 Tooltip/HoverCard 共用):
 
-| 能力 | 上游来源 | 现状 | 未来实现 |
-| --- | --- | --- | --- |
-| `onOpenChangeComplete`(动画完成回调) | Base UI PreviewCard | 只有 `onOpenChange` | 在 Presence 卸载点回调 |
-| `disableHoverablePopup`(禁止移入内容保持打开) | Base UI PreviewCard | 内容始终可停留 | 加开关,关闭时 content 不监听 pointer |
-| 指针跟踪轴(`trackCursorAxis`) | Base UI PreviewCard | 不跟踪光标 | 可选:按指针 x/y 更新定位 |
-| `stickIfOpen`、Portal 容器、`keepMounted` | Base UI PreviewCard | 关闭即卸载、Portal 到 body | 视需求扩展 |
-| `delay`/`closeDelay` 的跨组件共享(类似 TooltipGroup) | Base UI 无直接对应 | 单卡片独立 | 目前不需要 |
-| logical side 的 RTL | Base UI 逻辑属性 | 已支持 `inline-start`/`inline-end`(按 `dir` 转换) | 保持 |
+| 能力                                                 | 上游来源            | 现状                                              | 未来实现                             |
+| ---------------------------------------------------- | ------------------- | ------------------------------------------------- | ------------------------------------ |
+| `onOpenChangeComplete`(动画完成回调)                 | Base UI PreviewCard | 只有 `onOpenChange`                               | 在 Presence 卸载点回调               |
+| `disableHoverablePopup`(禁止移入内容保持打开)        | Base UI PreviewCard | 内容始终可停留                                    | 加开关,关闭时 content 不监听 pointer |
+| 指针跟踪轴(`trackCursorAxis`)                        | Base UI PreviewCard | 不跟踪光标                                        | 可选:按指针 x/y 更新定位             |
+| `stickIfOpen`、Portal 容器、`keepMounted`            | Base UI PreviewCard | 关闭即卸载、Portal 到 body                        | 视需求扩展                           |
+| `delay`/`closeDelay` 的跨组件共享(类似 TooltipGroup) | Base UI 无直接对应  | 单卡片独立                                        | 目前不需要                           |
+| logical side 的 RTL                                  | Base UI 逻辑属性    | 已支持 `inline-start`/`inline-end`(按 `dir` 转换) | 保持                                 |
 
 > 结论:悬停延迟、交互内容、键盘、定位与进出场动画均已在本仓库内实现,
 > **未新增任何运行时依赖**。
