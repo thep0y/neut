@@ -1,0 +1,46 @@
+name: "Delete Merged Branch"
+
+# 功能分支合并后自动删除 head 分支。
+# - 只处理本仓库的分支（fork PR 跳过，token 也没有删除权限）
+# - main / master / dev 是长期分支，永远不删
+# - stacked PR 的前置分支被删除后，GitHub 会把依赖 PR 的 base 自动改到 main
+
+on:
+    pull_request:
+        types: [closed]
+
+permissions:
+    contents: write
+
+jobs:
+    delete-branch:
+        name: "Delete head branch"
+        if: >-
+            github.event.pull_request.merged == true &&
+            github.event.pull_request.head.repo.full_name == github.repository
+        runs-on: ubuntu-24.04
+        timeout-minutes: 5
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Delete merged branch
+              env:
+                  BRANCH: ${{ github.event.pull_request.head.ref }}
+              run: |
+                  set -euo pipefail
+
+                  case "$BRANCH" in
+                      main|master|dev)
+                          echo "Skip long-lived branch: $BRANCH"
+                          exit 0
+                          ;;
+                  esac
+
+                  if ! git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+                      echo "Branch is already gone: $BRANCH"
+                      exit 0
+                  fi
+
+                  git push origin --delete "$BRANCH"
