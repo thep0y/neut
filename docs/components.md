@@ -83,7 +83,7 @@ import { Button } from "@neut/ui/components/button";
 | **Progress** | `Progress`、`ProgressLabel`、`ProgressValue` | 根 `Progress` 的 `value: number`（0–100）；内部渲染 `role="progressbar"`；`data-slot`：`progress`、`progress-track`、`progress-indicator`、`progress-label`、`progress-value` |
 | **Skeleton** | `Skeleton` | 纯占位块；用 `class` 控制尺寸与圆角 |
 | **Spinner** | `Spinner` | SVG 旋转指示器；`aria-hidden` 由使用方决定 |
-| **Toast** | `Toaster`、`Toast`、`toast`、`useSonner`、`getToasts`、`getHistory` | 命令式 `toast(...)` / `toast.success` / `toast.promise`；`Toaster` 的 `position`、`duration`、`visibleToasts`、`expand`、`richColors`、`swipeDirections`、`offset`、`mobileOffset`。详见 [Toast](./components/toast.md) |
+| **Toast** | `Toaster`、`Toast`、`toast`、`useSonner`、`getToasts`、`getHistory` | 命令式 `toast(...)` / `toast.success` / `toast.promise`；`Toaster` 的 `position`、`duration`、`visibleToasts`、`expand`、`variant`、`swipeDirections`、`offset`、`mobileOffset`。`variant` 支持 `popover`（默认，shadcn 样式）/ `semantic` / `colored`；描边恒为中性灰，彩色边框由使用方覆盖。详见 [Toast](./components/toast.md) |
 
 ## 数据展示
 

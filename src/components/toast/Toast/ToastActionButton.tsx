@@ -11,9 +11,13 @@ export interface ToastActionButtonProps {
   onClose: () => void;
 }
 
+/**
+ * 与 Button 的 xs 尺寸共用同一组度量（h-6 / px-2 / text-xs / 小圆角），
+ * 配色也回到 `primary` / `secondary` 语义 token，不再用"前景色反色"那套。
+ */
 const VARIANT_CLASS: Record<ToastActionButtonProps["variant"], string> = {
-  action: "bg-foreground text-background hover:bg-foreground/80",
-  cancel: "bg-foreground/10 text-foreground hover:bg-foreground/15",
+  action: "bg-primary text-primary-foreground hover:bg-primary/80",
+  cancel: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
 };
 
 /**
@@ -29,7 +33,7 @@ export function ToastActionButton(props: ToastActionButtonProps): JSX.Element {
       type="button"
       data-slot={isAction() ? "toast-action" : "toast-cancel"}
       class={clsx(
-        "shrink-0 rounded-md px-2.5 py-1 text-xs font-medium outline-none transition-colors",
+        "h-6 shrink-0 rounded-[min(var(--radius-md),10px)] px-2 text-xs font-medium outline-hidden transition-colors focus-visible:ring-2 focus-visible:ring-ring/50",
         VARIANT_CLASS[props.variant],
         props.class,
       )}

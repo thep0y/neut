@@ -182,6 +182,33 @@ describe("ToastViewport 逐条渲染", () => {
     expect(toasts()[0]).toHaveAttribute("data-rich-colors", "true");
   });
 
+  it("Toaster 级 variant 下发给每条 toast", () => {
+    const { toasts } = renderViewport({
+      variant: "semantic",
+      toasts: [toast("a", { type: "success" })],
+    });
+
+    expect(toasts()[0]).toHaveAttribute("data-variant", "semantic");
+  });
+
+  it("toastOptions.variant 优先于 Toaster 级 variant", () => {
+    const { toasts } = renderViewport({
+      variant: "semantic",
+      toastOptions: { variant: "colored" },
+      toasts: [toast("a", { type: "error" })],
+    });
+
+    expect(toasts()[0]).toHaveAttribute("data-variant", "colored");
+  });
+
+  it("都没有指定时 variant 回落到默认 popover", () => {
+    const { toasts } = renderViewport({
+      toasts: [toast("a")],
+    });
+
+    expect(toasts()[0]).toHaveAttribute("data-variant", "popover");
+  });
+
   it("closeButtonAriaLabel 下发给关闭按钮", () => {
     const { toasts } = renderViewport({
       closeButton: true,

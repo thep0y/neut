@@ -79,7 +79,8 @@ export default defineConfig({
 | :--- | :--- |
 | 基础 | `--background` / `--foreground` / `--border` / `--input` / `--ring` |
 | 表面 | `--card` / `--card-foreground` / `--popover` / `--popover-foreground` |
-| 强调 | `--primary` / `--primary-foreground` / `--secondary` / `--secondary-foreground` / `--accent` / `--accent-foreground` / `--muted` / `--muted-foreground` / `--destructive` |
+| 强调 | `--primary` / `--primary-foreground` / `--secondary` / `--secondary-foreground` / `--accent` / `--accent-foreground` / `--muted` / `--muted-foreground` |
+| 状态 | `--success` / `--warning` / `--info` / `--destructive` 及各自的 `*-foreground`（`@theme inline` 映射为 `text-success` / `bg-warning/10` 等类名） |
 | 图表 | `--chart-1` … `--chart-5` |
 | 侧边栏 | `--sidebar` / `--sidebar-foreground` / `--sidebar-primary` / `--sidebar-primary-foreground` / `--sidebar-accent` / `--sidebar-accent-foreground` / `--sidebar-border` / `--sidebar-ring` |
 | 圆角 | `--radius`（并派生 `--radius-sm` … `--radius-4xl`） |

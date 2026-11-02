@@ -1,7 +1,12 @@
 import { Show, createMemo, splitProps } from "solid-js";
 import { clsx } from "~/utils";
 import { toastVariants } from "./Toast.styles";
-import type { ToastIcons, ToastProps, ToastT } from "./Toast.types";
+import type {
+  ToastIcons,
+  ToastProps,
+  ToastT,
+  ToastVariant,
+} from "./Toast.types";
 import { getAnimationClasses, getToastStyle } from "./Toast.utils";
 import { ToastActions } from "./ToastActions";
 import { ToastCloseButton, isCloseButtonVisible } from "./ToastCloseButton";
@@ -24,6 +29,7 @@ export function Toast(props: ToastProps) {
     "class",
     "icons",
     "closeButtonAriaLabel",
+    "variant",
     "defaultRichColors",
     "onRemove",
     "index",
@@ -37,6 +43,17 @@ export function Toast(props: ToastProps) {
   const toastType = createMemo(() => toast().type ?? "default");
   const richColors = createMemo(
     () => toast().richColors ?? local.defaultRichColors ?? false,
+  );
+
+  /**
+   * 表面样式优先级：单条 toast > Toaster 级（toastOptions / Toaster）> 旧的
+   * `richColors` 布尔值（`true` 等价于 `semantic`）> 默认 `popover`。
+   */
+  const variant = createMemo<ToastVariant>(
+    () =>
+      toast().variant ??
+      local.variant ??
+      (richColors() ? "semantic" : "popover"),
   );
 
   const { animationState, close } = useToastLifecycle({
@@ -67,10 +84,14 @@ export function Toast(props: ToastProps) {
       data-slot="toast"
       data-type={toastType()}
       data-state={animationState()}
+      data-variant={variant()}
       data-rich-colors={richColors()}
       data-testid={toast().testId}
       class={clsx(
-        toastVariants({ type: toastType() }),
+        toastVariants({
+          type: toastType(),
+          variant: variant(),
+        }),
         local.closeButton && "pr-8",
         animationClasses(),
         local.class,

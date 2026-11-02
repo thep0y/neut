@@ -107,6 +107,140 @@ describe("Toast 渲染", () => {
     expect(element()).toHaveClass("classes-custom");
   });
 
+  it("表面配方与浮层一致：popover 背景 + ring 描边，不用实色 border", () => {
+    const element = renderToast({}, { type: "success" }).element();
+
+    expect(element).toHaveClass("bg-popover");
+    expect(element).toHaveClass("ring-1");
+    expect(element).toHaveClass("ring-foreground/10");
+    expect(element).not.toHaveClass("border");
+  });
+
+  it("默认不用 richColors 时状态只体现在图标颜色上", () => {
+    const element = renderToast({}, { type: "success" }).element();
+
+    expect(element).not.toHaveClass("bg-success/10");
+    expect(element).not.toHaveClass("text-success");
+  });
+
+  it("richColors 命中状态时铺不透明底色并让标题跟随语义色", () => {
+    const element = renderToast(
+      {},
+      { type: "error", richColors: true },
+    ).element();
+
+    // 必须是 color-mix 到 --popover 的不透明底色：直接叠 /10 透明色会让
+    // 堆叠的多条 toast 互相透出（见 DESIGN.md 4.1）。
+    // 另外必须用 oklab：oklch 是极坐标，消色 --popover 的 hue=0 会把蓝色/绿色
+    // 的 hue 一起拉向 0，混出来全是红色。
+    expect(element.className).toContain("color-mix");
+    expect(element.className).toContain("in_oklab");
+    expect(element.className).not.toContain("in_oklch");
+    expect(element.className).toContain("var(--destructive)_10%");
+    expect(element).toHaveClass("text-destructive");
+    // 描边不随状态变色：仍是中性灰，彩色边框由使用方覆盖
+    expect(element).toHaveClass("ring-foreground/10");
+    expect(element.className).not.toContain("ring-destructive");
+  });
+
+  it("默认 variant 是 popover：popover 表面 + 语义色图标 + popover-foreground 文字", () => {
+    const element = renderToast({}, { type: "success" }).element();
+    const icon = element.querySelector('[data-slot="toast-icon"]');
+
+    expect(element).toHaveAttribute("data-variant", "popover");
+    expect(element).toHaveClass("bg-popover");
+    expect(element).toHaveClass("text-popover-foreground");
+    expect(element.className).not.toContain("color-mix");
+    expect(icon).toHaveClass("text-success");
+  });
+
+  it("variant 默认值可被 Toaster 级 variant 覆盖", () => {
+    const element = renderToast(
+      { variant: "semantic" },
+      { type: "success" },
+    ).element();
+
+    expect(element).toHaveAttribute("data-variant", "semantic");
+    expect(element.className).toContain("color-mix");
+  });
+
+  it("单条 toast 的 variant 优先于 Toaster 级 variant", () => {
+    const element = renderToast(
+      { variant: "colored" },
+      { type: "warning", variant: "popover" },
+    ).element();
+
+    expect(element).toHaveAttribute("data-variant", "popover");
+    expect(element).toHaveClass("bg-popover");
+  });
+
+  it("variant=colored 使用实色状态底与 foreground 文字", () => {
+    const element = renderToast(
+      { variant: "colored" },
+      { type: "error" },
+    ).element();
+
+    expect(element).toHaveAttribute("data-variant", "colored");
+    expect(element).toHaveClass("bg-destructive");
+    expect(element).toHaveClass("text-destructive-foreground");
+    expect(element.className).toContain(
+      "[&_[data-slot=toast-icon]]:text-destructive-foreground",
+    );
+  });
+
+  it("variant=colored 的 default / loading 使用 primary 实底", () => {
+    for (const type of ["default", "loading"] as const) {
+      const element = renderToast({ variant: "colored" }, { type }).element();
+
+      expect(element).toHaveClass("bg-primary");
+      expect(element).toHaveClass("text-primary-foreground");
+    }
+  });
+
+  it("richColors=true 等价于 variant=semantic", () => {
+    const element = renderToast(
+      {},
+      { type: "info", richColors: true },
+    ).element();
+
+    expect(element).toHaveAttribute("data-variant", "semantic");
+    expect(element.className).toContain("color-mix");
+  });
+
+  it("richColors 不改变描边颜色，彩色边框留给使用方覆盖", () => {
+    const types = ["success", "info", "warning", "error"] as const;
+
+    for (const type of types) {
+      const element = renderToast({}, { type, richColors: true }).element();
+
+      expect(element).toHaveClass("ring-foreground/10");
+      expect(element.className).not.toMatch(
+        /ring-(success|info|warning|destructive)/,
+      );
+    }
+  });
+
+  it("richColors 的底色不是半透明背景，避免堆叠时互相透出", () => {
+    const types = ["success", "info", "warning", "error"] as const;
+
+    for (const type of types) {
+      const element = renderToast({}, { type, richColors: true }).element();
+
+      expect(element.className).not.toMatch(
+        /bg-(success|info|warning|destructive)\/10/,
+      );
+      expect(element.className).toContain("var(--popover)");
+    }
+  });
+
+  it("richColors 对没有专属配色的 default 保持中性表面", () => {
+    const element = renderToast({}, { richColors: true }).element();
+
+    expect(element).toHaveClass("bg-popover");
+    expect(element).not.toHaveClass("text-success");
+    expect(element).not.toHaveClass("text-destructive");
+  });
+
   it("closeButton 开启时给标题区留出右侧内边距", () => {
     expect(renderToast({ closeButton: true }).element()).toHaveClass("pr-8");
     expect(renderToast({ closeButton: false }).element()).not.toHaveClass(
