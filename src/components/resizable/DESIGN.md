@@ -23,24 +23,24 @@ Solid 做了「按 id 的细粒度更新」:尺寸存在 `createStore` 的 `{ [i
 
 ## 2. SRP 分工
 
-| 关注点 | 文件 |
-| --- | --- |
-| 类型契约 | `resizable.types.ts` |
-| 尺寸解析 / 归一化数学 | `resizable.utils.ts`(`parseSize`/`roundPercent`/`normalizeSizes`) |
-| **相邻面板尺寸约束(纯)** | `resizable.resize.ts`(`resolvePairSize`/`pairBounds`/`distributeInitialSizes`) |
-| **约束代数(纯)** | `resizable.constraints.ts`(`effectiveMin`/`isCollapsedSize`/`constraintBounds`/`pairConstraintsOf`) |
-| **面板注册表** | `resizable.registry.ts`(`createPanelRegistry`:注册顺序、跳过非面板节点解析相邻、前后邻居) |
-| **布局持久化(纯)** | `resizable.storage.ts`(`storageKey`/`resolveStorage`/`persistLayout`/`readSavedLayout`) |
-| **尺寸账目** | `resizable.sizes.ts`(`createPanelSizes`:按 id 的 store、`applyAll`、`sizeOf`) |
-| **生命周期** | `resizable.lifecycle.ts`(注册/注销、首次初始化、动态新增归一化) |
-| **对外汇报** | `resizable.reporting.ts`(`snapshot`/`notify`/持久化提交) |
-| **命令式操作** | `resizable.commands.ts`(`collapsePanel`/`expandPanel`/`setPanelSize`/`isPanelCollapsed`) |
-| **折叠决策** | `resizable.collapse.ts`(`createCollapseMemory`/`nextCollapseAction`) |
-| context | `resizable.context.ts` |
-| 布局引擎 | `useResizablePanelGroup.ts`(注册副作用、拖拽/键盘编排、命令式、调用上面的纯模块与注册表) |
-| 根部件 | `ResizablePanelGroup/`(Provider + 框架；`useDragCursor.ts` 全局光标) |
-| 面板部件 | `ResizablePanel/`(`useResizablePanel.ts` 注册 meta、映射 flex-grow、panelRef) |
-| 分隔条部件 | `ResizableHandle/`(`useResizableHandle.ts` 组装；`resizable.handle-drag.ts` 指针拖拽；`resizable.handle-keys.ts` 键盘；`.styles.ts` 类名) |
+| 关注点                   | 文件                                                                                                                                      |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 类型契约                 | `resizable.types.ts`                                                                                                                      |
+| 尺寸解析 / 归一化数学    | `resizable.utils.ts`(`parseSize`/`roundPercent`/`normalizeSizes`)                                                                         |
+| **相邻面板尺寸约束(纯)** | `resizable.resize.ts`(`resolvePairSize`/`pairBounds`/`distributeInitialSizes`)                                                            |
+| **约束代数(纯)**         | `resizable.constraints.ts`(`effectiveMin`/`isCollapsedSize`/`constraintBounds`/`pairConstraintsOf`)                                       |
+| **面板注册表**           | `resizable.registry.ts`(`createPanelRegistry`:注册顺序、跳过非面板节点解析相邻、前后邻居)                                                 |
+| **布局持久化(纯)**       | `resizable.storage.ts`(`storageKey`/`resolveStorage`/`persistLayout`/`readSavedLayout`)                                                   |
+| **尺寸账目**             | `resizable.sizes.ts`(`createPanelSizes`:按 id 的 store、`applyAll`、`sizeOf`)                                                             |
+| **生命周期**             | `resizable.lifecycle.ts`(注册/注销、首次初始化、动态新增归一化)                                                                           |
+| **对外汇报**             | `resizable.reporting.ts`(`snapshot`/`notify`/持久化提交)                                                                                  |
+| **命令式操作**           | `resizable.commands.ts`(`collapsePanel`/`expandPanel`/`setPanelSize`/`isPanelCollapsed`)                                                  |
+| **折叠决策**             | `resizable.collapse.ts`(`createCollapseMemory`/`nextCollapseAction`)                                                                      |
+| context                  | `resizable.context.ts`                                                                                                                    |
+| 布局引擎                 | `useResizablePanelGroup.ts`(注册副作用、拖拽/键盘编排、命令式、调用上面的纯模块与注册表)                                                  |
+| 根部件                   | `ResizablePanelGroup/`(Provider + 框架；`useDragCursor.ts` 全局光标)                                                                      |
+| 面板部件                 | `ResizablePanel/`(`useResizablePanel.ts` 注册 meta、映射 flex-grow、panelRef)                                                             |
+| 分隔条部件               | `ResizableHandle/`(`useResizableHandle.ts` 组装；`resizable.handle-drag.ts` 指针拖拽；`resizable.handle-keys.ts` 键盘；`.styles.ts` 类名) |
 
 > 2026-09 重构:把原先内联在 `useResizablePanelGroup.ts`(403 行)里的
 > 「相邻面板约束 + 折叠吸附」「storage 持久化」两块抽成纯模块。
@@ -108,13 +108,13 @@ Solid 做了「按 id 的细粒度更新」:尺寸存在 `createStore` 的 `{ [i
 任何上游组件/行为运行时,因此**手写**了 Solid 版引擎;下表列出「无法在本仓库内直接实现、
 需要第三方或后续补齐」的能力,供未来决策:
 
-| 能力 | 上游来源 | 现状 | 未来实现 |
-| --- | --- | --- | --- |
-| 完整的像素级约束 | `react-resizable-panels` 的像素快照 + `ResizeObserver` | 只支持百分比;`"200px"` 会被当作 200(%)解析 | 引入像素约束模型:ResizeObserver 记录可用像素,拖拽期间用像素快照换算,避免容器尺寸变化抖动 |
-| 更多命令式 API | `PanelImperativeHandle` / group 命令 | 已实现常用 6 个方法 | 视需求补 `getLayout`/`setLayout`/`collapseAll`/`expandAll` |
-| 布局持久化的兼容与迁移 | 上游自带 storage 结构与版本 | 简单 JSON,key 前缀 `neut-resizable:` | 需要与上游 `react-resizable-panels:<id>` 兼容时再加读取/迁移 |
-| 更严格的 a11y 关联 | `aria-controls` 指向相邻 panel、像素级 `aria-valuenow` | handle 未做 `aria-controls`,值为百分比 | 给 panel 生成稳定 DOM id 并互相关联 |
-| SSR/水合一致性 | 上游在客户端计算 | 引擎在客户端初始化,首屏用 defaultSize fallback | 若要严格对齐,需在服务端预计算并序列化布局 |
+| 能力                   | 上游来源                                               | 现状                                           | 未来实现                                                                                 |
+| ---------------------- | ------------------------------------------------------ | ---------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| 完整的像素级约束       | `react-resizable-panels` 的像素快照 + `ResizeObserver` | 只支持百分比;`"200px"` 会被当作 200(%)解析     | 引入像素约束模型:ResizeObserver 记录可用像素,拖拽期间用像素快照换算,避免容器尺寸变化抖动 |
+| 更多命令式 API         | `PanelImperativeHandle` / group 命令                   | 已实现常用 6 个方法                            | 视需求补 `getLayout`/`setLayout`/`collapseAll`/`expandAll`                               |
+| 布局持久化的兼容与迁移 | 上游自带 storage 结构与版本                            | 简单 JSON,key 前缀 `neut-resizable:`           | 需要与上游 `react-resizable-panels:<id>` 兼容时再加读取/迁移                             |
+| 更严格的 a11y 关联     | `aria-controls` 指向相邻 panel、像素级 `aria-valuenow` | handle 未做 `aria-controls`,值为百分比         | 给 panel 生成稳定 DOM id 并互相关联                                                      |
+| SSR/水合一致性         | 上游在客户端计算                                       | 引擎在客户端初始化,首屏用 defaultSize fallback | 若要严格对齐,需在服务端预计算并序列化布局                                                |
 
 > 结论:除上表外,常见场景(拖拽、键盘、嵌套、受控、持久化、折叠)均已在本仓库内实现,
 > **没有新增任何运行时依赖**。若未来一定要对齐像素级行为,建议单独评估引入

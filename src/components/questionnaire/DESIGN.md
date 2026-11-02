@@ -31,24 +31,24 @@ Questionnaire (form)              # Root:激活项、进度、导航、校验、
 
 ## 2. SRP 分工
 
-| 关注点 | 文件 |
-| --- | --- |
-| 类型契约 | `questionnaire.types.ts` |
-| context(Root / Item) | `questionnaire.context.ts` |
-| Root 状态机 | `useQuestionnaireRoot.ts`（组装注册表/视图/键盘） |
-| Item 状态机 | `useQuestionnaireItem.ts`（组装答案账目/ARIA/校验/焦点） |
-| 题目注册表 | `questionnaire.registry.ts`（按元素去重替换、注销） |
-| 题目视图(派生状态) | `questionnaire.item-view.ts`（DOM 顺序、激活项、进度、首尾） |
-| DOM 顺序观察 | `questionnaire.dom-watch.ts`（MutationObserver 版本号，SSR 退化） |
-| 答案账目 | `questionnaire.answers.ts`（选中集合、默认值、touched/skipped/reset） |
-| ARIA 文本 | `questionnaire.aria.ts`（describedby id 合并、keyshortcuts） |
-| 键盘派发 | `questionnaire.keys.ts`（纯映射，不读信号） |
-| 快捷键推导 | `questionnaire.shortcuts.ts`（定义 choices / 已注册答案） |
-| 校验判定 | `questionnaire.validation.ts`（invalid / satisfied / 原生首个错误） |
-| 题目内焦点 | `questionnaire.focus.ts`（聚焦首选答案、上下移动） |
-| 纯函数(输入判定/字母表/文档序) | `questionnaire.utils.ts` |
-| Choice / Input 引擎 | `QuestionnaireChoice/useQuestionnaireChoice.ts`、`QuestionnaireChoice/questionnaire-choice.utils.ts`、`QuestionnaireInput/useQuestionnaireInput.ts` |
-| 各部件的渲染/ARIA | `Questionnaire*/` 各自目录 |
+| 关注点                         | 文件                                                                                                                                                |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 类型契约                       | `questionnaire.types.ts`                                                                                                                            |
+| context(Root / Item)           | `questionnaire.context.ts`                                                                                                                          |
+| Root 状态机                    | `useQuestionnaireRoot.ts`（组装注册表/视图/键盘）                                                                                                   |
+| Item 状态机                    | `useQuestionnaireItem.ts`（组装答案账目/ARIA/校验/焦点）                                                                                            |
+| 题目注册表                     | `questionnaire.registry.ts`（按元素去重替换、注销）                                                                                                 |
+| 题目视图(派生状态)             | `questionnaire.item-view.ts`（DOM 顺序、激活项、进度、首尾）                                                                                        |
+| DOM 顺序观察                   | `questionnaire.dom-watch.ts`（MutationObserver 版本号，SSR 退化）                                                                                   |
+| 答案账目                       | `questionnaire.answers.ts`（选中集合、默认值、touched/skipped/reset）                                                                               |
+| ARIA 文本                      | `questionnaire.aria.ts`（describedby id 合并、keyshortcuts）                                                                                        |
+| 键盘派发                       | `questionnaire.keys.ts`（纯映射，不读信号）                                                                                                         |
+| 快捷键推导                     | `questionnaire.shortcuts.ts`（定义 choices / 已注册答案）                                                                                           |
+| 校验判定                       | `questionnaire.validation.ts`（invalid / satisfied / 原生首个错误）                                                                                 |
+| 题目内焦点                     | `questionnaire.focus.ts`（聚焦首选答案、上下移动）                                                                                                  |
+| 纯函数(输入判定/字母表/文档序) | `questionnaire.utils.ts`                                                                                                                            |
+| Choice / Input 引擎            | `QuestionnaireChoice/useQuestionnaireChoice.ts`、`QuestionnaireChoice/questionnaire-choice.utils.ts`、`QuestionnaireInput/useQuestionnaireInput.ts` |
+| 各部件的渲染/ARIA              | `Questionnaire*/` 各自目录                                                                                                                          |
 
 > 2026-10 重构：根 hook 原先同时负责注册、排序、键盘、焦点与答案账目（约 500 行）。
 > 现在按纯函数边界拆成上表的后 9 个模块：`answers / aria / dom-watch / focus /
@@ -110,13 +110,13 @@ Questionnaire (form)              # Root:激活项、进度、导航、校验、
 
 上游及示例涉及、而本仓库**没有引入**的依赖,以及现状/替代:
 
-| 依赖 | 用在哪 | 现状 | 未来实现 |
-| --- | --- | --- | --- |
-| `@shadcn/react/questionnaire`(headless) | 全部行为 | 手写 `useQuestionnaireRoot/Item/Choice/Input` 复刻核心语义 | 若要对齐边界情况,可对照其测试用例补 |
-| `cn-questionnaire-*`(主题 token) | 全部样式 | 内联 Tailwind 类 | 引入主题 token 后迁移 |
-| `zod` | Custom Validation 示例 | dev 示例改为手写校验(等价逻辑) | 需要 schema 校验时由使用方接入 |
-| `sonner`(toast) | 各示例提交反馈 | dev 用内联 `role="status"` 结果行替代 | 挂载 Toaster 后可换成 toast |
-| `NativeSelect` | Shortcuts 示例的模式选择 | dev 用原生 `<select>` 替代 | 需要统一外观时用仓库 Select |
+| 依赖                                    | 用在哪                   | 现状                                                       | 未来实现                            |
+| --------------------------------------- | ------------------------ | ---------------------------------------------------------- | ----------------------------------- |
+| `@shadcn/react/questionnaire`(headless) | 全部行为                 | 手写 `useQuestionnaireRoot/Item/Choice/Input` 复刻核心语义 | 若要对齐边界情况,可对照其测试用例补 |
+| `cn-questionnaire-*`(主题 token)        | 全部样式                 | 内联 Tailwind 类                                           | 引入主题 token 后迁移               |
+| `zod`                                   | Custom Validation 示例   | dev 示例改为手写校验(等价逻辑)                             | 需要 schema 校验时由使用方接入      |
+| `sonner`(toast)                         | 各示例提交反馈           | dev 用内联 `role="status"` 结果行替代                      | 挂载 Toaster 后可换成 toast         |
+| `NativeSelect`                          | Shortcuts 示例的模式选择 | dev 用原生 `<select>` 替代                                 | 需要统一外观时用仓库 Select         |
 
 > 结论:问卷的完整交互与无障碍已在本仓库内实现,**未新增任何运行时依赖**;
 > 上表是文字/样式层面的替代,不改变组件行为。

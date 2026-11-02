@@ -34,10 +34,10 @@ AttachmentGroup            # 横向滚动、吸附的附件行
 
 ## 3. 复用
 
-| 需要 | 复用 |
-| --- | --- |
-| 操作按钮 | `Button`(默认 `ghost` + `xs`,仅图标时要求 `aria-label`) |
-| 多态触发器 | `~/types` 的 `PolymorphicProps` + `Dynamic`(默认 `button`,可换 `a` 等) |
+| 需要               | 复用                                                                            |
+| ------------------ | ------------------------------------------------------------------------------- |
+| 操作按钮           | `Button`(默认 `ghost` + `xs`,仅图标时要求 `aria-label`)                         |
+| 多态触发器         | `~/types` 的 `PolymorphicProps` + `Dynamic`(默认 `button`,可换 `a` 等)          |
 | 圆角/卡片色/状态色 | 现有主题 token(`bg-card`、`text-card-foreground`、`bg-muted`、`destructive` 等) |
 
 ## 4. 两个自实现工具类(`src/styles/effects.css`)
@@ -82,5 +82,5 @@ shadcn 的 `shimmer` / `scroll-fade-x` 随其 `shadcn` 包提供,本仓库没有
       <X />
     </AttachmentAction>
   </AttachmentActions>
-</Attachment>
+</Attachment>;
 ```

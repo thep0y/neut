@@ -18,27 +18,36 @@
 
 ## 2. 复用
 
-| 需要 | 复用 |
-| --- | --- |
-| 输入组布局 | `InputGroup`、`InputGroupAddon` |
-| 输入框 | `InputGroupInput`(内部 `Input`) |
-| 减/加按钮 | `InputGroupButton`(内部 `Button`) |
-| 图标 | `lucide-solid` 的 `Minus` / `Plus` |
-| 事件详情 | 对齐仓库既有的 `ChangeEventDetails`(`reason`/`cancel()`/`isCanceled`) |
+| 需要       | 复用                                                                  |
+| ---------- | --------------------------------------------------------------------- |
+| 输入组布局 | `InputGroup`、`InputGroupAddon`                                       |
+| 输入框     | `InputGroupInput`(内部 `Input`)                                       |
+| 减/加按钮  | `InputGroupButton`(内部 `Button`)                                     |
+| 图标       | `lucide-solid` 的 `Minus` / `Plus`                                    |
+| 事件详情   | 对齐仓库既有的 `ChangeEventDetails`(`reason`/`cancel()`/`isCanceled`) |
 
 ## 3. API(P1)
 
 ```ts
 interface NumberInputProps extends BaseProps {
-  value?: number | null; defaultValue?: number | null;
-  onValueChange?: (value: number | null, details: NumberInputChangeEventDetails) => void;
-  min?: number; max?: number;
-  step?: number;        // 按钮/方向键步长,默认 1
-  largeStep?: number;   // PageUp/PageDown,默认 step * 10
-  disabled?: boolean; readOnly?: boolean; required?: boolean;
-  name?: string; placeholder?: string; id?: string;
+  value?: number | null;
+  defaultValue?: number | null;
+  onValueChange?: (
+    value: number | null,
+    details: NumberInputChangeEventDetails,
+  ) => void;
+  min?: number;
+  max?: number;
+  step?: number; // 按钮/方向键步长,默认 1
+  largeStep?: number; // PageUp/PageDown,默认 step * 10
+  disabled?: boolean;
+  readOnly?: boolean;
+  required?: boolean;
+  name?: string;
+  placeholder?: string;
+  id?: string;
   "aria-label"?: string;
-  format?: (value: number) => string;      // 失焦/步进后回显
+  format?: (value: number) => string; // 失焦/步进后回显
   parse?: (text: string) => number | null; // 解析失败返回 null
 }
 ```
@@ -92,5 +101,5 @@ const [qty, setQty] = createSignal<number | null>(1);
   min={1}
   max={99}
   aria-label="Quantity"
-/>
+/>;
 ```

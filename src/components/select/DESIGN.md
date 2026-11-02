@@ -17,15 +17,15 @@ Select                 # 根:value/open/disabled + 选项注册表 + context
 
 ## 2. SRP 分工
 
-| 关注点 | 文件 |
-| --- | --- |
-| 类型契约 | `Select/Select.types.ts` |
-| 根状态与选项注册表 | `Select/Select.tsx` |
-| context + `useSelectContext` | `Select/Select.context.ts` |
-| Trigger 交互 | `SelectTrigger/useSelectTrigger.ts` |
-| 浮层定位/可见性/关闭 | `SelectContent/useSelectContent.ts`、`SelectContent.utils.ts` |
-| 选项交互 | `SelectItem/useSelectItem.ts` |
-| 展示部件 | `SelectValue/`、`SelectGroup/`、`SelectLabel/`、`SelectSeparator/` |
+| 关注点                       | 文件                                                               |
+| ---------------------------- | ------------------------------------------------------------------ |
+| 类型契约                     | `Select/Select.types.ts`                                           |
+| 根状态与选项注册表           | `Select/Select.tsx`                                                |
+| context + `useSelectContext` | `Select/Select.context.ts`                                         |
+| Trigger 交互                 | `SelectTrigger/useSelectTrigger.ts`                                |
+| 浮层定位/可见性/关闭         | `SelectContent/useSelectContent.ts`、`SelectContent.utils.ts`      |
+| 选项交互                     | `SelectItem/useSelectItem.ts`                                      |
+| 展示部件                     | `SelectValue/`、`SelectGroup/`、`SelectLabel/`、`SelectSeparator/` |
 
 ## 3. 值模型
 

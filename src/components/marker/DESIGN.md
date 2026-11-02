@@ -16,12 +16,12 @@ Marker               # 根:variant + 多态(div / a / button)
 
 ## 2. SRP 分工
 
-| 关注点 | 文件 |
-| --- | --- |
+| 关注点   | 文件                                                              |
+| -------- | ----------------------------------------------------------------- |
 | 变体样式 | `Marker/Marker.styles.ts`(cva:`default` / `separator` / `border`) |
-| 多态根 | `Marker/Marker.tsx`(输出 `data-variant` + `group/marker`) |
-| 图标槽 | `MarkerIcon/MarkerIcon.tsx`(aria-hidden) |
-| 内容槽 | `MarkerContent/MarkerContent.tsx` |
+| 多态根   | `Marker/Marker.tsx`(输出 `data-variant` + `group/marker`)         |
+| 图标槽   | `MarkerIcon/MarkerIcon.tsx`(aria-hidden)                          |
+| 内容槽   | `MarkerContent/MarkerContent.tsx`                                 |
 
 `markerVariants` 一并导出，便于自定义组件复用样式。
 

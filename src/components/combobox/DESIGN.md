@@ -23,17 +23,17 @@ Combobox                     # headless 根:items / value / open / filter / acti
 
 ## 2. SRP 分工
 
-| 关注点 | 文件 |
-| --- | --- |
-| 类型契约 | `Combobox/Combobox.types.ts` |
-| 根状态(值/开合/过滤/高亮/锚点/id) | `Combobox/Combobox.tsx` |
-| context + `useComboboxContext` | `Combobox/Combobox.context.ts` |
-| 输入框与键盘 | `ComboboxInput/ComboboxInput.tsx` |
-| 浮层定位与开合 | `ComboboxContent/ComboboxContent.tsx` |
-| listbox 与滚动箭头 | `ComboboxList/ComboboxList.tsx` |
-| 选项/分组/空态 | `ComboboxItem/`、`ComboboxGroup/`、`ComboboxLabel/`、`ComboboxEmpty/` |
-| 多选 chip | `ComboboxChips/`、`ComboboxChip/`、`ComboboxChipsInput/` |
-| 集合渲染(可选，带本地过滤) | `ComboboxCollection/ComboboxCollection.tsx` |
+| 关注点                            | 文件                                                                  |
+| --------------------------------- | --------------------------------------------------------------------- |
+| 类型契约                          | `Combobox/Combobox.types.ts`                                          |
+| 根状态(值/开合/过滤/高亮/锚点/id) | `Combobox/Combobox.tsx`                                               |
+| context + `useComboboxContext`    | `Combobox/Combobox.context.ts`                                        |
+| 输入框与键盘                      | `ComboboxInput/ComboboxInput.tsx`                                     |
+| 浮层定位与开合                    | `ComboboxContent/ComboboxContent.tsx`                                 |
+| listbox 与滚动箭头                | `ComboboxList/ComboboxList.tsx`                                       |
+| 选项/分组/空态                    | `ComboboxItem/`、`ComboboxGroup/`、`ComboboxLabel/`、`ComboboxEmpty/` |
+| 多选 chip                         | `ComboboxChips/`、`ComboboxChip/`、`ComboboxChipsInput/`              |
+| 集合渲染(可选，带本地过滤)        | `ComboboxCollection/ComboboxCollection.tsx`                           |
 
 ## 3. 状态模型
 

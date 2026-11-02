@@ -17,17 +17,17 @@ Calendar                  # 受控/非受控 selected 与 month;多月份并排
 
 ## 2. SRP 分工
 
-| 关注点 | 文件 |
-| --- | --- |
-| 类型契约 | `Calendar/Calendar.types.ts` |
-| 根状态与多月份编排 | `Calendar/Calendar.tsx` |
-| 单月视图 | `Calendar/CalendarMonth.tsx` |
-| 标题(文本/下拉) | `Calendar/CalendarMonthCaption.tsx` |
-| 单格渲染 | `Calendar/CalendarDay.tsx` |
-| 日期算法(月/周/格式) | `Calendar/Calendar.utils.ts` |
-| 选项生成(min/max、月份/年份下拉) | `Calendar/Calendar.options.ts` |
-| 选择推导(单选/多选/范围) | `Calendar/Calendar.selection.ts` |
-| 默认 classNames | `Calendar/Calendar.styles.ts` |
+| 关注点                           | 文件                                |
+| -------------------------------- | ----------------------------------- |
+| 类型契约                         | `Calendar/Calendar.types.ts`        |
+| 根状态与多月份编排               | `Calendar/Calendar.tsx`             |
+| 单月视图                         | `Calendar/CalendarMonth.tsx`        |
+| 标题(文本/下拉)                  | `Calendar/CalendarMonthCaption.tsx` |
+| 单格渲染                         | `Calendar/CalendarDay.tsx`          |
+| 日期算法(月/周/格式)             | `Calendar/Calendar.utils.ts`        |
+| 选项生成(min/max、月份/年份下拉) | `Calendar/Calendar.options.ts`      |
+| 选择推导(单选/多选/范围)         | `Calendar/Calendar.selection.ts`    |
+| 默认 classNames                  | `Calendar/Calendar.styles.ts`       |
 
 ## 3. 状态模型
 

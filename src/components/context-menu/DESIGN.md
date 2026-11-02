@@ -23,22 +23,22 @@ ContextMenu                 # 不渲染 DOM:开合、虚拟锚点、菜单元素
 
 ## 2. SRP 分工
 
-| 关注点 | 文件 |
-| --- | --- |
-| 类型契约 | `context-menu.types.ts` |
-| Root / Popup / Submenu / Radio / Group context | `ContextMenu/ContextMenu.context.ts`、`context-menu.context.ts` |
-| Root 状态(开合/锚点/锁滚动) | `ContextMenu/ContextMenu.tsx` |
-| 触发(右键/长按/键盘) | `ContextMenuTrigger/useContextMenuTrigger.ts`、`context-menu.long-press.ts`、`context-menu.trigger.utils.ts` |
-| 浮层运行时 | `ContextMenuContent/useContextMenuContent.ts` |
-| 定位 | `ContextMenuContent/context-menu.positioner.ts`（positioner + size） |
-| 展示骨架 | `ContextMenuContent/ContextMenuPopupSurface.tsx` |
-| 菜单项集合 | `ContextMenuContent/context-menu.popup-items.ts`（DOM 顺序、可用项） |
-| 高亮导航 | `ContextMenuContent/context-menu.highlight.ts` |
-| 菜单项注册/高亮 | `context-menu.entry.ts`（`useContextMenuEntry`） |
-| 键盘映射(纯) | `context-menu.keyboard.ts` |
-| 字符导航(纯) | `context-menu.typeahead.ts` |
-| 子菜单状态 | `ContextMenuSub/ContextMenuSub.tsx` |
-| 事件详情/定位工具 | `context-menu.utils.ts` |
+| 关注点                                         | 文件                                                                                                         |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 类型契约                                       | `context-menu.types.ts`                                                                                      |
+| Root / Popup / Submenu / Radio / Group context | `ContextMenu/ContextMenu.context.ts`、`context-menu.context.ts`                                              |
+| Root 状态(开合/锚点/锁滚动)                    | `ContextMenu/ContextMenu.tsx`                                                                                |
+| 触发(右键/长按/键盘)                           | `ContextMenuTrigger/useContextMenuTrigger.ts`、`context-menu.long-press.ts`、`context-menu.trigger.utils.ts` |
+| 浮层运行时                                     | `ContextMenuContent/useContextMenuContent.ts`                                                                |
+| 定位                                           | `ContextMenuContent/context-menu.positioner.ts`（positioner + size）                                         |
+| 展示骨架                                       | `ContextMenuContent/ContextMenuPopupSurface.tsx`                                                             |
+| 菜单项集合                                     | `ContextMenuContent/context-menu.popup-items.ts`（DOM 顺序、可用项）                                         |
+| 高亮导航                                       | `ContextMenuContent/context-menu.highlight.ts`                                                               |
+| 菜单项注册/高亮                                | `context-menu.entry.ts`（`useContextMenuEntry`）                                                             |
+| 键盘映射(纯)                                   | `context-menu.keyboard.ts`                                                                                   |
+| 字符导航(纯)                                   | `context-menu.typeahead.ts`                                                                                  |
+| 子菜单状态                                     | `ContextMenuSub/ContextMenuSub.tsx`                                                                          |
+| 事件详情/定位工具                              | `context-menu.utils.ts`                                                                                      |
 
 ## 3. 交互模型
 

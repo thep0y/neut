@@ -15,19 +15,19 @@
 
 ## 2. 设计目标与 SRP 分解
 
-| 关注点     | 归属文件                                    | 职责                                                                |
-| ---------- | ------------------------------------------- | ------------------------------------------------------------------- |
-| 类型契约   | `TimePicker/TimePicker.types.ts`            | 只声明 props / context / 事件详情类型                               |
-| 纯时间算法 | `TimePicker/time-picker.utils.ts`           | 选项生成、单位读写、12/24 换算、格式化(无 Solid 依赖,可独立测试)    |
-| 事件详情   | `TimePicker/create-change-event-details.ts` | 构造 `cancel()` / `isCanceled` 语义                                 |
-| 唯一状态源 | `TimePicker/TimePicker.context.ts`          | 受控/非受控值、派生选项、列注册表、Context + `useTimePickerContext` |
-| 根组装     | `TimePicker/TimePicker.tsx`                 | 组装 Provider + Popover,默认/自定义子组件二选一                     |
-| 触发器     | `TimePickerTrigger/TimePickerTrigger.tsx`   | 复用 `PopoverTrigger` 的 ARIA 与引用,展示格式化时间                 |
-| 浮层       | `TimePickerContent/TimePickerContent.tsx`   | 复用 `PopoverContent`,按 units 渲染列,打开时聚焦首列                |
-| 单列交互   | `TimePickerColumn/useTimePickerColumn.ts`   | 选项派生、键盘(↑↓/Home/End/←→)、提交、滚动入视                      |
+| 关注点     | 归属文件                                       | 职责                                                                |
+| ---------- | ---------------------------------------------- | ------------------------------------------------------------------- |
+| 类型契约   | `TimePicker/TimePicker.types.ts`               | 只声明 props / context / 事件详情类型                               |
+| 纯时间算法 | `TimePicker/time-picker.utils.ts`              | 选项生成、单位读写、12/24 换算、格式化(无 Solid 依赖,可独立测试)    |
+| 事件详情   | `TimePicker/create-change-event-details.ts`    | 构造 `cancel()` / `isCanceled` 语义                                 |
+| 唯一状态源 | `TimePicker/TimePicker.context.ts`             | 受控/非受控值、派生选项、列注册表、Context + `useTimePickerContext` |
+| 根组装     | `TimePicker/TimePicker.tsx`                    | 组装 Provider + Popover,默认/自定义子组件二选一                     |
+| 触发器     | `TimePickerTrigger/TimePickerTrigger.tsx`      | 复用 `PopoverTrigger` 的 ARIA 与引用,展示格式化时间                 |
+| 浮层       | `TimePickerContent/TimePickerContent.tsx`      | 复用 `PopoverContent`,按 units 渲染列,打开时聚焦首列                |
+| 单列交互   | `TimePickerColumn/useTimePickerColumn.ts`      | 选项派生、键盘(↑↓/Home/End/←→)、提交、滚动入视                      |
 | 列内纯算法 | `TimePickerColumn/time-picker.column-utils.ts` | 索引环形推进、跨列推进(RTL 取反)、按键到意图的映射(纯函数)          |
-| 单列渲染   | `TimePickerColumn/TimePickerColumn.tsx`     | `role="listbox"` + `aria-activedescendant`                          |
-| 选项       | `TimePickerOption/TimePickerOption.tsx`     | `role="option"` + data-* 状态                                       |
+| 单列渲染   | `TimePickerColumn/TimePickerColumn.tsx`        | `role="listbox"` + `aria-activedescendant`                          |
+| 选项       | `TimePickerOption/TimePickerOption.tsx`        | `role="option"` + data-* 状态                                       |
 
 ### 文件结构
 
@@ -56,26 +56,26 @@ type TimePickerUnit = "hour" | "minute" | "second" | "meridiem";
 type TimePickerUnitValue = number | "AM" | "PM";
 
 interface TimePickerProps extends ParentProps {
-    value?: Date;
-    defaultValue?: Date;
-    onValueChange?: (
-        value: Date | undefined,
-        details: TimePickerChangeEventDetails,
-    ) => void;
-    hourCycle?: 12 | 24; // 默认 24
-    showSeconds?: boolean; // 默认 false
-    hourStep?: number;
-    minuteStep?: number;
-    secondStep?: number; // 默认 1
-    locale?: string; // 影响 AM/PM 文案
-    disabled?: boolean;
-    readOnly?: boolean;
-    placeholder?: string;
-    formatTime?: (date: Date) => string;
-    dir?: "ltr" | "rtl" | "auto";
-    open?: boolean;
-    defaultOpen?: boolean;
-    onOpenChange?: (open: boolean) => void;
+  value?: Date;
+  defaultValue?: Date;
+  onValueChange?: (
+    value: Date | undefined,
+    details: TimePickerChangeEventDetails,
+  ) => void;
+  hourCycle?: 12 | 24; // 默认 24
+  showSeconds?: boolean; // 默认 false
+  hourStep?: number;
+  minuteStep?: number;
+  secondStep?: number; // 默认 1
+  locale?: string; // 影响 AM/PM 文案
+  disabled?: boolean;
+  readOnly?: boolean;
+  placeholder?: string;
+  formatTime?: (date: Date) => string;
+  dir?: "ltr" | "rtl" | "auto";
+  open?: boolean;
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 ```
 
