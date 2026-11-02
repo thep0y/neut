@@ -4,11 +4,14 @@ import { useSelectContent } from "./useSelectContent";
 import { ScrollArrows } from "~/components/scroll-arrows";
 import type { SelectContentProps } from "./SelectContent.types";
 import { clsx } from "~/utils";
+import { getAlignment, getSide } from "~/lib";
 
 export function SelectContent(props: SelectContentProps) {
   const {
     ctx,
     pos,
+    placement,
+    aligned,
     maxHeight,
     isVisible,
     animationState,
@@ -17,12 +20,29 @@ export function SelectContent(props: SelectContentProps) {
   } = useSelectContent(() => props);
 
   const [local, rest] = splitProps(props, [
+    "side",
+    "align",
+    "sideOffset",
+    "alignOffset",
+    "alignItemWithTrigger",
     "placement",
     "collisionPadding",
     "class",
     "style",
     "children",
   ]);
+
+  /**
+   * 对外的定位状态：`data-side` 在“选中项对齐”时是 `none`（对齐 Base UI），
+   * 其余时候是最终 placement 拆出来的物理 side/align。
+   */
+  const dataAttrs = createMemo(() => ({
+    "data-placement": placement(),
+    "data-side": aligned() ? "none" : getSide(placement()),
+    "data-align": aligned()
+      ? undefined
+      : (getAlignment(placement()) ?? "center"),
+  }));
 
   const enabledItems = createMemo(() => ctx.items.filter((it) => !it.disabled));
 
@@ -116,6 +136,7 @@ export function SelectContent(props: SelectContentProps) {
       */}
       <div
         data-slot="select-content"
+        {...dataAttrs()}
         ref={(el) => {
           ctx.setFloating(el);
           // 元素卸载时清空 ctx.floating()，避免后续读到已从 DOM 摘除的
@@ -142,6 +163,7 @@ export function SelectContent(props: SelectContentProps) {
           ref={setContentElement}
           role="listbox"
           data-state={animationState()}
+          {...dataAttrs()}
           style={{
             position: "relative",
             width: pos.middlewareData().matchWidth?.width
