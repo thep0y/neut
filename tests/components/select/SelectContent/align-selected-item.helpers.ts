@@ -68,10 +68,11 @@ export function runItemAlign(options: {
   referenceRect: ReturnType<typeof rect>;
 }) {
   const middleware = createSelectMiddleware({
-    hasValue: true,
+    useItemAlign: true,
     selectedValue: () => options.selectedValue,
     scrollElement: () => options.scrollEl,
-    placement: "bottom",
+    sideOffset: 4,
+    alignOffset: 0,
     collisionPadding: 8,
     onAvailableHeightChange: () => {},
   });

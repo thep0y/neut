@@ -1,6 +1,6 @@
 # Select
 
-下拉选择。与 shadcn 的用法一致，但定位采用“选中项对齐”模型，`SelectContent` 用 `placement` 而不是 `side`/`align`。
+下拉选择。与 shadcn 的用法一致；浮层定位统一用 `side`/`align`，默认通过 `alignItemWithTrigger` 启用“选中项对齐”模型。
 
 ```tsx
 import {
@@ -15,7 +15,7 @@ import {
     <SelectTrigger class="w-48">
         <SelectValue placeholder="选择框架" />
     </SelectTrigger>
-    <SelectContent>
+    <SelectContent side="bottom" align="start">
         <SelectItem value="solid">Solid</SelectItem>
         <SelectItem value="react">React</SelectItem>
         <SelectItem value="vue">Vue</SelectItem>
@@ -40,15 +40,38 @@ import {
 | :--- | :--- |
 | `SelectTrigger` | 默认渲染 `Button`（`variant="outline"`）；`role="combobox"`，带 ChevronDown |
 | `SelectValue` | 展示当前 label；`placeholder` |
-| `SelectContent` | `placement`（默认 `"bottom-start"`）、`collisionPadding`；`role="listbox"` |
+| `SelectContent` | `side`/`align`（默认 `"bottom"`/`"start"`）、`sideOffset`/`alignOffset`、`alignItemWithTrigger`（默认 `true`）、`collisionPadding`；`role="listbox"` |
 | `SelectItem` | `value`、`label`、`disabled`；`role="option"` |
 | `SelectGroup` / `SelectLabel` / `SelectSeparator` | 分组与分隔 |
 
 ## 定位模型
 
-- 没有选中值时，按 `placement` 贴 trigger 摆放。
-- 有选中值时切换成“选中项对齐”：让选中项本身盖在 trigger 上，避免长列表里出现“面板打开了但选中项在屏幕外”。
-- 因此 `SelectContent` 没有 `side`/`align` 两个独立 prop；需要固定位置时用 `placement`。
+`SelectContent` 的定位 props 与 Popover / Dropdown / Tooltip 保持一致：
+
+```tsx
+<SelectContent side="top" align="start">
+    …
+</SelectContent>
+
+// 关闭“选中项对齐”，退化成普通贴边下拉
+<SelectContent side="bottom" align="start" alignItemWithTrigger={false}>
+    …
+</SelectContent>
+```
+
+- **`alignItemWithTrigger`（默认 `true`）**
+  - 有选中值时：让选中项本身盖在 trigger 上，避免长列表里“面板打开了但选中项在屏幕外”；
+    此时 `side` / `align` / `sideOffset` / `alignOffset` 不生效。
+  - 没有选中值时：按 `side` / `align` 贴 trigger 摆放。
+- **`alignItemWithTrigger={false}`**：始终按 `side` / `align` 贴边摆放，和 Popover / Dropdown 完全一致。
+- 默认 `side="bottom"`、`align="start"`、`sideOffset={4}`、`alignOffset={0}`。
+- 渲染元素上会写 `data-side` / `data-align` / `data-placement`；进入选中项对齐时
+  `data-side="none"`（与 Base UI 一致）。
+- `placement` 是**已弃用**的兼容参数，仍可继续使用，并会推导出对应的
+  `data-side`/`data-align`；新代码请直接用 `side`/`align`，1.0 会移除。
+
+> 当前只根据“是否有选中值”切换模式；Base UI 那套“触摸打开 / 视口空间不足时自动回退到
+> side/align”尚未实现。
 
 ## 行为细节
 

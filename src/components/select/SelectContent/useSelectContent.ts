@@ -1,5 +1,10 @@
-import { createSignal, createMemo, createEffect, onCleanup } from "solid-js";
-import { createPositioner, type Positioner } from "~/lib";
+import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
+import {
+  createPositioner,
+  toPlacement,
+  type Placement,
+  type Positioner,
+} from "~/lib";
 import { useSelectContext } from "../Select/Select.context";
 import { createSelectMiddleware } from "./SelectContent.utils";
 import type { SelectContentProps } from "./SelectContent.types";
@@ -7,11 +12,16 @@ import type { SelectContentProps } from "./SelectContent.types";
 export interface UseSelectContentResult {
   ctx: ReturnType<typeof useSelectContext>;
   pos: Positioner;
+  /** 当前生效的 placement（`placement` 兼容参数或 side/align 推导出的结果） */
+  placement: () => Placement;
+  /** 是否处于“选中项对齐”模式（`alignItemWithTrigger` 且有选中值） */
+  aligned: () => boolean;
   /**
-   * 面板应该用的最大高度：有选中值时，直接读 alignSelectedItem 自己算好的
-   * panelHeight（不经过 size 中间件）；没有选中值（占位符状态、走贴边下拉）
-   * 时，用 size 中间件算出来的可用空间。两种场景用的是不同的高度来源，
-   * 统一在这里合并成一个对外的值，展示层不需要关心具体走的是哪一个。
+   * 面板应该用的最大高度：选中项对齐时，直接读 alignSelectedItem 自己算好的
+   * panelHeight（不经过 size 中间件）；没有选中值、或
+   * `alignItemWithTrigger={false}` 时，用 size 中间件算出来的可用空间。
+   * 两种场景用的是不同的高度来源，统一在这里合并成一个对外的值，
+   * 展示层不需要关心具体走的是哪一个。
    */
   maxHeight: () => number | undefined;
   /** 综合了 open 状态 + hide 中间件的 referenceHidden 判断 */
@@ -36,17 +46,30 @@ export function useSelectContent(
   const [contentElement, setContentElement] = createSignal<HTMLElement>();
   const [fallbackMaxHeight, setFallbackMaxHeight] = createSignal<number>();
 
-  const hasValue = createMemo(() => ctx.value() != null);
+  const alignItemWithTrigger = () => props().alignItemWithTrigger ?? true;
+  /** “选中项对齐”只在有选中值时启用；没有值时退回普通贴边下拉 */
+  const useItemAlign = createMemo(
+    () => alignItemWithTrigger() && ctx.value() != null,
+  );
+
+  const placement = createMemo<Placement>(() => {
+    // 兼容旧参数：placement 优先于 side/align，1.0 删除
+    const legacy = props().placement;
+    if (legacy) return legacy;
+    // 逻辑方向按 LTR 映射——与 PopoverContent 的 toPopoverPlacement 保持一致
+    return toPlacement(props().side ?? "bottom", props().align ?? "start");
+  });
 
   const pos = createPositioner(ctx.reference, ctx.floating, {
-    placement: () => props().placement ?? "bottom-start",
+    placement,
     strategy: "fixed",
     middleware: () =>
       createSelectMiddleware({
-        hasValue: hasValue(),
+        useItemAlign: useItemAlign(),
         selectedValue: ctx.value,
         scrollElement: contentElement,
-        placement: props().placement ?? "bottom-start",
+        sideOffset: props().sideOffset ?? 4,
+        alignOffset: props().alignOffset ?? 0,
         collisionPadding: props().collisionPadding ?? 8,
         onAvailableHeightChange: (availableHeight) => {
           setFallbackMaxHeight(Math.max(availableHeight, 120));
@@ -54,8 +77,15 @@ export function useSelectContent(
       }),
   });
 
+  /**
+   * 是否处于“选中项对齐”模式。用模式本身而不是 middlewareData.aligned
+   * 判断，保证 data-side="none" 在首次定位完成前就稳定下来（Base UI 同样
+   * 以模式为准）。
+   */
+  const aligned = useItemAlign;
+
   const maxHeight = createMemo(() => {
-    if (hasValue()) {
+    if (useItemAlign()) {
       const panelHeight = pos.middlewareData().itemAlign?.panelHeight as
         | number
         | undefined;
@@ -105,6 +135,8 @@ export function useSelectContent(
   return {
     ctx,
     pos,
+    placement,
+    aligned,
     maxHeight,
     isVisible,
     mounted,

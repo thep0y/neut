@@ -6,7 +6,6 @@ import {
   hide,
   containingBlockOffset,
   type Middleware,
-  type Placement,
 } from "~/lib";
 import { getViewportBoundary } from "~/lib/positioner/utils/dom";
 import type { SelectOptionValue } from "../Select/Select.types";
@@ -110,26 +109,28 @@ function alignSelectedItem(
 }
 
 export interface BuildSelectMiddlewareOptions {
-  /** 当前是否已经有选中值——决定走"选中项对齐"还是普通的贴边下拉 */
-  hasValue: boolean;
+  /** 是否走“选中项对齐”模式（`alignItemWithTrigger` 且有选中值） */
+  useItemAlign: boolean;
   selectedValue: () => SelectOptionValue | null | undefined;
   /** 真正会滚动、承载选项列表的那个元素（内层），不是外层的定位容器 */
   scrollElement: () => HTMLElement | undefined;
-  placement: Placement;
+  /** 普通贴边模式下沿 side 方向的间距 */
+  sideOffset: number;
+  /** 普通贴边模式下沿 align 方向的偏移 */
+  alignOffset: number;
   collisionPadding: number;
   onAvailableHeightChange: (availableHeight: number) => void;
 }
 
 /**
- * Select 面板的定位管线，按"有没有选中值"分两套配方：
+ * Select 面板的定位管线，按是否启用“选中项对齐”分两套配方：
  *
- * - **有选中值**：matchWidth → size（算可用高度，配合 overflow:auto 做滚动——
- *   和 Tooltip 不同，下拉列表内容天然可能很长，滚动是合理需求，不是过度设计）
- *   → itemAlign（核心：选中项盖在 trigger 上）→ shift（只处理横向，纵向已经被
- *   itemAlign 自己夹过了）→ containingBlockOffset。
- * - **没有选中值**（占位符状态）：offset → flip → shift → matchWidth → size
- *   → containingBlockOffset，这是标准的"贴边下拉"策略，和 Dropdown 用的是
- *   同一套思路。
+ * - **启用选中项对齐**（`alignItemWithTrigger` 且有选中值）：
+ *   matchWidth → itemAlign（核心：选中项盖在 trigger 上）→ shift（只处理横向，
+ *   纵向已经被 itemAlign 自己夹过了）→ containingBlockOffset。
+ * - **普通贴边**（没有选中值，或 `alignItemWithTrigger={false}`）：
+ *   offset → flip → shift → matchWidth → size → containingBlockOffset，
+ *   这是标准的"贴边下拉"策略，和 Dropdown 用的是同一套思路。
  *
  * 顺序不能随便换：size 必须在 shift/itemAlign 之后（要用最终坐标反推可用高度），
  * containingBlockOffset 必须在所有其他 middleware 之后。
@@ -146,7 +147,7 @@ export interface BuildSelectMiddlewareOptions {
 export function createSelectMiddleware(
   options: BuildSelectMiddlewareOptions,
 ): Middleware[] {
-  if (options.hasValue) {
+  if (options.useItemAlign) {
     return [
       matchReferenceWidth(),
       // 注意这里没有 size 中间件：alignSelectedItem 自己已经把面板高度、
@@ -167,7 +168,10 @@ export function createSelectMiddleware(
   }
 
   return [
-    offset(4),
+    offset({
+      mainAxis: options.sideOffset,
+      crossAxis: options.alignOffset,
+    }),
     flip(),
     shift({ padding: options.collisionPadding }),
     matchReferenceWidth(),

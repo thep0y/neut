@@ -263,6 +263,47 @@ function SelectScrollable() {
   );
 }
 
+function SelectItemAlignment() {
+  return (
+    <div class="flex flex-wrap items-start justify-center gap-8">
+      <div class="flex flex-col gap-2">
+        <span class="text-sm text-muted-foreground">
+          alignItemWithTrigger (default)
+        </span>
+        <Select defaultValue="apple">
+          <SelectTrigger class="w-45">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <For each={fruits}>
+              {(fruit) => (
+                <SelectItem value={fruit.value}>{fruit.label}</SelectItem>
+              )}
+            </For>
+          </SelectContent>
+        </Select>
+      </div>
+      <div class="flex flex-col gap-2">
+        <span class="text-sm text-muted-foreground">
+          alignItemWithTrigger=false
+        </span>
+        <Select defaultValue="apple">
+          <SelectTrigger class="w-45">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            <For each={fruits}>
+              {(fruit) => (
+                <SelectItem value={fruit.value}>{fruit.label}</SelectItem>
+              )}
+            </For>
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+}
+
 function SelectPlacement() {
   return (
     <div class="flex h-40 items-start justify-center">
@@ -270,7 +311,7 @@ function SelectPlacement() {
         <SelectTrigger class="w-45">
           <SelectValue placeholder="Opens upward" />
         </SelectTrigger>
-        <SelectContent placement="top-start">
+        <SelectContent side="top" align="start">
           <For each={fruits}>
             {(fruit) => (
               <SelectItem value={fruit.value}>{fruit.label}</SelectItem>
@@ -346,9 +387,16 @@ export const selectSections: Section[] = [
     component: SelectScrollable,
   },
   {
-    id: "select-placement",
-    title: "Placement",
-    description: "Prefer opening upward with the placement prop.",
+    id: "select-positioning",
+    title: "Positioning",
+    description: "Prefer opening upward with side/align.",
     component: SelectPlacement,
+  },
+  {
+    id: "select-item-alignment",
+    title: "Item Alignment",
+    description:
+      "alignItemWithTrigger keeps the selected item over the trigger; turn it off for a regular dropdown.",
+    component: SelectItemAlignment,
   },
 ];

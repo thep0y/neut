@@ -3,7 +3,7 @@ import { rect } from "~tests/lib/positioner/test-utils";
 import { createSelectMiddleware } from "~/components/select/SelectContent/SelectContent.utils";
 
 /**
- * `SelectContent.utils` 的定位管线按「有没有选中值」分成两套配方。
+ * `SelectContent.utils` 的定位管线按「是否启用选中项对齐」分成两套配方。
  * 这里验证:
  * ① 两套配方的 middleware 组成与顺序;
  * ② `alignSelectedItem` 的核心算法(选中项贴 trigger + 面板高度 + scrollTop)。
@@ -12,18 +12,23 @@ function names(middleware: { name: string }[]): string[] {
   return middleware.map((m) => m.name);
 }
 
-describe("createSelectMiddleware 配方", () => {
-  it("有选中值时:matchWidth → itemAlign → shift → hide → containingBlockOffset（无 size）", () => {
-    const middleware = createSelectMiddleware({
-      hasValue: true,
-      selectedValue: () => "b",
-      scrollElement: () => undefined,
-      placement: "bottom",
-      collisionPadding: 8,
-      onAvailableHeightChange: () => {},
-    });
+function options(useItemAlign: boolean) {
+  return {
+    useItemAlign,
+    selectedValue: () => (useItemAlign ? "b" : undefined),
+    scrollElement: () => undefined,
+    sideOffset: 4,
+    alignOffset: 0,
+    collisionPadding: 8,
+    onAvailableHeightChange: () => {},
+  };
+}
 
-    // 关键:有值时不能有 size —— itemAlign 自己算面板高度，
+describe("createSelectMiddleware 配方", () => {
+  it("启用选中项对齐时:matchWidth → itemAlign → shift → hide → containingBlockOffset（无 size）", () => {
+    const middleware = createSelectMiddleware(options(true));
+
+    // 关键:选中项对齐时不能有 size —— itemAlign 自己算面板高度，
     // 两套算法同时存在会互相打架（注释里记录的踩坑点）。
     expect(names(middleware)).toEqual([
       "matchWidth",
@@ -35,15 +40,8 @@ describe("createSelectMiddleware 配方", () => {
     expect(names(middleware)).not.toContain("size");
   });
 
-  it("没有选中值时:offset → flip → shift → matchWidth → size → hide → containingBlockOffset", () => {
-    const middleware = createSelectMiddleware({
-      hasValue: false,
-      selectedValue: () => undefined,
-      scrollElement: () => undefined,
-      placement: "bottom",
-      collisionPadding: 8,
-      onAvailableHeightChange: () => {},
-    });
+  it("普通贴边时:offset → flip → shift → matchWidth → size → hide → containingBlockOffset", () => {
+    const middleware = createSelectMiddleware(options(false));
 
     expect(names(middleware)).toEqual([
       "offset",
@@ -57,41 +55,24 @@ describe("createSelectMiddleware 配方", () => {
   });
 
   it("containingBlockOffset 始终排在最后", () => {
-    for (const hasValue of [true, false]) {
-      const middleware = createSelectMiddleware({
-        hasValue,
-        selectedValue: () => "b",
-        scrollElement: () => undefined,
-        placement: "bottom",
-        collisionPadding: 8,
-        onAvailableHeightChange: () => {},
-      });
+    for (const useItemAlign of [true, false]) {
+      const middleware = createSelectMiddleware(options(useItemAlign));
 
       expect(middleware.at(-1)?.name).toBe("containingBlockOffset");
     }
   });
 
-  it("有值时 shift 只处理交叉轴（纵向由 itemAlign 负责）", () => {
-    const middleware = createSelectMiddleware({
-      hasValue: true,
-      selectedValue: () => "b",
-      scrollElement: () => undefined,
-      placement: "bottom",
-      collisionPadding: 8,
-      onAvailableHeightChange: () => {},
-    });
+  it("选中项对齐时 shift 只处理交叉轴（纵向由 itemAlign 负责）", () => {
+    const middleware = createSelectMiddleware(options(true));
 
     const shift = middleware.find((m) => m.name === "shift");
     expect(shift).toBeDefined();
   });
 
-  it("无值时 size 中间件把可用高度回调出去", () => {
+  it("普通贴边时 size 中间件把可用高度回调出去", () => {
     const onAvailableHeightChange = vi.fn();
     const middleware = createSelectMiddleware({
-      hasValue: false,
-      selectedValue: () => undefined,
-      scrollElement: () => undefined,
-      placement: "bottom",
+      ...options(false),
       collisionPadding: 0,
       onAvailableHeightChange,
     });
@@ -138,14 +119,7 @@ describe("createSelectMiddleware 配方", () => {
 
 describe("matchReferenceWidth", () => {
   it("把 reference 宽度透传到 middlewareData", () => {
-    const middleware = createSelectMiddleware({
-      hasValue: false,
-      selectedValue: () => undefined,
-      scrollElement: () => undefined,
-      placement: "bottom",
-      collisionPadding: 8,
-      onAvailableHeightChange: () => {},
-    });
+    const middleware = createSelectMiddleware(options(false));
     const matchWidth = middleware.find((m) => m.name === "matchWidth")!;
 
     const result = matchWidth.fn({

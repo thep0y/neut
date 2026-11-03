@@ -36,13 +36,21 @@ Select                 # 根:value/open/disabled + 选项注册表 + context
   否则 item 注销会让已选值失去 label。
 - `onValueChange` 只回调值，没有事件详情（与 Combobox 不同）。
 
-## 4. 定位：选中项对齐
+## 4. 定位：side/align + 选中项对齐
 
-- 未选中时：按 `placement`（默认 `bottom-start`）贴 trigger。
-- 已选中时：进入“选中项对齐”——计算选中项在列表中的 offsetTop，让该项盖在 trigger 上。
-  这样长列表里打开面板时选中项一定可见。
-- 因此没有 `side`/`align` 两个独立 prop；`SelectContent` 用 `placement`。
-- 管线：positioner（offset/flip/shift/matchWidth/size）+ 滚动箭头。
+- 公共 API 与其他浮层统一：`side` / `align` / `sideOffset` / `alignOffset`，
+  默认 `bottom` / `start` / `4` / `0`。
+- `alignItemWithTrigger`（默认 `true`）：
+  - 有选中值时进入“选中项对齐”——计算选中项在列表中的 offsetTop，让该项盖在 trigger 上；
+    此时 `side`/`align`/`offset` 不生效。
+  - 未选中时：按 `side`/`align` 贴 trigger。
+- `alignItemWithTrigger={false}` 时始终走普通贴边下拉，与 Popover/Dropdown 一致。
+- `placement` 只作为 1.0 前的兼容别名；内部仍由 positioner 的 `placement` 表达最终结果，
+  渲染元素上通过 `data-side` / `data-align` / `data-placement` 暴露；对齐模式下
+  `data-side="none"`（对齐 Base UI）。
+- 管线：选中项对齐走 `matchWidth → itemAlign → shift(crossAxis) → hide`；
+  普通贴边走 `offset → flip → shift → matchWidth → size → hide`，最后都接
+  `containingBlockOffset`。
 
 ## 5. 交互与无障碍
 
