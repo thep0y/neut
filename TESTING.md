@@ -521,8 +521,11 @@ Solid 会把模板提升到模块顶层。V8 覆盖率把 `solid-js/web` 内部�
 覆盖率结果会由 `.github/scripts/coverage-comment.mjs` 整理成一条 **PR 评论**：
 
 - 用隐藏标记 `<!-- neut-ui-coverage-report -->` 在**同一个 PR 上原地更新**，不会刷屏；
-- 内容：四项总览（覆盖数 / 百分比 / 门槛 / 状态）、**本 PR 改动的源码文件**逐个的覆盖率、
-  以及"最接近达标"的未覆盖文件（整个仓库有几百个 0% 的文件，列它们只是噪声）；
+- 内容：四项总览（覆盖数 / 百分比 / 门槛 / 状态，门槛按 §1.1 的
+  functions 100%、statements/lines 99.8%、branches 92.5%），**本 PR 改动的源码文件**
+  逐个的覆盖率；总览未达标时，再列出"最接近达标"的未覆盖文件
+  （整个仓库有几百个 0% 的文件，列它们只是噪声）；百分比只是粗筛，
+  真实缺口由 `bun run check:branches` 把关；
 - 该步骤 `if: always()` + `continue-on-error: true`：**没达标时才更需要看到报告**，
   而 fork PR 只有只读 token、发不出去也不该让门禁再多一条红；
 - 明细（`lcov-report` 的 HTML）随运行产物 `coverage-report` 上传，保留 7 天；

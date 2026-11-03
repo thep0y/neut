@@ -42,9 +42,17 @@ const METRICS = [
   ["functions", "函数"],
   ["lines", "行"],
 ];
-/** TESTING.md §1.3：四项都必须 100% */
-const GOAL = 100;
-/** 未达标文件最多列多少个（按百分比从高到低，挑最接近达标的） */
+/**
+ * TESTING.md §1.1 的四项百分比地板，与 vitest.config.ts 保持一致。
+ * 百分比只是粗筛；真实缺口由 `bun run check:branches` 精确把关。
+ */
+const THRESHOLDS = {
+  statements: 99.8,
+  branches: 92.5,
+  functions: 100,
+  lines: 99.8,
+};
+/** 低于地板的文件最多列多少个（按距各自门槛的差距从小到大，挑最接近达标的） */
 const MAX_OFFENDERS = 15;
 
 const OK_ICON = "✅";
@@ -55,7 +63,8 @@ function readMetric(entry, key) {
   const metric = entry?.[key];
   const pct = metric?.pct;
   return {
-    pct: typeof pct === "number" ? pct : GOAL,
+    // 0/0 时 vitest 写 "Unknown"，按 100% 处理，避免把"没有可覆盖代码"误报为缺口
+    pct: typeof pct === "number" ? pct : 100,
     covered: Number(metric?.covered ?? 0),
     total: Number(metric?.total ?? 0),
   };
@@ -80,9 +89,13 @@ function summarize(summary) {
   const metrics = METRICS.map(([key, label]) => ({
     key,
     label,
+    threshold: THRESHOLDS[key],
     ...readMetric(summary?.total, key),
   }));
-  return { metrics, ok: metrics.every((metric) => metric.pct >= GOAL) };
+  return {
+    metrics,
+    ok: metrics.every((metric) => metric.pct >= metric.threshold),
+  };
 }
 
 /** 逐个文件的四项指标 + "最差指标"与缺口（用于排序） */
@@ -93,15 +106,21 @@ function perFile(summary) {
       const metrics = METRICS.map(([name, label]) => ({
         key: name,
         label,
+        threshold: THRESHOLDS[name],
         ...readMetric(entry, name),
       }));
-      const worst = metrics.reduce((min, metric) =>
-        metric.pct < min.pct ? metric : min,
+      const failing = metrics.filter((metric) => metric.pct < metric.threshold);
+      // “最差”按距各自门槛的差距算，而不是直接比百分比：
+      // functions 门槛 100%、branches 只有 92.5%，直接比百分比会误判。
+      const worst = metrics.reduce((max, metric) =>
+        metric.threshold - metric.pct > max.threshold - max.pct ? metric : max,
       );
       return {
         file: relativeToRoot(key),
         metrics,
         worst,
+        failingCount: failing.length,
+        shortfall: Math.max(0, worst.threshold - worst.pct),
         gap: worst.total - worst.covered,
       };
     })
@@ -133,8 +152,16 @@ function formatPct(pct) {
   return `${pct}%`;
 }
 
-function icon(pct) {
-  return pct >= GOAL ? OK_ICON : BAD_ICON;
+function metricOk(metric) {
+  return metric.pct >= metric.threshold;
+}
+
+function rowOk(row) {
+  return row.metrics.every(metricOk);
+}
+
+function icon(metric) {
+  return metricOk(metric) ? OK_ICON : BAD_ICON;
 }
 
 function formatCount(covered, total) {
@@ -144,7 +171,7 @@ function formatCount(covered, total) {
 function overallTable(metrics) {
   const rows = metrics.map(
     (metric) =>
-      `| ${metric.label} | ${formatCount(metric.covered, metric.total)} | ${formatPct(metric.pct)} | ${formatPct(GOAL)} | ${icon(metric.pct)} |`,
+      `| ${metric.label} | ${formatCount(metric.covered, metric.total)} | ${formatPct(metric.pct)} | ${formatPct(metric.threshold)} | ${icon(metric)} |`,
   );
   return [
     "| 指标 | 覆盖 / 总数 | 百分比 | 门槛 | 状态 |",
@@ -155,12 +182,16 @@ function overallTable(metrics) {
 
 function verdict(summary) {
   const { metrics, ok } = summarize(summary);
-  if (ok) return `${OK_ICON} 四项指标均达标（各 100%）`;
+  if (ok)
+    return `${OK_ICON} 覆盖率达标：函数 100%、语句/行 99.8%、分支 92.5%（见 TESTING.md §1.1）`;
   const failing = metrics
-    .filter((metric) => metric.pct < GOAL)
-    .map((metric) => `${metric.label} ${formatPct(metric.pct)}`)
+    .filter((metric) => metric.pct < metric.threshold)
+    .map(
+      (metric) =>
+        `${metric.label} ${formatPct(metric.pct)}（门槛 ${formatPct(metric.threshold)}）`,
+    )
     .join("、");
-  return `${BAD_ICON} 未达标：${failing}（门槛各 ${GOAL}%，见 TESTING.md §1.3）`;
+  return `${BAD_ICON} 未达标：${failing}`;
 }
 
 function fileTable(rows, withWorst) {
@@ -174,7 +205,7 @@ function fileTable(rows, withWorst) {
     const cells = row.metrics
       .map((metric) => formatPct(metric.pct))
       .join(" | ");
-    const state = icon(row.worst.pct);
+    const state = rowOk(row) ? OK_ICON : BAD_ICON;
     return withWorst
       ? `| \`${row.file}\` | ${row.worst.label} | ${cells} | ${state} |`
       : `| \`${row.file}\` | ${cells} | ${state} |`;
@@ -212,24 +243,28 @@ function changedSection(files, changed) {
  * 先列它们等于每张 PR 都在刷同样一屏噪声；按百分比从高到低更容易挑出能收尾的。
  */
 function offendersSection(files) {
-  const offenders = files.filter((row) => row.worst.pct < GOAL);
+  const offenders = files.filter((row) => row.failingCount > 0);
   if (offenders.length === 0) {
     return [
       "",
-      `### 未达 ${GOAL}% 的文件`,
+      "### 低于百分比地板的文件",
       "",
-      `无：全部 ${files.length} 个文件四项均达标。`,
+      `无：全部 ${files.length} 个文件均达到各自阈值。`,
     ];
   }
-  const empty = offenders.filter((row) => row.worst.pct === 0).length;
+  const empty = offenders.filter((row) =>
+    row.metrics.every((metric) => metric.pct === 0),
+  ).length;
   const nearMisses = [...offenders].sort(
     (left, right) =>
-      right.worst.pct - left.worst.pct || left.file.localeCompare(right.file),
+      left.shortfall - right.shortfall ||
+      right.failingCount - left.failingCount ||
+      left.file.localeCompare(right.file),
   );
   const shown = nearMisses.slice(0, MAX_OFFENDERS);
   const lines = [
     "",
-    `### 接近达标的未覆盖文件（未达标共 ${offenders.length} 个，其中 ${empty} 个为 0%）`,
+    `### 低于百分比地板的文件（共 ${offenders.length} 个，其中 ${empty} 个为 0%）`,
     "",
     fileTable(shown, true),
   ];
@@ -253,17 +288,22 @@ function buildComment({ summary, baseSha, runUrl, outcome }) {
       "请先看运行日志里第一条报错的步骤。",
     );
   } else {
+    const info = summarize(summary);
     const files = perFile(summary);
-    lines.push(verdict(summary), "", overallTable(summarize(summary).metrics));
+    lines.push(verdict(summary), "", overallTable(info.metrics));
     // 门禁失败不总是"没达标"：也可能只是有用例挂了，而数字看起来仍是 100%
-    if (outcome === "failure" && summarize(summary).ok) {
+    if (outcome === "failure" && info.ok) {
       lines.push(
         "",
         `${BAD_ICON} 覆盖率数字达标，但 \`Test with coverage\` 这一步失败了（多半是有失败用例）——请看运行日志。`,
       );
     }
     lines.push(...changedSection(files, changedSourceFiles(baseSha)));
-    lines.push(...offendersSection(files));
+    // 总览已达标时不逐文件列“低于地板”的清单：单文件低于整体地板是正常的
+    // （Solid JSX 归因会让分支天然低于 100%），真实缺口由 check:branches 把关。
+    if (!info.ok) {
+      lines.push(...offendersSection(files));
+    }
   }
 
   lines.push("", "---", "");
