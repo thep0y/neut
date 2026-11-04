@@ -226,6 +226,71 @@
     padding-right: env(safe-area-inset-right);
 }
 
+/*
+ * 移动端触控目标：
+ * - 行式控件（按钮/菜单项/Tabs/分页/下拉选项）抬到 44px；
+ * - 小方控件（Checkbox/Radio/Switch/Slider）只把 ::after 命中区扩到 44px，
+ *   不改变视觉尺寸，避免把紧凑布局撑开；
+ * - 日历单元格 28px → 36px（7 列在 320px 屏幕上仍放得下）。
+ */
+@media (pointer: coarse) {
+    :is(
+        [data-slot="button"],
+        [data-slot="toggle"],
+        [data-slot="tabs-trigger"],
+        [data-slot="dropdown-menu-item"],
+        [data-slot="context-menu-item"],
+        [data-slot="combobox-item"],
+        [data-slot="pagination-link"]
+    ) {
+        min-width: 2.75rem;
+        min-height: 2.75rem;
+    }
+
+    [data-slot="tabs-list"] {
+        height: auto;
+        min-height: 2.75rem;
+    }
+
+    [data-slot="select-content"] [role="option"],
+    [data-slot="combobox-content"] [role="option"] {
+        min-height: 2.75rem;
+    }
+
+    [data-slot="calendar"] {
+        --cell-size: 2.25rem;
+    }
+
+    :is(
+        [data-slot="checkbox"],
+        [data-slot="radio-group-item"],
+        [data-slot="switch"],
+        [data-slot="slider-thumb"]
+    ) {
+        position: relative;
+    }
+
+    :is(
+        [data-slot="checkbox"],
+        [data-slot="radio-group-item"],
+        [data-slot="switch"],
+        [data-slot="slider-thumb"]
+    )::after {
+        content: "";
+        position: absolute;
+        inset: -0.875rem;
+    }
+
+    [data-slot="resizable-handle"]::after {
+        width: 0.75rem;
+    }
+
+    [data-slot="resizable-handle"][aria-orientation="horizontal"]::after {
+        width: 100%;
+        height: 0.75rem;
+    }
+}
+
 @layer utilities {
     :is(.\*\:data-\[slot\=accordion\]\:max-w-sm > *)[data-slot="accordion"] {
         max-width: var(--container-sm);
