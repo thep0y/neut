@@ -66,6 +66,20 @@ describe("ToastViewport 语义与排布", () => {
     expect(viewport()).toHaveAttribute("tabindex", "-1");
   });
 
+  it("底部视口使用 pb-safe", () => {
+    const { viewport } = renderViewport();
+
+    expect(viewport()).toHaveClass("pb-safe");
+    expect(viewport()).not.toHaveClass("pt-safe");
+  });
+
+  it("顶部视口使用 pt-safe", () => {
+    const { viewport } = renderViewport({ position: "top-center" });
+
+    expect(viewport()).toHaveClass("pt-safe");
+    expect(viewport()).not.toHaveClass("pb-safe");
+  });
+
   it("收起时用 grid 叠放", () => {
     const { viewport } = renderViewport();
 

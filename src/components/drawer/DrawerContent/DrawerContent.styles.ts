@@ -19,10 +19,10 @@ export function isHorizontal(direction: DrawerSwipeDirection): boolean {
 }
 
 const axisStyles: Record<DrawerSwipeDirection, string> = {
-  down: "inset-x-0 bottom-0 max-h-[calc(100dvh-6rem)]",
-  up: "inset-x-0 top-0 max-h-[calc(100dvh-6rem)]",
-  left: "inset-y-0 left-0 w-3/4 sm:w-96",
-  right: "inset-y-0 right-0 w-3/4 sm:w-96",
+  down: "inset-x-0 bottom-0 max-h-[calc(100dvh-6rem)] pb-safe",
+  up: "inset-x-0 top-0 max-h-[calc(100dvh-6rem)] pt-safe",
+  left: "inset-y-0 left-0 w-3/4 sm:w-96 pl-safe",
+  right: "inset-y-0 right-0 w-3/4 sm:w-96 pr-safe",
 };
 
 /**

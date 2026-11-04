@@ -96,6 +96,32 @@ export default defineConfig({
 组件内部的状态样式使用 `data-*` 变体（如 `data-open:`、`data-highlighted:`、`data-disabled:`），
 与主题切换互不影响。
 
+## 移动端安全区
+
+在 `<meta name="viewport">` 中启用 `viewport-fit=cover`：
+
+```html
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+/>
+```
+
+`dist/ui.css` 提供四个安全区工具类，对应 `env(safe-area-inset-*)`：
+
+| 类名 | 作用 |
+| :--- | :--- |
+| `pt-safe` | `padding-top: env(safe-area-inset-top)` |
+| `pb-safe` | `padding-bottom: env(safe-area-inset-bottom)` |
+| `pl-safe` | `padding-left: env(safe-area-inset-left)` |
+| `pr-safe` | `padding-right: env(safe-area-inset-right)` |
+
+Drawer / Sheet / Toast 已默认使用；自定义固定底栏、顶栏或全屏面板直接加类即可：
+
+```html
+<footer class="pb-safe">…</footer>
+```
+
 ## 多语言字体（可选）
 
 `src/styles/i18n-font.css` 按 `data-lang` 设置 `font-family` 与行高系数。取值：
