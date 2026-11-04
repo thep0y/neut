@@ -1,4 +1,4 @@
-import { createEffect, For } from "solid-js";
+import { For } from "solid-js";
 import {
   A,
   Route,
@@ -7,10 +7,6 @@ import {
   type RouteSectionProps,
 } from "@solidjs/router";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
   Sidebar,
   SidebarContent,
   SidebarGroup,
@@ -39,6 +35,7 @@ function Brand() {
 
 function Navigation(props: { onNavigate?: () => void }) {
   const location = useLocation();
+  const { setOpenMobile } = useSidebar();
 
   return (
     <SidebarGroup>
@@ -51,7 +48,10 @@ function Navigation(props: { onNavigate?: () => void }) {
                 component={A}
                 href={route.path}
                 isActive={location.pathname === route.path}
-                onClick={() => props.onNavigate?.()}
+                onClick={() => {
+                  setOpenMobile(false);
+                  props.onNavigate?.();
+                }}
               >
                 {route.title}
               </SidebarMenuButton>
@@ -63,46 +63,10 @@ function Navigation(props: { onNavigate?: () => void }) {
   );
 }
 
-/**
- * 移动端导航：复用 SidebarProvider 的 openMobile，默认关闭。
- * Sheet 关闭时完全不占布局，示例内容可以使用整屏宽度。
- */
-function MobileSidebar() {
-  const { openMobile, setOpenMobile } = useSidebar();
-  const location = useLocation();
-
-  createEffect(() => {
-    // 路由变化后自动收起，避免导航后 Sheet 还盖在示例上
-    location.pathname;
-    setOpenMobile(false);
-  });
-
-  return (
-    <Sheet open={openMobile()} onOpenChange={setOpenMobile}>
-      <SheetContent side="left" class="w-[min(18rem,85vw)] p-0">
-        <SheetHeader class="border-b p-4">
-          <SheetTitle class="flex items-center gap-2 text-sm font-semibold">
-            <span class="flex size-6 items-center justify-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">
-              N
-            </span>
-            neut/ui
-          </SheetTitle>
-        </SheetHeader>
-        <SidebarContent class="p-2">
-          <Navigation onNavigate={() => setOpenMobile(false)} />
-        </SidebarContent>
-      </SheetContent>
-    </Sheet>
-  );
-}
-
 function AppLayout(props: RouteSectionProps) {
   return (
     <SidebarProvider>
-      <Sidebar
-        collapsible="none"
-        class="sticky top-0 hidden h-svh border-r md:flex"
-      >
+      <Sidebar collapsible="offcanvas" class="border-r">
         <SidebarHeader>
           <Brand />
         </SidebarHeader>
@@ -110,8 +74,6 @@ function AppLayout(props: RouteSectionProps) {
           <Navigation />
         </SidebarContent>
       </Sidebar>
-
-      <MobileSidebar />
 
       <SidebarInset>
         <header class="sticky top-0 z-20 flex min-h-12 items-center gap-2 border-b bg-background/95 px-4 pt-safe backdrop-blur md:hidden">
