@@ -235,7 +235,6 @@
  */
 @media (pointer: coarse) {
     :is(
-        [data-slot="button"],
         [data-slot="toggle"],
         [data-slot="tabs-trigger"],
         [data-slot="dropdown-menu-item"],
@@ -245,6 +244,37 @@
     ) {
         min-width: 2.75rem;
         min-height: 2.75rem;
+    }
+
+    /* Button 保留 xs/sm/md/lg 的高度层级；小于 44 的档位用 ::after
+       把命中区补到 44，不把四种尺寸压成同一个高度。 */
+    [data-slot="button"] {
+        position: relative;
+        min-width: 2.75rem;
+    }
+
+    [data-slot="button"]:not([data-size]),
+    [data-slot="button"][data-size="md"] {
+        min-height: 2.75rem;
+    }
+
+    [data-slot="button"][data-size="xs"] {
+        min-height: 2.25rem;
+    }
+
+    [data-slot="button"][data-size="sm"] {
+        min-height: 2.5rem;
+    }
+
+    [data-slot="button"][data-size="lg"] {
+        min-height: 3rem;
+    }
+
+    [data-slot="button"]::after {
+        content: "";
+        position: absolute;
+        inset-block: calc((2.75rem - 100%) / -2);
+        inset-inline: 0;
     }
 
     [data-slot="tabs-list"] {
