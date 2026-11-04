@@ -147,6 +147,208 @@ describe("carousel 整机 - 水平导航", () => {
   });
 });
 
+/** 派发一次 pointer 手势；默认按下→移动→抬起 */
+function swipe(
+  viewport: HTMLElement,
+  options: {
+    from: number;
+    to: number;
+    axis?: "x" | "y";
+    pointerType?: string;
+    pointerId?: number;
+    up?: boolean;
+  },
+) {
+  const {
+    from,
+    to,
+    axis = "x",
+    pointerType = "touch",
+    pointerId = 1,
+    up = true,
+  } = options;
+  const point = (value: number) =>
+    axis === "x"
+      ? { clientX: value, clientY: 10 }
+      : { clientX: 10, clientY: value };
+
+  fireEvent.pointerDown(viewport, {
+    pointerId,
+    pointerType,
+    ...point(from),
+  });
+  fireEvent.pointerMove(viewport, {
+    pointerId,
+    pointerType,
+    ...point(to),
+  });
+  if (up) {
+    fireEvent.pointerUp(viewport, {
+      pointerId,
+      pointerType,
+      ...point(to),
+    });
+  }
+}
+
+describe("carousel 整机 - 触摸拖拽", () => {
+  it("左滑超过阈值进入下一张", () => {
+    const resizeObserver = stubResizeObserver();
+    const { container } = render(() => <CarouselFixture count={3} />);
+    applyLayout(resizeObserver, container, {
+      itemWidth: 200,
+      viewportWidth: 200,
+    });
+    const viewport = container.querySelector<HTMLElement>(
+      '[data-slot="carousel-content"]',
+    )!;
+
+    swipe(viewport, { from: 300, to: 100 });
+
+    expect(selected()).toEqual(["false", "true", "false"]);
+    expect(queryTrack(container).getAttribute("style")).toBe(
+      "transform: translate3d(-200px, 0, 0);",
+    );
+  });
+
+  it("位移不足阈值时回弹，不切换索引", () => {
+    const resizeObserver = stubResizeObserver();
+    const { container } = render(() => <CarouselFixture count={3} />);
+    applyLayout(resizeObserver, container, {
+      itemWidth: 200,
+      viewportWidth: 200,
+    });
+    const viewport = container.querySelector<HTMLElement>(
+      '[data-slot="carousel-content"]',
+    )!;
+
+    swipe(viewport, { from: 300, to: 290, up: false });
+
+    expect(queryTrack(container).getAttribute("style")).toBe(
+      "transform: translate3d(-10px, 0, 0);",
+    );
+
+    fireEvent.pointerUp(viewport, {
+      pointerId: 1,
+      pointerType: "touch",
+      clientX: 290,
+      clientY: 10,
+    });
+
+    expect(selected()).toEqual(["true", "false", "false"]);
+    expect(queryTrack(container).getAttribute("style")).toBe(
+      "transform: translate3d(-0px, 0, 0);",
+    );
+  });
+
+  it("右滑超过阈值返回上一张", () => {
+    const resizeObserver = stubResizeObserver();
+    const { container } = render(() => <CarouselFixture count={3} />);
+    applyLayout(resizeObserver, container, {
+      itemWidth: 200,
+      viewportWidth: 200,
+    });
+    const viewport = container.querySelector<HTMLElement>(
+      '[data-slot="carousel-content"]',
+    )!;
+
+    fireEvent.click(screen.getByRole("button", { name: "Next slide" }));
+    expect(selected()).toEqual(["false", "true", "false"]);
+
+    swipe(viewport, { from: 100, to: 300 });
+
+    expect(selected()).toEqual(["true", "false", "false"]);
+    expect(queryTrack(container).getAttribute("style")).toBe(
+      "transform: translate3d(-0px, 0, 0);",
+    );
+  });
+
+  it("垂直方向用 clientY 计算位移", () => {
+    const resizeObserver = stubResizeObserver();
+    const { container } = render(() => (
+      <CarouselFixture orientation="vertical" count={3} />
+    ));
+    applyLayout(resizeObserver, container, {
+      itemHeight: 150,
+      viewportHeight: 150,
+    });
+    const viewport = container.querySelector<HTMLElement>(
+      '[data-slot="carousel-content"]',
+    )!;
+
+    swipe(viewport, { from: 300, to: 100, axis: "y" });
+
+    expect(selected()).toEqual(["false", "true", "false"]);
+    expect(queryTrack(container).getAttribute("style")).toBe(
+      "transform: translate3d(0, -150px, 0);",
+    );
+  });
+
+  it("鼠标拖动不接管（桌面端保留文本选择与点击）", () => {
+    const resizeObserver = stubResizeObserver();
+    const { container } = render(() => <CarouselFixture count={3} />);
+    applyLayout(resizeObserver, container, {
+      itemWidth: 200,
+      viewportWidth: 200,
+    });
+    const viewport = container.querySelector<HTMLElement>(
+      '[data-slot="carousel-content"]',
+    )!;
+
+    swipe(viewport, { from: 300, to: 100, pointerType: "mouse" });
+
+    expect(selected()).toEqual(["true", "false", "false"]);
+    expect(queryTrack(container).getAttribute("style")).toBe(
+      "transform: translate3d(-0px, 0, 0);",
+    );
+  });
+
+  it("忽略非当前 pointerId 的 move", () => {
+    const resizeObserver = stubResizeObserver();
+    const { container } = render(() => <CarouselFixture count={3} />);
+    applyLayout(resizeObserver, container, {
+      itemWidth: 200,
+      viewportWidth: 200,
+    });
+    const viewport = container.querySelector<HTMLElement>(
+      '[data-slot="carousel-content"]',
+    )!;
+
+    fireEvent.pointerDown(viewport, {
+      pointerId: 1,
+      pointerType: "touch",
+      clientX: 300,
+      clientY: 10,
+    });
+    fireEvent.pointerMove(viewport, {
+      pointerId: 2,
+      pointerType: "touch",
+      clientX: 100,
+      clientY: 10,
+    });
+
+    expect(queryTrack(container).getAttribute("style")).toBe(
+      "transform: translate3d(-0px, 0, 0);",
+    );
+
+    // 非当前 pointerId 的 pointerup 也不能结束手势
+    fireEvent.pointerUp(viewport, {
+      pointerId: 2,
+      pointerType: "touch",
+      clientX: 100,
+      clientY: 10,
+    });
+    expect(selected()).toEqual(["true", "false", "false"]);
+
+    fireEvent.pointerUp(viewport, {
+      pointerId: 1,
+      pointerType: "touch",
+      clientX: 300,
+      clientY: 10,
+    });
+  });
+});
+
 describe("carousel 整机 - 垂直导航", () => {
   it("垂直方向位移走 Y 轴", () => {
     const resizeObserver = stubResizeObserver();
