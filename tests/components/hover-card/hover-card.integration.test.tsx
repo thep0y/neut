@@ -207,6 +207,16 @@ describe("HoverCard - 延时开关", () => {
     expect(trigger()).toHaveAttribute("data-state", "closed");
   });
 
+  it("触摸 pointerenter 不打开（触摸没有 hover 语义）", async () => {
+    renderCard({ delay: 0 });
+
+    fireEvent.pointerEnter(trigger(), { pointerType: "touch" });
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(content()).toBeNull();
+    expect(trigger()).toHaveAttribute("data-state", "closed");
+  });
+
   it("disabled 时 hover 不打开", async () => {
     renderCard({ disabled: true });
 

@@ -35,7 +35,11 @@ export function useTooltipTrigger(): UseTooltipTriggerResult {
   const attachListeners = (el: Element) => {
     let isPointerDown = false;
 
-    const onPointerEnter = () => {
+    const onPointerEnter = (event: Event) => {
+      // 触摸没有“悬停”语义：pointerenter 在触摸按下时也会触发，
+      // 放任它会和随后的 mousedown / focus 抢开关。触摸设备交给
+      // focus（键盘/读屏）或使用方自己的点击逻辑。
+      if ((event as PointerEvent).pointerType === "touch") return;
       if (!ctx.disabled()) ctx.requestOpen();
     };
     const onPointerLeave = () => {

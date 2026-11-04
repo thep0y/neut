@@ -91,6 +91,16 @@ describe("Tooltip - 初始状态与 ARIA", () => {
 });
 
 describe("Tooltip - hover 延时", () => {
+  it("触摸 pointerenter 不打开（触摸没有 hover 语义）", async () => {
+    renderTooltip();
+
+    fireEvent.pointerEnter(trigger(), { pointerType: "touch" });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(content()).toBeNull();
+    expect(trigger()).toHaveAttribute("data-state", "closed");
+  });
+
   it("默认 openDelay 为 0：hover 后立刻打开", async () => {
     renderTooltip();
 

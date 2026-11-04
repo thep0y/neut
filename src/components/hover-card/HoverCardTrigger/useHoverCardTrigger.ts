@@ -23,7 +23,10 @@ export function useHoverCardTrigger(options: Options) {
   const attachListeners = (el: Element) => {
     let pointerDown = false;
 
-    const onPointerEnter = () => {
+    const onPointerEnter = (event: Event) => {
+      // HoverCard 是悬停式组件，触摸没有等价语义；避免 pointerenter
+      // 在点按时误开、随后又被 pointerleave/外部点击立刻关掉。
+      if ((event as PointerEvent).pointerType === "touch") return;
       if (isDisabled()) return;
       ctx.requestOpen(options.delay());
     };
