@@ -122,6 +122,17 @@ Drawer / Sheet / Toast 已默认使用；自定义固定底栏、顶栏或全屏
 <footer class="pb-safe">…</footer>
 ```
 
+## 移动端触控目标
+
+`dist/ui.css` 内置 `@media (pointer: coarse)` 规则，触摸设备上：
+
+- Button / Toggle / TabsTrigger / 菜单项 / 下拉选项 / PaginationLink 的最小尺寸为 44×44；
+- Checkbox / Radio / Switch / Slider 只把 `::after` 命中区扩到 44×44，**不改变视觉尺寸**；
+- Calendar 单元格从 28px 提到 36px；
+- Resizable 手柄的命中区从 4px 提到 12px。
+
+鼠标/触控板环境不受影响。
+
 ## 多语言字体（可选）
 
 `src/styles/i18n-font.css` 按 `data-lang` 设置 `font-family` 与行高系数。取值：
