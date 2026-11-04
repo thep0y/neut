@@ -1,10 +1,17 @@
 import { mergeProps, Show, splitProps } from "solid-js";
 import type { SidebarProps } from "./Sidebar.types";
 import { clsx } from "~/utils";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "~/components/sheet";
 import { useSidebar } from "../SidebarProvider";
 
 export const Sidebar = (props: SidebarProps) => {
-  const { isMobile, state } = useSidebar();
+  const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
   const merged = mergeProps(
     { side: "left", variant: "sidebar", collapsible: "offcanvas" } as const,
@@ -38,7 +45,28 @@ export const Sidebar = (props: SidebarProps) => {
         </div>
       }
     >
-      <Show when={!isMobile} fallback={null}>
+      <Show
+        when={!isMobile}
+        fallback={
+          <Sheet open={openMobile()} onOpenChange={setOpenMobile}>
+            <SheetContent
+              data-sidebar="sidebar"
+              data-mobile="true"
+              side={local.side}
+              showCloseButton={false}
+              class="w-[min(18rem,85vw)] bg-sidebar p-0 text-sidebar-foreground"
+            >
+              <SheetHeader class="sr-only">
+                <SheetTitle>Sidebar</SheetTitle>
+                <SheetDescription>
+                  Displays the mobile sidebar.
+                </SheetDescription>
+              </SheetHeader>
+              <div class="flex h-full w-full flex-col">{local.children}</div>
+            </SheetContent>
+          </Sheet>
+        }
+      >
         <div
           class="group peer hidden text-sidebar-foreground md:block"
           data-state={state()}
