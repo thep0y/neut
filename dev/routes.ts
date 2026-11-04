@@ -8,6 +8,9 @@ export interface DevRoute {
   hideInSidebar?: boolean;
 }
 
+const ButtonPage = lazy(() => import("./pages/button-page"));
+const SliderPage = lazy(() => import("./pages/slider-page"));
+const SwitchPage = lazy(() => import("./pages/switch-page"));
 const DatePickerPage = lazy(() => import("./pages/date-picker-page"));
 const DataTablePage = lazy(() => import("./pages/data-table-page"));
 const DialogPage = lazy(() => import("./pages/dialog-page"));
@@ -45,6 +48,9 @@ export const routes: DevRoute[] = [
     component: DatePickerPage,
     hideInSidebar: true,
   },
+  { path: "/button", title: "Button", component: ButtonPage },
+  { path: "/slider", title: "Slider", component: SliderPage },
+  { path: "/switch", title: "Switch", component: SwitchPage },
   { path: "/dialog", title: "Dialog", component: DialogPage },
   { path: "/drawer", title: "Drawer", component: DrawerPage },
   {
@@ -74,7 +80,11 @@ export const routes: DevRoute[] = [
   { path: "/resizable", title: "Resizable", component: ResizablePage },
   { path: "/sheet", title: "Sheet", component: SheetPage },
   { path: "/hover-card", title: "Hover Card", component: HoverCardPage },
-  { path: "/questionnaire", title: "Questionnaire", component: QuestionnairePage },
+  {
+    path: "/questionnaire",
+    title: "Questionnaire",
+    component: QuestionnairePage,
+  },
   { path: "/tooltip", title: "Tooltip", component: TooltipPage },
   { path: "/toggle", title: "Toggle", component: TogglePage },
   { path: "/toggle-group", title: "Toggle Group", component: ToggleGroupPage },
