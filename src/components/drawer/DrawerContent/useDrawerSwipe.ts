@@ -67,6 +67,16 @@ export function useDrawerSwipe(ctx: DrawerContextValue) {
 
     const onUp = (event: PointerEvent) => finish(event);
 
+    // 触摸设备上只靠 pointer events 不够：浏览器会在第一次 move 后
+    // 接管纵向/横向滚动并派发 pointercancel。拖拽期间用非 passive 的
+    // touchmove 阻止默认滚动，才能把整段手势留给抽屉。
+    const onTouchMove = (event: TouchEvent) => {
+      if (!dragging()) return;
+      // 只有沿关闭方向的位移才拦截；反方向要让内容继续原生滚动。
+      const offset = horizontal() ? dragX() : dragY();
+      if (offset !== 0) event.preventDefault();
+    };
+
     const onPointerDown = (event: PointerEvent) => {
       if (event.button !== 0) return;
       const target = event.target as Element | null;
@@ -82,8 +92,10 @@ export function useDrawerSwipe(ctx: DrawerContextValue) {
     };
 
     popup.addEventListener("pointerdown", onPointerDown);
+    popup.addEventListener("touchmove", onTouchMove, { passive: false });
     onCleanup(() => {
       popup.removeEventListener("pointerdown", onPointerDown);
+      popup.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
