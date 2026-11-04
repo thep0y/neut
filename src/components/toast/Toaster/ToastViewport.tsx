@@ -61,6 +61,10 @@ export function ToastViewport(props: ToastViewportProps) {
         toasterContainerClass,
         getPositionClass(props.position),
         getViewportLayoutClass(props.position, props.expanded),
+        // 移动端安全区：底部视口避开 Home Indicator，顶部视口避开刘海/状态栏；
+        // 横屏时左右也可能有安全区，统一加上
+        "pl-safe pr-safe",
+        props.position.startsWith("bottom") ? "pb-safe" : "pt-safe",
       )}
       style={{
         gap: `${props.gap}px`,
