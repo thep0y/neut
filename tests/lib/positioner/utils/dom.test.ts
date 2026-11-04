@@ -46,6 +46,30 @@ function withOverflow(el: Element, overflow: string, fn: () => void) {
   }
 }
 
+/** 临时给 window 安装 visualViewport（jsdom 默认没有） */
+function withVisualViewport(
+  vv: Pick<VisualViewport, "width" | "height" | "offsetLeft" | "offsetTop">,
+  fn: () => void,
+) {
+  const original = window.visualViewport;
+  Object.defineProperty(window, "visualViewport", {
+    configurable: true,
+    value: vv,
+  });
+  try {
+    fn();
+  } finally {
+    if (original === undefined) {
+      Reflect.deleteProperty(window, "visualViewport");
+    } else {
+      Object.defineProperty(window, "visualViewport", {
+        configurable: true,
+        value: original,
+      });
+    }
+  }
+}
+
 /** 临时把 window.scrollX/scrollY 设为指定值 */
 function withScroll(x: number, y: number, fn: () => void) {
   const originalX = window.scrollX;
@@ -169,6 +193,52 @@ describe("getViewportBoundary", () => {
         });
       });
     });
+  });
+
+  it("有 visualViewport 时 fixed 用可视视口尺寸与 offset，仍不叠加滚动", () => {
+    withVisualViewport(
+      { width: 400, height: 300, offsetLeft: 10, offsetTop: 20 },
+      () => {
+        withScroll(500, 300, () => {
+          expect(getViewportBoundary("fixed")).toEqual({
+            x: 10,
+            y: 20,
+            width: 400,
+            height: 300,
+          });
+        });
+      },
+    );
+  });
+
+  it("有 visualViewport 时 absolute 同时叠加滚动偏移与可视视口 offset", () => {
+    withVisualViewport(
+      { width: 400, height: 300, offsetLeft: 10, offsetTop: 20 },
+      () => {
+        withScroll(500, 300, () => {
+          expect(getViewportBoundary("absolute")).toEqual({
+            x: 510,
+            y: 320,
+            width: 400,
+            height: 300,
+          });
+        });
+      },
+    );
+  });
+
+  it("visualViewport 下 padding 同样收缩位置与尺寸", () => {
+    withVisualViewport(
+      { width: 400, height: 300, offsetLeft: 10, offsetTop: 20 },
+      () => {
+        expect(getViewportBoundary("fixed", 5)).toEqual({
+          x: 15,
+          y: 25,
+          width: 390,
+          height: 290,
+        });
+      },
+    );
   });
 
   it("absolute 策略下叠加滚动偏移", () => {

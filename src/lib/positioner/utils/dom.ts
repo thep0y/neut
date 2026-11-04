@@ -32,15 +32,21 @@ export function getRectRelativeTo(
 
 /** 当前视口作为默认边界（用于 shift / flip 的溢出检测），strategy 决定坐标系 */
 export function getViewportBoundary(strategy: Strategy, padding = 0): Rect {
-  const width = document.documentElement.clientWidth;
-  const height = document.documentElement.clientHeight;
+  // 移动端软键盘 / 地址栏变化会改变 visualViewport，但不会改变
+  // documentElement.clientHeight。用 visualViewport 作为边界，浮层才不会
+  // 被定位到键盘后面；没有 visualViewport 的环境回退到布局视口。
+  const viewport = window.visualViewport;
+  const width = viewport?.width ?? document.documentElement.clientWidth;
+  const height = viewport?.height ?? document.documentElement.clientHeight;
+  const offsetX = viewport?.offsetLeft ?? 0;
+  const offsetY = viewport?.offsetTop ?? 0;
   const scrollX =
     strategy === "fixed" ? 0 : (window.scrollX ?? window.pageXOffset);
   const scrollY =
     strategy === "fixed" ? 0 : (window.scrollY ?? window.pageYOffset);
   return {
-    x: scrollX + padding,
-    y: scrollY + padding,
+    x: scrollX + offsetX + padding,
+    y: scrollY + offsetY + padding,
     width: width - padding * 2,
     height: height - padding * 2,
   };

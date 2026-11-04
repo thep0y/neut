@@ -26,6 +26,27 @@ function elementWithRect(r: ReturnType<typeof rect>): HTMLElement {
   return el;
 }
 
+/** 临时给 window 安装 visualViewport（jsdom 默认没有） */
+function withVisualViewport(vv: VisualViewport, fn: () => void) {
+  const original = window.visualViewport;
+  Object.defineProperty(window, "visualViewport", {
+    configurable: true,
+    value: vv,
+  });
+  try {
+    fn();
+  } finally {
+    if (original === undefined) {
+      Reflect.deleteProperty(window, "visualViewport");
+    } else {
+      Object.defineProperty(window, "visualViewport", {
+        configurable: true,
+        value: original,
+      });
+    }
+  }
+}
+
 /** 覆盖 getComputedStyle 让指定元素报告 overflow */
 function withOverflow(el: Element, overflow: string) {
   const original = window.getComputedStyle;
@@ -80,6 +101,27 @@ describe("autoUpdate", () => {
     window.dispatchEvent(new Event("resize"));
 
     expect(update).not.toHaveBeenCalled();
+  });
+
+  it("visualViewport 的 resize / scroll 会触发 update，cleanup 会移除监听", () => {
+    const update = vi.fn();
+    const viewport = new EventTarget() as VisualViewport;
+    const reference = elementWithRect(rect(0, 0, 10, 10));
+    const floating = elementWithRect(rect(0, 0, 10, 10));
+
+    withVisualViewport(viewport, () => {
+      const cleanup = autoUpdate(reference, floating, update);
+
+      viewport.dispatchEvent(new Event("resize"));
+      expect(update).toHaveBeenCalledTimes(1);
+
+      viewport.dispatchEvent(new Event("scroll"));
+      expect(update).toHaveBeenCalledTimes(2);
+
+      cleanup();
+      viewport.dispatchEvent(new Event("resize"));
+      expect(update).toHaveBeenCalledTimes(2);
+    });
   });
 
   it("监听可滚动祖先的 scroll 事件", () => {
