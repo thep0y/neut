@@ -126,7 +126,8 @@ Drawer / Sheet / Toast 已默认使用；自定义固定底栏、顶栏或全屏
 
 `dist/ui.css` 内置 `@media (pointer: coarse)` 规则，触摸设备上：
 
-- Button / Toggle / TabsTrigger / 菜单项 / 下拉选项 / PaginationLink 的最小尺寸为 44×44；
+- Button 保留尺寸层级：xs 36 / sm 40 / md 44 / lg 48；小于 44 的档位用 `::after` 把命中区补到 44；
+- Toggle / TabsTrigger / 菜单项 / 下拉选项 / PaginationLink 最小 44×44；
 - Checkbox / Radio / Switch / Slider 只把 `::after` 命中区扩到 44×44，**不改变视觉尺寸**；
 - Calendar 单元格从 28px 提到 36px；
 - Resizable 手柄的命中区从 4px 提到 12px。
