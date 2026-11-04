@@ -67,11 +67,19 @@ export function autoUpdate(
 
   window.addEventListener("resize", update);
 
+  // 移动端软键盘弹出/收起时，iOS 不一定触发 window.resize，但会触发
+  // visualViewport 的 resize / scroll。监听它，浮层才能跟着可视区域重新定位。
+  const visualViewport = window.visualViewport;
+  visualViewport?.addEventListener("resize", update);
+  visualViewport?.addEventListener("scroll", update);
+
   return () => {
     ancestors.forEach((ancestor) => {
       ancestor.removeEventListener("scroll", update);
     });
     resizeObserver?.disconnect();
     window.removeEventListener("resize", update);
+    visualViewport?.removeEventListener("resize", update);
+    visualViewport?.removeEventListener("scroll", update);
   };
 }

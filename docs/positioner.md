@@ -81,6 +81,7 @@ interface Positioner {
 - 祖先 `ResizeObserver`（`ancestorResize`，默认 true）
 - reference/floating 自身尺寸（`elementResize`，默认 true）
 - `window.resize`
+- `window.visualViewport` 的 `resize` / `scroll`（移动端软键盘、地址栏变化）
 
 虚拟元素没有 DOM 祖先，除非提供 `contextElement`，否则只监听 `window.resize`。
 
@@ -102,4 +103,6 @@ const anchor = createVirtualElement({
 
 - `placement` 是 `top` / `right` / `bottom` / `left` 及其 `-start` / `-end` 组合。
 - 业务组件的 `side` 额外支持逻辑方向 `inline-start` / `inline-end`，由组件按 `dir` 解析成 left/right（RTL 下相反）。
-- `rect` / `boundary` 由 `utils/dom` 计算；`isOverflowElement` 同时被浮层定位与 `useScrollLock` 复用。
+- `rect` / `boundary` 由 `utils/dom` 计算；有 `visualViewport` 时用它作为边界，
+  并叠加 `offsetLeft` / `offsetTop`（`absolute` 还要再加页面滚动），避免软键盘弹出后浮层被键盘盖住。
+  `isOverflowElement` 同时被浮层定位与 `useScrollLock` 复用。
