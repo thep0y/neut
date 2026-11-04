@@ -22,7 +22,7 @@ import { Button } from "@neut/ui/components/button";
 | **Accordion** | `Accordion`、`AccordionItem`、`AccordionTrigger`、`AccordionContent` | `value`/`defaultValue` 为数组；`multiple`、`disabled`、`orientation`、`loopFocus`、`hiddenUntilFound`、`keepMounted`；`data-slot`：`accordion`、`accordion-item`、`accordion-content`、`accordion-trigger-icon` |
 | **AspectRatio** | `AspectRatio` | `ratio`（必填）；`data-slot="aspect-ratio"` |
 | **Card** | `Card`、`CardHeader`、`CardTitle`、`CardDescription`、`CardAction`、`CardContent`、`CardFooter` | 根组件 `size="md" \| "sm"`；各部件均为多态容器 |
-| **Carousel** | `Carousel`、`CarouselContent`、`CarouselItem`、`CarouselPrevious`、`CarouselNext`、`CarouselDots` | `loop`、`orientation`、`autoPlay`、`autoPlayInterval`；`data-slot`：`carousel`、`carousel-content`、`carousel-item`、`carousel-previous`、`carousel-next` |
+| **Carousel** | `Carousel`、`CarouselContent`、`CarouselItem`、`CarouselPrevious`、`CarouselNext`、`CarouselDots` | `loop`、`orientation`、`autoPlay`、`autoPlayInterval`；触摸/触控笔可拖拽切页（鼠标不接管）；`data-slot`：`carousel`、`carousel-content`、`carousel-item`、`carousel-previous`、`carousel-next` |
 | **Collapsible** | `Collapsible`、`CollapsibleTrigger`、`CollapsibleContent` | `open`/`defaultOpen`/`onOpenChange`；`data-slot`：`collapsible`、`collapsible-trigger`、`collapsible-content` |
 | **Resizable** | `ResizablePanelGroup`、`ResizablePanel`、`ResizableHandle` | `orientation`、`defaultLayout`、`onLayoutChange`、`autoSaveId`、`storage`、`keyboardResizeBy`；panel：`id`、`defaultSize`、`minSize`、`maxSize`、`collapsible`、`collapsedSize`、`panelRef`。详见 [Resizable](./components/resizable.md) |
 | **ScrollArea** | `ScrollArea`、`ScrollBar` | `orientation`、`aria-label`；`data-slot`：`scroll-area`、`scroll-area-viewport`、`scroll-area-scrollbar`、`scroll-area-thumb` |

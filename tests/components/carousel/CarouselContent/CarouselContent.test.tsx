@@ -46,6 +46,22 @@ describe("CarouselContent - viewport", () => {
 });
 
 describe("CarouselContent - 方向", () => {
+  it("水平方向容器使用 touch-pan-y（保留纵向页面滚动）", () => {
+    const { container } = setup({ orientation: "horizontal" });
+    const viewport = getViewport(container);
+
+    expect(viewport).toHaveClass("touch-pan-y");
+    expect(viewport).not.toHaveClass("touch-pan-x");
+  });
+
+  it("垂直方向容器使用 touch-pan-x（保留横向页面滚动）", () => {
+    const { container } = setup({ orientation: "vertical" });
+    const viewport = getViewport(container);
+
+    expect(viewport).toHaveClass("touch-pan-x");
+    expect(viewport).not.toHaveClass("touch-pan-y");
+  });
+
   it("水平方向使用 -ml-4 且不加 flex-col", () => {
     const { container } = setup({ orientation: "horizontal" });
 
