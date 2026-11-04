@@ -130,6 +130,56 @@ describe("useDrawerSwipe - 起手判定", () => {
 
     expect(swipe.dragging()).toBe(true);
   });
+
+  it("拖拽中阻止 touchmove 默认滚动，结束后不再阻止", () => {
+    const { popup } = setup();
+
+    const idle = new Event("touchmove", { cancelable: true, bubbles: true });
+    popup.dispatchEvent(idle);
+    expect(idle.defaultPrevented).toBe(false);
+
+    fireEvent.pointerDown(popup, { button: 0, clientY: 0 });
+    fireEvent.pointerMove(window, { clientY: 40 });
+
+    const during = new Event("touchmove", { cancelable: true, bubbles: true });
+    popup.dispatchEvent(during);
+    expect(during.defaultPrevented).toBe(true);
+
+    fireEvent.pointerUp(window, { clientY: 40 });
+
+    const after = new Event("touchmove", { cancelable: true, bubbles: true });
+    popup.dispatchEvent(after);
+    expect(after.defaultPrevented).toBe(false);
+  });
+
+  it("横向拖拽中同样阻止 touchmove", () => {
+    const { popup } = setup(
+      { swipeDirection: () => "left" },
+      { offsetWidth: 1000 },
+    );
+
+    fireEvent.pointerDown(popup, { button: 0, clientX: 0 });
+    fireEvent.pointerMove(window, { clientX: -40 });
+
+    const event = new Event("touchmove", { cancelable: true, bubbles: true });
+    popup.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+
+    fireEvent.pointerUp(window, { clientX: -40 });
+  });
+
+  it("反方向拖动不阻止 touchmove，让内容继续滚动", () => {
+    const { popup } = setup();
+
+    fireEvent.pointerDown(popup, { button: 0, clientY: 0 });
+    fireEvent.pointerMove(window, { clientY: -40 });
+
+    const event = new Event("touchmove", { cancelable: true, bubbles: true });
+    popup.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+
+    fireEvent.pointerUp(window, { clientY: -40 });
+  });
 });
 
 describe("useDrawerSwipe - 位移与阈值", () => {

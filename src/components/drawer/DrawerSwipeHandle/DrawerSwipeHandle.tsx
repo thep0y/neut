@@ -17,7 +17,7 @@ export function DrawerSwipeHandle(props: DrawerSwipeHandleProps) {
       data-slot="drawer-swipe-handle"
       aria-hidden="true"
       class={clsx(
-        "relative z-10 flex shrink-0 cursor-grab active:cursor-grabbing",
+        "relative z-10 flex shrink-0 touch-none cursor-grab active:cursor-grabbing",
         // 轴向：x 轴是整列的竖条，y 轴是整行的横条
         "group-data-[swipe-axis=x]/drawer-popup:h-full group-data-[swipe-axis=x]/drawer-popup:w-3 group-data-[swipe-axis=x]/drawer-popup:items-center",
         "group-data-[swipe-axis=y]/drawer-popup:h-3 group-data-[swipe-axis=y]/drawer-popup:w-full group-data-[swipe-axis=y]/drawer-popup:justify-center",
