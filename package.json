@@ -19,7 +19,7 @@
     "test": "vitest run",
     "test:affected": "node .github/scripts/test-affected.mjs",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage && vitest run --config packages/positioner/vitest.config.ts",
     "test:positioner": "vitest run --config packages/positioner/vitest.config.ts",
     "build:positioner": "vite build --config packages/positioner/vite.config.ts",
     "check:positioner": "tsc -p packages/positioner/tsconfig.json --noEmit",
