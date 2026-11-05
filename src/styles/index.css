@@ -291,11 +291,13 @@
         --cell-size: 2.25rem;
     }
 
+    /* Checkbox / Radio / Switch 是普通流内元素，需要 relative 作为伪元素定位基准。
+       Slider thumb 本身就是 absolute（left/top 来自 --position），不能改成
+       relative，否则会脱离轨道位置、掉到 flex 末尾。 */
     :is(
         [data-slot="checkbox"],
         [data-slot="radio-group-item"],
-        [data-slot="switch"],
-        [data-slot="slider-thumb"]
+        [data-slot="switch"]
     ) {
         position: relative;
     }
