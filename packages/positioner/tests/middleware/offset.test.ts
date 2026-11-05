@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { middlewareState } from "~tests/lib/positioner/test-utils";
-import { offset } from "~/lib/positioner/middleware/offset";
+import { middlewareState } from "~tests/test-utils";
+import { offset } from "@neut/positioner/middleware/offset";
 
 /** 直接取 middleware 返回的坐标，默认行为是"相对当前坐标的增量" */
 function run(

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createVirtualElement } from "~/lib/positioner/virtual-element";
+import { createVirtualElement } from "@neut/positioner/virtual-element";
 
 describe("createVirtualElement", () => {
   it("rect 锚定到给定坐标，宽高为 0", () => {

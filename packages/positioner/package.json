@@ -1,0 +1,29 @@
+{
+  "name": "@neut/positioner",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Solid-first floating positioning engine for Neut UI.",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "solid-js": "^1.9.15"
+  }
+}

@@ -7,7 +7,7 @@ import {
   containingBlockOffset,
   type Middleware,
 } from "~/lib";
-import { getViewportBoundary } from "~/lib/positioner/utils/dom";
+import { getViewportBoundary } from "@neut/positioner";
 import type { SelectOptionValue } from "../Select/Select.types";
 
 /** 让浮层宽度和 trigger 对齐——不改坐标，只把 reference 宽度透传给上层当 style.width 用 */

@@ -1,10 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  VIEWPORT,
-  middlewareState,
-  rect,
-} from "~tests/lib/positioner/test-utils";
-import { size } from "~/lib/positioner/middleware/size";
+import { VIEWPORT, middlewareState, rect } from "~tests/test-utils";
+import { size } from "@neut/positioner/middleware/size";
 
 describe("size", () => {
   it("middleware 名为 size", () => {

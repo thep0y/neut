@@ -1,9 +1,9 @@
 import { renderHook } from "@solidjs/testing-library";
 import { createSignal } from "solid-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { asDOMRect, rect } from "~tests/lib/positioner/test-utils";
-import { createPositioner } from "~/lib/positioner/create-positioner";
-import { offset } from "~/lib/positioner/middleware/offset";
+import { asDOMRect, rect } from "~tests/test-utils";
+import { createPositioner } from "@neut/positioner/create-positioner";
+import { offset } from "@neut/positioner/middleware/offset";
 
 function elementWithRect(r: ReturnType<typeof rect>): HTMLElement {
   const el = document.createElement("div");
