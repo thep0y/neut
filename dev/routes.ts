@@ -8,6 +8,31 @@ export interface DevRoute {
   hideInSidebar?: boolean;
 }
 
+const AccordionPage = lazy(() => import("./pages/accordion-page"));
+const AlertPage = lazy(() => import("./pages/alert-page"));
+const AspectRatioPage = lazy(() => import("./pages/aspect-ratio-page"));
+const AvatarPage = lazy(() => import("./pages/avatar-page"));
+const BadgePage = lazy(() => import("./pages/badge-page"));
+const BreadcrumbPage = lazy(() => import("./pages/breadcrumb-page"));
+const ButtonGroupPage = lazy(() => import("./pages/button-group-page"));
+const CardPage = lazy(() => import("./pages/card-page"));
+const CheckboxPage = lazy(() => import("./pages/checkbox-page"));
+const CollapsiblePage = lazy(() => import("./pages/collapsible-page"));
+const FieldPage = lazy(() => import("./pages/field-page"));
+const InputPage = lazy(() => import("./pages/input-page"));
+const InputGroupPage = lazy(() => import("./pages/input-group-page"));
+const ItemPage = lazy(() => import("./pages/item-page"));
+const KbdPage = lazy(() => import("./pages/kbd-page"));
+const LabelPage = lazy(() => import("./pages/label-page"));
+const PaginationPage = lazy(() => import("./pages/pagination-page"));
+const ProgressPage = lazy(() => import("./pages/progress-page"));
+const ScrollAreaPage = lazy(() => import("./pages/scroll-area-page"));
+const SeparatorPage = lazy(() => import("./pages/separator-page"));
+const SidebarPage = lazy(() => import("./pages/sidebar-page"));
+const SkeletonPage = lazy(() => import("./pages/skeleton-page"));
+const SpinnerPage = lazy(() => import("./pages/spinner-page"));
+const TabsPage = lazy(() => import("./pages/tabs-page"));
+const TextareaPage = lazy(() => import("./pages/textarea-page"));
 const ButtonPage = lazy(() => import("./pages/button-page"));
 const SliderPage = lazy(() => import("./pages/slider-page"));
 const SwitchPage = lazy(() => import("./pages/switch-page"));
@@ -92,6 +117,31 @@ export const routes: DevRoute[] = [
   { path: "/toast", title: "Toast", component: ToastPage },
   { path: "/table", title: "Table", component: TablePage },
   { path: "/time-picker", title: "Time Picker", component: TimePickerPage },
+  { path: "/accordion", title: "Accordion", component: AccordionPage },
+  { path: "/alert", title: "Alert", component: AlertPage },
+  { path: "/aspect-ratio", title: "Aspect Ratio", component: AspectRatioPage },
+  { path: "/avatar", title: "Avatar", component: AvatarPage },
+  { path: "/badge", title: "Badge", component: BadgePage },
+  { path: "/breadcrumb", title: "Breadcrumb", component: BreadcrumbPage },
+  { path: "/button-group", title: "Button Group", component: ButtonGroupPage },
+  { path: "/card", title: "Card", component: CardPage },
+  { path: "/checkbox", title: "Checkbox", component: CheckboxPage },
+  { path: "/collapsible", title: "Collapsible", component: CollapsiblePage },
+  { path: "/field", title: "Field", component: FieldPage },
+  { path: "/input", title: "Input", component: InputPage },
+  { path: "/input-group", title: "Input Group", component: InputGroupPage },
+  { path: "/item", title: "Item", component: ItemPage },
+  { path: "/kbd", title: "Kbd", component: KbdPage },
+  { path: "/label", title: "Label", component: LabelPage },
+  { path: "/pagination", title: "Pagination", component: PaginationPage },
+  { path: "/progress", title: "Progress", component: ProgressPage },
+  { path: "/scroll-area", title: "Scroll Area", component: ScrollAreaPage },
+  { path: "/separator", title: "Separator", component: SeparatorPage },
+  { path: "/sidebar", title: "Sidebar", component: SidebarPage },
+  { path: "/skeleton", title: "Skeleton", component: SkeletonPage },
+  { path: "/spinner", title: "Spinner", component: SpinnerPage },
+  { path: "/tabs", title: "Tabs", component: TabsPage },
+  { path: "/textarea", title: "Textarea", component: TextareaPage },
 ];
 
 export const sidebarRoutes = routes
