@@ -24,10 +24,12 @@
 | `bun run dev`            | 启动 dev playground（等价 `vite ./dev`，端口 **7789**）         |
 | `bun run build`          | 构建组件库到 `dist/`（含 `.d.ts`）                              |
 | `bun run serve`          | 预览构建产物                                                    |
-| `bun run check`          | `tsc --noEmit && biome check --write src tests`，提交前必须通过 |
+| `bun run check`          | `tsc --noEmit && biome check --write src tests packages/positioner/src packages/positioner/tests`，提交前必须通过 |
 | `bun run test`           | 跑单元测试（vitest）                                            |
 | `bun run test:affected`  | 只跑受改动影响的测试（快速反馈，不校验覆盖率）                  |
-| `bun run test:coverage`  | 跑全量测试并校验百分比地板（见 `TESTING.md` §1.1）              |
+| `bun run test:coverage`  | 跑组件库 + positioner 全量测试并校验百分比地板（见 `TESTING.md` §1.1） |
+| `bun run test:positioner` | 单独跑 `packages/positioner` 的测试                          |
+| `bun run build:positioner` | 单独构建 `packages/positioner`                               |
 | `bun run check:branches` | 精确覆盖率门禁：不允许任何一条真实未覆盖缺口（提交前必须通过）  |
 
 注意事项：
@@ -72,14 +74,20 @@
 src/
 ├── index.ts                 # 总出口：导出所有组件 + hooks + utils，并 import 样式
 ├── components/<name>/       # 一个组件一个目录（kebab-case）
-├── lib/positioner/          # 自研 floating-ui：createPositioner + middleware
+├── lib/index.ts             # 兼容出口：re-export @neut/positioner
 ├── types/                   # BaseProps / PolymorphicProps 等公共类型
 ├── utils/                   # clsx、mergeRefs、logger、getStyleValue、
 │                            # callEventHandler、createChangeEventDetails、clamp、
 │                            # toKebabCase、roving-navigation
 ├── hooks/                   # 跨组件 hooks（useScrollLock / useScrollEdges / useFontLoader）
 └── styles/                  # Tailwind 入口、动画、效果、i18n 字体
-tests/                       # 全部测试用例：与 src/ 一一镜像（源码目录里禁止放测试）
+
+packages/
+└── positioner/              # 自研 Solid 定位引擎（private workspace 包）
+    ├── src/
+    └── tests/
+
+tests/                       # 组件测试：与 src/ 一一镜像（源码目录里禁止放测试）
 docs/                        # 使用者/贡献者文档：上手、架构、组件目录、定位器、自定义组件
 dev/                         # Solid Router playground：examples + pages + routes.ts
 example/                     # 独立的消费者示例工程（依赖已发布的 @neut/ui），不参与根检查
@@ -89,8 +97,8 @@ vitest.setup.ts              # jsdom polyfill + 每个用例后的清理
 TESTING.md                   # 测试撰写规则（强制）：覆盖率、必测清单、反作弊条款
 ```
 
-- 路径别名 `~/*` → `src/*`、`~tests/*` → `tests/*`（见 `tsconfig.json` 与 `vitest.config.ts`）。
-  测试引用被测源码用 `~/*`，测试之间引用脚手架用 `~tests/*`。
+- 路径别名 `~/*` → `src/*`、`~tests/*` → `tests/*`、`@neut/positioner` → `packages/positioner/src`
+  （见 `tsconfig.json` 与 `vitest.config.ts`）。测试引用被测源码用 `~/*`，测试之间引用脚手架用 `~tests/*`。
 - 根 `tsconfig.json` 的 `exclude` 包含 `./dev` 与 `example`，即 `bun run check` **不会**
   类型检查它们；改动 dev 后请用 `bun run dev`/`vite build ./dev` 验证。
 
@@ -138,7 +146,8 @@ button/
 - 覆盖率采用**两层门禁**（细则见 `TESTING.md` §1.1/§1.3）：`bun run test:coverage` 的百分比阈值
   是粗筛（functions 100%，statements/lines 99.8%，branches 92.5%，为 Solid JSX 归因产物留余量）；
   `bun run check:branches` 才是精确门禁，不允许任何一条真实源码缺口。
-  **测试用例一律放在 `tests/` 下、与 `src/` 镜像的路径里，源码目录中不得出现任何测试文件**：
+  **测试用例一律放在 `tests/`（或 `packages/positioner/tests/`）下、与源码镜像的路径里，
+  源码目录中不得出现任何测试文件**：
   `src/components/toast/Toast/Toast.tsx` 对应 `tests/components/toast/Toast/Toast.test.tsx`；
   跨子组件的组合行为放 `<component>.integration.test.tsx`。命名、分层、别名与必测清单见 `TESTING.md` §3/§5.3。
 - 重构必须"小步、可验证、可回滚"：
@@ -205,12 +214,12 @@ export type ContextMenuTriggerProps<T extends ValidComponent = "div"> =
 - 移植 Base UI（`@base-ui/react`）的语义时，先读它的 props 表与 `ChangeEventDetails`，
   再决定 Solid 侧类型；`onOpenChange` 等回调第二参为事件详情对象
   （`reason` / `event` / `trigger` / `cancel()` / `allowPropagation()` / `isCanceled`）。
-- 不引入任何上游组件库运行时依赖，全部手写；需要浮层能力时用 `src/lib/positioner`。
+- 不引入任何上游组件库运行时依赖，全部手写；需要浮层能力时用 `packages/positioner`（组件侧仍从 `~/lib` 消费兼容出口）。
 - 默认值尽量与 Base UI / shadcn 保持一致（例如菜单 `modal` 默认 `true`、`loopFocus` 默认 `true`）。
 
 ## 浮层与定位
 
-`src/lib/positioner` 是自研的 floating-ui，入口是 `createPositioner(reference, floating, options)`：
+`packages/positioner` 是自研的 Solid 定位引擎（private workspace 包），入口是 `createPositioner(reference, floating, options)`：
 
 - middleware：`offset` / `flip` / `shift` / `size` / `hide` / `arrow` / `containingBlockOffset`。
 - 虚拟锚点（右键坐标、光标跟随）用 `createVirtualElement({ x, y, contextElement })`。
@@ -273,7 +282,7 @@ bun run dev           # http://localhost:7789，手动过一遍受影响的交�
 ## 不要做
 
 - 不要新增 `@radix-ui` / `@base-ui` / `kobalte` 等组件库依赖。
-- 不要把 `clsx` 改成 `cn`，不要绕过 `~/lib/positioner` 自己引 floating-ui。
+- 不要把 `clsx` 改成 `cn`，不要绕过 `packages/positioner` 自己引 floating-ui。
 - 不要手改 `dist/`；不要提交 `dist/`、`dev/dist/`。
 - 不要给根 `tsconfig.json` 加 `dev`/`example` 的包含项来"顺手"检查它们。
 - 不要在 `src/components/*/index.ts` 与 `src/index.ts` 之外额外维护导出清单。
@@ -282,7 +291,7 @@ bun run dev           # http://localhost:7789，手动过一遍受影响的交�
   摘掉等于静默丢弃。要么在元素上写 `classList={local.classList}`，要么写
   `// classlist-opt-out: <原因>` 显式豁免（CI 有机械守卫，见 `TESTING.md` §9.1）。
 - 不要把测试文件、测试脚手架或夹具放进 `src/`（包括"反正只在测试里用"的 helpers）；
-  一律放 `tests/` 下的镜像路径，详见 `TESTING.md` §3。
+  组件测试放 `tests/`，positioner 测试放 `packages/positioner/tests/`，详见 `TESTING.md` §3。
 - 不要新增组件/修 bug 却不写测试；不要用 `it.skip`、`it.only`、快照或空洞断言
   凑覆盖率；更不要为了测试变绿去改实现语义（详见 `TESTING.md` §4）。
 - 不要替换测试栈（`jest` / `@testing-library/react` / `enzyme` 一律禁止），

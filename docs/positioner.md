@@ -1,14 +1,15 @@
-# 定位器（`~/lib/positioner`）
+# 定位器（`packages/positioner`）
 
-Neut 的浮层不依赖 floating-ui，而是自研了一套更小的定位引擎。入口：
+Neut 的浮层不依赖 floating-ui，而是自研了一套更小的、面向 Solid 的定位引擎。
+它位于 private workspace 包 `@neut/positioner`，入口：
 
 ```ts
-import { createPositioner, offset, flip, shift } from "~/lib";
+import { createPositioner, offset, flip, shift } from "@neut/positioner";
 ```
 
-> `~/lib` 是仓库内别名；`@neut/ui` 包**没有**导出 `/lib` 子路径。安装包使用时，
-> 浮层能力已封装在 Tooltip/Popover/Menu 等组件里；只有复制源码或在本仓库内扩展组件时
-> 才直接引用 `src/lib/positioner`（并保留 `~/*` 别名）。
+组件内部仍可从 `~/lib` 这个兼容出口消费；`@neut/ui` 发布时会把它打进 dist，
+消费者不需要单独安装。`@neut/positioner` 目前不单独发布，复制源码时复制
+`packages/positioner/src` 并把 `@neut/positioner` 映射到该目录即可。
 
 ## createPositioner
 

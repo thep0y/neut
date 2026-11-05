@@ -172,7 +172,7 @@ function App() {
    - `src/utils/`（`clsx`、`mergeRefs`、`callEventHandler` 等）
    - `src/types/`（`BaseProps`、`PolymorphicProps`）
    - `src/hooks/`（`useScrollLock`、`useScrollEdges` 等，组件实际 import 到的 hook）
-   - `src/lib/positioner/`（仅浮层组件需要）
+   - `packages/positioner/src/`（仅浮层组件需要；把 `@neut/positioner` 映射到该目录，发布包已内置）
 3. 配置 `~/*` 别名：
 
 ```ts

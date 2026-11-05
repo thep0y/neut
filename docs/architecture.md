@@ -25,11 +25,16 @@ src/
 │   ├── <name>.types.ts          # 跨部件共享类型
 │   ├── <name>.utils.ts          # 共享纯函数
 │   └── DESIGN.md                # 复杂组件的设计文档（中文）
-├── lib/positioner/              # 自研浮层定位（middleware + autoUpdate + 虚拟元素）
+├── lib/index.ts                 # 兼容出口：re-export @neut/positioner
 ├── types/                       # BaseProps / PolymorphicProps 等
 ├── utils/                       # clsx / mergeRefs / 事件详情 / roving navigation
 ├── hooks/                       # 跨组件 hooks
 └── styles/                      # Tailwind 入口、动画、i18n 字体
+
+packages/
+└── positioner/                  # 自研浮层定位（private workspace 包）
+    ├── src/
+    └── tests/
 ```
 
 单文件只承担一件事：**渲染 / 状态 / 交互算法 / ARIA 语义** 解耦。交互算法尽量抽成可独立单测的函数或
@@ -114,7 +119,7 @@ import { Dynamic } from "solid-js/web";
 
 ## 7. 浮层与键盘
 
-- 定位统一走 `src/lib/positioner`（`createPositioner` + middleware），见 [定位器](./positioner.md)。
+- 定位统一走 `packages/positioner`（`createPositioner` + middleware），组件仍从 `~/lib` 消费兼容出口，见 [定位器](./positioner.md)。
 - 右键/光标跟随用 `createVirtualElement({ x, y, contextElement })`。
 - 菜单类组件把焦点停在浮层上，用 `aria-activedescendant` + `data-highlighted` 表达高亮；
   Tabs / ToggleGroup 用 roving focus（焦点在项之间移动）。方向键、Home/End、typeahead 的语义对齐 Base UI。
