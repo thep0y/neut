@@ -148,6 +148,53 @@ describe("Checkbox - 点击交互", () => {
     expect(hiddenInput().checked).toBe(true);
   });
 
+  it("存在 label[for] 时点击可见方块仍能切换（回归）", () => {
+    const onChange = vi.fn();
+    render(() => (
+      <div>
+        <Checkbox id="cb-with-label" onChange={onChange} />
+        <label for="cb-with-label">Accept</label>
+      </div>
+    ));
+
+    fireEvent.click(box());
+
+    expect(onChange).toHaveBeenCalledWith(true);
+    expect(box()).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("label 包住可见方块时只转发一次，不重复 toggle（回归）", () => {
+    const onChange = vi.fn();
+    render(() => (
+      <label for="cb-wrapped">
+        <Checkbox id="cb-wrapped" onChange={onChange} />
+        Wrapped label
+      </label>
+    ));
+
+    fireEvent.click(box());
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith(true);
+    expect(box()).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("点击关联 label 只切换一次", () => {
+    const onChange = vi.fn();
+    render(() => (
+      <div>
+        <Checkbox id="cb-label-click" onChange={onChange} />
+        <label for="cb-label-click">Accept</label>
+      </div>
+    ));
+
+    fireEvent.click(document.querySelector("label")!);
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith(true);
+    expect(box()).toHaveAttribute("aria-checked", "true");
+  });
+
   it("受控：点击只回调，状态不变", () => {
     const onChange = vi.fn();
     renderCheckbox({ checked: false, onChange });
@@ -167,6 +214,26 @@ describe("Checkbox - 点击交互", () => {
     await Promise.resolve();
 
     expect(box()).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("受控 + label[for]：点击可见方块后外部回写生效（回归）", async () => {
+    const [checked, setChecked] = createSignal(false);
+    render(() => (
+      <div>
+        <Checkbox
+          id="cb-controlled-label"
+          checked={checked()}
+          onChange={setChecked}
+        />
+        <label for="cb-controlled-label">Accept</label>
+      </div>
+    ));
+
+    fireEvent.click(box());
+    await Promise.resolve();
+
+    expect(box()).toHaveAttribute("aria-checked", "true");
+    expect(hiddenInput().checked).toBe(true);
   });
 
   it("受控：外部回写后原生 input 也跟随", async () => {
