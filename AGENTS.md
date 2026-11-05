@@ -24,7 +24,7 @@
 | `bun run dev`            | 启动 dev playground（等价 `vite ./dev`，端口 **7789**）         |
 | `bun run build`          | 构建组件库到 `dist/`（含 `.d.ts`）                              |
 | `bun run serve`          | 预览构建产物                                                    |
-| `bun run check`          | `tsc --noEmit && biome check --write src tests packages/positioner/src packages/positioner/tests`，提交前必须通过 |
+| `bun run check`          | 根项目 + positioner 的 `tsc` 与 Biome，提交前必须通过 |
 | `bun run test`           | 跑单元测试（vitest）                                            |
 | `bun run test:affected`  | 只跑受改动影响的测试（快速反馈，不校验覆盖率）                  |
 | `bun run test:coverage`  | 跑组件库 + positioner 全量测试并校验百分比地板（见 `TESTING.md` §1.1） |
