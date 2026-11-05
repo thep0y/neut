@@ -19,6 +19,9 @@ export const Label = (props: LabelProps) => {
       // 自定义控件一侧必须避免"再代理一次"（见 Checkbox 的可见 span），
       // 否则同一个 input 会被点两遍、状态翻转两次回到原值。
       target.click();
+      // 自定义控件的可见元素会自行代理隐藏 input；这里必须阻止
+      // <label for> 的原生转发，否则同一次点击会落到 input 两次。
+      e.preventDefault();
       return;
     }
 

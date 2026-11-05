@@ -41,20 +41,23 @@ export const Checkbox = (props: CheckboxProps) => {
    * 统一从 input 走一遍原生点击，这样用户点 span、点 label（原生转发到 input）
    * 两条路径完全一致，不会各改一次状态导致净变化为 0、onChange 触发两次。
    */
-  const handleClick = () => {
+  const handleClick = (event: MouseEvent) => {
     if (local.disabled) return;
-    // 若存在某个 <label> 的 control 正是我们的隐藏 input，浏览器已经会为
-    // 每次 label 点击转发一次原生点击；此时 span 再代理就会把同一个 input
-    // 点两遍（状态翻两次回到原值、onChange 也触发两次）。
-    // 注意 span 通常是 label 的**兄弟**节点，不能用 closest("label") 判断。
-    if (hasLabelPointingAtInput()) return;
+    // label 有两种关联方式：
+    // - <label for> 是兄弟节点：点击 label 由浏览器原生转发，span 的
+    //   handleClick 根本不会执行；
+    // - <label> 包住 span：浏览器会转发，同时 span 的点击也会冒泡上来。
+    // 只有后一种需要取消原生转发，否则会把 input 点两次。判断依据是当前
+    // 点击目标是否在这个 label 内、且 label.control 正是我们的 input。
+    const target = event.target as Element | null;
+    const label = target?.closest("label") as HTMLLabelElement | null;
+    if (label?.control === inputRef) {
+      // label 包住 span 时浏览器也会转发一次；取消原生转发，改由下面
+      // 的 input.click() 统一走一次，保证 jsdom / 浏览器行为一致。
+      event.preventDefault();
+    }
     inputRef?.click();
   };
-
-  /** 页面里是否有 label 通过 for/id 指向我们的隐藏 input（原生会代为转发点击） */
-  const hasLabelPointingAtInput = () =>
-    !!inputRef?.id &&
-    !!document.querySelector(`label[for="${CSS.escape(inputRef.id)}"]`);
 
   return (
     <>
@@ -69,7 +72,7 @@ export const Checkbox = (props: CheckboxProps) => {
         aria-labelledby={local.id}
         class={clsx(classes, local.class)}
         classList={local.classList}
-        onClick={handleClick}
+        onClick={(event) => handleClick(event)}
         {...others}
       >
         <CheckboxIndicator checked={checked()} />
