@@ -43,6 +43,7 @@ const DrawerPage = lazy(() => import("./pages/drawer-page"));
 const DropdownMenuPage = lazy(() => import("./pages/dropdown-menu-page"));
 const AlertDialogPage = lazy(() => import("./pages/alert-dialog-page"));
 const CalendarPage = lazy(() => import("./pages/calendar-page"));
+const CarouselPage = lazy(() => import("./pages/carousel-page"));
 const BubblePage = lazy(() => import("./pages/bubble-page"));
 const MarkerPage = lazy(() => import("./pages/marker-page"));
 const MessagePage = lazy(() => import("./pages/message-page"));
@@ -74,6 +75,7 @@ export const routes: DevRoute[] = [
     hideInSidebar: true,
   },
   { path: "/button", title: "Button", component: ButtonPage },
+  { path: "/carousel", title: "Carousel", component: CarouselPage },
   { path: "/slider", title: "Slider", component: SliderPage },
   { path: "/switch", title: "Switch", component: SwitchPage },
   { path: "/dialog", title: "Dialog", component: DialogPage },
