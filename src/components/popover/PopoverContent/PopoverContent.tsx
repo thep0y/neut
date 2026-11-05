@@ -58,7 +58,7 @@ export function PopoverContent(props: PopoverContentProps) {
               ...(typeof local.style === "object" ? local.style : undefined),
             }}
             class={clsx(
-              "z-50 flex w-72 flex-col gap-2.5 overflow-hidden rounded-lg bg-popover p-2.5 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-hidden duration-100",
+              "z-50 flex max-h-[calc(100dvh-1rem)] w-72 max-w-[calc(100vw-1rem)] flex-col gap-2.5 overflow-x-hidden overflow-y-auto overscroll-contain rounded-lg bg-popover p-2.5 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-hidden duration-100",
               "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
               "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
               "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",

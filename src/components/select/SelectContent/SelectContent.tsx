@@ -174,7 +174,7 @@ export function SelectContent(props: SelectContentProps) {
             ...(typeof local.style === "object" ? local.style : undefined),
           }}
           class={clsx(
-            "min-w-36",
+            "min-w-36 max-w-[calc(100vw-1rem)] overscroll-contain",
             "no-scrollbar [&::-webkit-scrollbar]:hidden",
             "rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100",
             // 只保留入场动画，没有退场动画：关闭瞬间外层直接 visibility:hidden，
