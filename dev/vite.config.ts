@@ -10,6 +10,7 @@ export default defineConfig({
       // dev 下阻断 src/index.ts 对库样式的二次导入，避免与 dev/index.css 重复注入 Tailwind
       "~/styles/index.css": path.resolve(__dirname, "empty.css"),
       "~": path.resolve(__dirname, "../src"),
+      "@neut/positioner": path.resolve(__dirname, "../packages/positioner/src"),
     },
   },
   plugins: [

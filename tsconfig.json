@@ -18,12 +18,14 @@
     "paths": {
       "~/*": ["./src/*"],
       "~tests/*": ["./tests/*"],
+      "@neut/positioner": ["./packages/positioner/src/index.ts"],
+      "@neut/positioner/*": ["./packages/positioner/src/*"],
     },
 
     // Type Checking & Safety
     "strict": true,
     "types": ["vite/client"],
   },
-  "include": ["src", "tests", "vitest.d.ts"],
+  "include": ["src", "tests", "packages/positioner/src", "vitest.d.ts"],
   "exclude": ["node_modules", "dist", "./dev", "example"],
 }

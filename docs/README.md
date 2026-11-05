@@ -11,7 +11,7 @@
 | [组件目录](./components.md) | 使用者 | 60 个组件的子部件、关键 props、`data-slot` 与相关文档入口 |
 | [自研组件用法](./components/README.md) | 使用者 | shadcn 之外/行为较复杂的组件：API、受控用法、事件详情 |
 | [架构说明](./architecture.md) | 贡献者 | 受控/非受控、事件详情、多态、样式与 `data-*` 约定、文件结构 |
-| [定位器](./positioner.md) | 贡献者 | `~/lib/positioner` 的 middleware、自动更新、虚拟锚点 |
+| [定位器](./positioner.md) | 贡献者 | `packages/positioner` 的 middleware、自动更新、虚拟锚点 |
 | [Hooks](./hooks.md) | 使用者/贡献者 | `useScrollLock`、`useScrollEdges`、`useFontLoader` |
 | [Utils](./utils.md) | 使用者/贡献者 | `clsx`、`mergeRefs`、`callEventHandler`、事件详情、roving navigation 等 |
 | [设计文档索引](#设计文档索引) | 贡献者 | 各组件 `DESIGN.md` 的分布 |

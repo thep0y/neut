@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  asDOMRect,
-  middlewareState,
-  rect,
-} from "~tests/lib/positioner/test-utils";
-import { containingBlockOffset } from "~/lib/positioner/middleware/containing-block-offset";
+import { asDOMRect, middlewareState, rect } from "~tests/test-utils";
+import { containingBlockOffset } from "@neut/positioner/middleware/containing-block-offset";
 
 /**
  * `containingBlockOffset` 会沿 floating 的父链查找"意外包含块"。

@@ -121,7 +121,7 @@ export default defineConfig({
 ### 4. 方式 A：复制源码（推荐）
 
 1. 把需要的组件目录（例如 `src/components/button/`）复制到你的项目。
-2. 同时复制它依赖的共享模块：`src/utils/`、`src/types/`、`src/hooks/`，浮层组件还需要 `src/lib/positioner/`。
+2. 同时复制它依赖的共享模块：`src/utils/`、`src/types/`、`src/hooks/`，浮层组件还需要 `packages/positioner/src/`（把 `@neut/positioner` 映射到该目录；发布包已内置 positioner）。
 3. 少数组件会在内部组合其他组件（例如 `AlertDialog` → `Dialog`、`DatePicker` → `Calendar`/`Popover`/`Button`）；这些依赖也要一起复制，或直接使用包入口。
 4. 保留 `~/*` 别名（或改写 import），让 `~/utils`、`~/types`、`~/hooks`、`~/lib` 能解析。
 5. 复制或引入样式：源码方式用 `src/styles/index.css`，安装包方式用 `@neut/ui/dist/ui.css`。缺少设计 token 与动画工具类时，组件仍能渲染，但会丢失主题色/动效。

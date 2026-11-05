@@ -142,8 +142,9 @@ if (weirdEdgeCase) { ... }
 
 ## 3. 目录与命名约定
 
-**测试用例一律放在仓库根目录的 `tests/` 下，与 `src/` 结构一一镜像；源码目录里不允许出现
-任何 `*.test.*` / `*.spec.*` / 测试脚手架文件。** 测试文件名沿用 `<被测文件名>.test.ts(x)`，
+**组件测试一律放在仓库根目录的 `tests/` 下，与 `src/` 结构一一镜像；独立 workspace 包
+`packages/positioner` 的测试放在它自己的 `tests/` 下。源码目录里不允许出现任何
+`*.test.*` / `*.spec.*` / 测试脚手架文件。** 测试文件名沿用 `<被测文件名>.test.ts(x)`，
 因此从路径即可反推被测文件（`tests/components/tabs/Tabs/Tabs.test.tsx` →
 `src/components/tabs/Tabs/Tabs.tsx`）。
 
@@ -161,8 +162,8 @@ tests/components/tabs/
 导入规则（**强约定**）：
 
 - 引用被测源码一律走 `~/*` 别名（`~` → `src/`），**不要**写 `../../src/...`；
-- 测试之间互相引用辅助文件走 `~tests/*` 别名（`~tests` → `tests/`），
-  例如共享脚手架 `~tests/lib/positioner/test-utils.ts`；
+- 测试之间互相引用辅助文件走 `~tests/*` 别名（`~tests` → `tests/`）；positioner 包内
+  测试的 `~tests` 指向 `packages/positioner/tests/`；
 - 同一个测试目录内的私有辅助可以用相对路径，跨目录一律用别名。
 
 > 只有测试使用、`src/` 不依赖的文件（共享脚手架、夹具）也必须放在 `tests/` 下，
@@ -170,7 +171,8 @@ tests/components/tabs/
 
 `tsconfig.json` 的 `include` 含 `tests`，`vitest.config.ts` 的 `include` 只扫
 `tests/**`，`coverage.include` 只扫 `src/**`：三者共同保证"测试被类型检查、被运行，
-但从不进入覆盖率与产物"。
+但从不进入覆盖率与产物"。positioner 包内测试通过 `bun run test:positioner` 单独运行，
+不进入根覆盖率。
 
 分层命名（**强约定**，一眼看出测的是什么）：
 
@@ -388,13 +390,13 @@ it("test handleKeyDown", () => {});
 | `hooks/useScrollEdges`                 | 迟滞阈值（进 4px / 出 1px）、元素替换/缺失、scroll 驱动                                                              | ✅ `useScrollEdges.test.ts`                                                                                |
 | `hooks/useScrollLock`                  | 引用计数、`allowedSelector` 放行、恢复内联样式与滚动位置、滚动条补偿                                                 | ✅ `useScrollLock.test.ts`                                                                                 |
 | `hooks/useFontLoader`                  | 语言映射、去重缓存、目标元素、卸载恢复、未知语言告警                                                                 | ✅ `useFontLoader.test.ts`                                                                                 |
-| `lib/positioner/core/placement`        | 方向/对齐解析、翻转、坐标推导                                                                                        | ✅ `placement.test.ts`                                                                                     |
-| `lib/positioner/core/compute-position` | middleware 链、reset 重跑与上限、strategy 换算、虚拟锚点                                                             | ✅ `compute-position.test.ts`                                                                              |
-| `lib/positioner/middleware/*`          | offset/shift/flip/hide/size/arrow/containingBlockOffset                                                              | ✅ 各自 `.test.ts`                                                                                         |
-| `lib/positioner/utils/dom`             | rect 换算、视口边界、overflow 判定、滚动祖先                                                                         | ✅ `dom.test.ts`                                                                                           |
-| `lib/positioner/auto-update`           | scroll/resize 监听、ResizeObserver 连接与断开、虚拟元素                                                              | ✅ `auto-update.test.ts`                                                                                   |
-| `lib/positioner/create-positioner`     | 首次定位、响应式 options、autoUpdate 开关、floatingStyles                                                            | ✅ `create-positioner.test.ts`                                                                             |
-| `lib/positioner/virtual-element`       | 坐标锚定、`contextElement` 透传                                                                                      | ✅ `virtual-element.test.ts`                                                                               |
+| `packages/positioner/src/core/placement`        | 方向/对齐解析、翻转、坐标推导                                                                                        | ✅ `placement.test.ts`                                                                                     |
+| `packages/positioner/src/core/compute-position` | middleware 链、reset 重跑与上限、strategy 换算、虚拟锚点                                                             | ✅ `compute-position.test.ts`                                                                              |
+| `packages/positioner/src/middleware/*`          | offset/shift/flip/hide/size/arrow/containingBlockOffset                                                              | ✅ 各自 `.test.ts`                                                                                         |
+| `packages/positioner/src/utils/dom`             | rect 换算、视口边界、overflow 判定、滚动祖先                                                                         | ✅ `dom.test.ts`                                                                                           |
+| `packages/positioner/src/auto-update`           | scroll/resize 监听、ResizeObserver 连接与断开、虚拟元素                                                              | ✅ `auto-update.test.ts`                                                                                   |
+| `packages/positioner/src/create-positioner`     | 首次定位、响应式 options、autoUpdate 开关、floatingStyles                                                            | ✅ `create-positioner.test.ts`                                                                             |
+| `packages/positioner/src/virtual-element`       | 坐标锚定、`contextElement` 透传                                                                                      | ✅ `virtual-element.test.ts`                                                                               |
 | `tabs/*`                               | 键盘导航、受控/非受控、roving tabindex、惰性挂载、上下文约束、用户事件不丢                                           | ✅ `tabs.integration.test.tsx` / `Tabs.context.test.tsx` / `tabs-events.test.tsx` / `TabsTrigger.test.tsx` |
 | `toggle-group/*`                       | 键盘导航、单选/多选、受控/非受控、`cancel()` 语义                                                                    | ✅ `toggle-group.integration.test.tsx`                                                                     |
 | `components/popover`                   | 受控/非受控、disabled、ARIA（`aria-haspopup`/`aria-controls`/`data-side`）、Escape 与点击外部关闭、Trigger 键盘、用户 `onClick` 不丢、上下文约束 | ✅ `popover.integration.test.tsx`                                                                          |

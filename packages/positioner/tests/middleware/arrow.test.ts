@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  asDOMRect,
-  middlewareState,
-  rect,
-} from "~tests/lib/positioner/test-utils";
-import { arrow } from "~/lib/positioner/middleware/arrow";
+import { asDOMRect, middlewareState, rect } from "~tests/test-utils";
+import { arrow } from "@neut/positioner/middleware/arrow";
 
 /** 构造一个带可控 getBoundingClientRect 的箭头元素 */
 function arrowElement(width: number, height: number): Element {

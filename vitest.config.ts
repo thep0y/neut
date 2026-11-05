@@ -9,6 +9,10 @@ export default defineConfig({
     alias: {
       "~tests": path.resolve(import.meta.dirname, "./tests"),
       "~": path.resolve(import.meta.dirname, "./src"),
+      "@neut/positioner": path.resolve(
+        import.meta.dirname,
+        "./packages/positioner/src",
+      ),
     },
   },
   plugins: [solidPlugin()],
@@ -34,7 +38,7 @@ export default defineConfig({
         "src/**/index.ts", // 仅 re-export
         "src/index.ts", // 仅 re-export
         "src/lib/index.ts", // 仅 re-export
-        "src/lib/positioner/types.ts", // 纯类型声明
+        // positioner 已拆到 packages/positioner，不在根覆盖率范围
         "tests/**", // 测试用例、测试辅助与夹具都不是交付物（源码目录里不再放测试）
       ],
       // 门槛分两层（见 TESTING.md §1.1 / §1.3 与 §8）：

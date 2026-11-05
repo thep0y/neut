@@ -121,7 +121,7 @@ See [Getting Started](./docs/getting-started.md) for the full token list and the
 ### 4. Method A: Copy the source (recommended)
 
 1. Copy the component directory you need, for example `src/components/button/`, into your project.
-2. Copy the shared modules it imports: `src/utils/`, `src/types/`, `src/hooks/`, and — for any floating component — `src/lib/positioner/`.
+2. Copy the shared modules it imports: `src/utils/`, `src/types/`, `src/hooks/`, and — for any floating component — `packages/positioner/src/` (map `@neut/positioner` to it; the published package already bundles it).
 3. A few components compose others internally (for example `AlertDialog` → `Dialog`, `DatePicker` → `Calendar`/`Popover`/`Button`). Copy those dependencies too, or use the package entry.
 4. Keep the `~/*` alias (or rewrite the imports) so `~/utils`, `~/types`, `~/hooks`, and `~/lib` resolve.
 5. Copy or import the styles: `src/styles/index.css` (source copy) or `@neut/ui/dist/ui.css` (package). Without the design tokens and animation utilities, components render but lose theme colors/motion.

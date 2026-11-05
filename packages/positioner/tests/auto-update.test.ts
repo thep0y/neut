@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { asDOMRect, rect } from "~tests/lib/positioner/test-utils";
-import { autoUpdate } from "~/lib/positioner/auto-update";
+import { asDOMRect, rect } from "~tests/test-utils";
+import { autoUpdate } from "@neut/positioner/auto-update";
 
 /** 记录 observe/disconnect 的 ResizeObserver 替身 */
 class FakeResizeObserver {

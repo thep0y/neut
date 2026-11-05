@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  VIEWPORT,
-  consistentState,
-  rect,
-} from "~tests/lib/positioner/test-utils";
-import { flip } from "~/lib/positioner/middleware/flip";
+import { VIEWPORT, consistentState, rect } from "~tests/test-utils";
+import { flip } from "@neut/positioner/middleware/flip";
 
 describe("flip", () => {
   it("middleware 名为 flip", () => {

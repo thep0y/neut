@@ -8,8 +8,8 @@ import {
   getOppositeSide,
   getSide,
   isVerticalSide,
-} from "~/lib/positioner/core/placement";
-import { rect } from "~tests/lib/positioner/test-utils";
+} from "@neut/positioner/core/placement";
+import { rect } from "~tests/test-utils";
 
 describe("getSide", () => {
   it("从 placement 中取出主方向", () => {

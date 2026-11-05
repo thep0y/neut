@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { asDOMRect, rect } from "~tests/lib/positioner/test-utils";
+import { asDOMRect, rect } from "~tests/test-utils";
 import {
   getOverflowAncestors,
   getRectRelativeTo,
   getViewportBoundary,
   getViewportRect,
   isOverflowElement,
-} from "~/lib/positioner/utils/dom";
+} from "@neut/positioner/utils/dom";
 
 function elWithRect(r: ReturnType<typeof rect>): HTMLElement {
   const el = document.createElement("div");

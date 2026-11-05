@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import type { Middleware } from "~/lib/positioner/types";
-import { computePosition } from "~/lib/positioner/core/compute-position";
-import { asDOMRect, rect } from "~tests/lib/positioner/test-utils";
+import type { Middleware } from "@neut/positioner/types";
+import { computePosition } from "@neut/positioner/core/compute-position";
+import { asDOMRect, rect } from "~tests/test-utils";
 
 /**
  * computePosition 需要真实元素来测 rect。

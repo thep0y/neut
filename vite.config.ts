@@ -40,6 +40,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "~": path.resolve(import.meta.dirname, "./src"),
+      "@neut/positioner": path.resolve(
+        import.meta.dirname,
+        "./packages/positioner/src",
+      ),
     },
   },
   plugins: [
@@ -75,6 +79,10 @@ export default defineConfig({
     },
     rolldownOptions: {
       external: (id) => {
+        if (id === "@neut/positioner" || id.startsWith("@neut/positioner/")) {
+          // UI 发布时把私有 positioner 打进 dist，避免消费者需要安装它
+          return false;
+        }
         if (id.startsWith("~") || id.startsWith(".") || path.isAbsolute(id)) {
           return false;
         }

@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  VIEWPORT,
-  middlewareState,
-  rect,
-} from "~tests/lib/positioner/test-utils";
-import { hide } from "~/lib/positioner/middleware/hide";
+import { VIEWPORT, middlewareState, rect } from "~tests/test-utils";
+import { hide } from "@neut/positioner/middleware/hide";
 
 /** hide 默认走 referenceHidden 策略，读取 elements.reference 的 rect */
 function stateWithReference(options: {

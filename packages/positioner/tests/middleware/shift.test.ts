@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  VIEWPORT,
-  middlewareState,
-  rect,
-} from "~tests/lib/positioner/test-utils";
-import { shift } from "~/lib/positioner/middleware/shift";
+import { VIEWPORT, middlewareState, rect } from "~tests/test-utils";
+import { shift } from "@neut/positioner/middleware/shift";
 
 describe("shift", () => {
   it("middleware 名为 shift", () => {
