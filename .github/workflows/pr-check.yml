@@ -63,11 +63,6 @@ jobs:
             - name: Run static checks
               run: bun run check
 
-            # 快速反馈：只跑受本 PR 影响的测试；真正的门禁在 tests job。
-            - name: Test affected files (fast feedback)
-              run: bun run test:affected -- --base ${{ github.event.pull_request.base.sha }}
-              continue-on-error: true
-
     tests:
         name: "Tests & coverage"
         runs-on: ubuntu-24.04
