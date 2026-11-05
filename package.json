@@ -15,7 +15,7 @@
     "dev": "vite ./dev",
     "build": "vite build",
     "serve": "vite preview",
-    "check": "tsc --noEmit && biome check --write src tests packages/positioner/src packages/positioner/tests",
+    "check": "tsc --noEmit && tsc -p packages/positioner/tsconfig.json --noEmit && biome check --write src tests packages/positioner/src packages/positioner/tests",
     "test": "vitest run",
     "test:affected": "node .github/scripts/test-affected.mjs",
     "test:watch": "vitest",
