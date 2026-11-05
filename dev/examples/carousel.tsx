@@ -1,4 +1,6 @@
 import {
+  Card,
+  CardContent,
   Carousel,
   CarouselContent,
   CarouselDots,
@@ -53,11 +55,19 @@ function CarouselAutoplay() {
 
 function CarouselVertical() {
   return (
-    <div class="h-80 w-full max-w-md py-12">
-      <Carousel orientation="vertical" loop class="h-full w-full">
-        <CarouselContent class="h-full">
+    <div class="w-full max-w-xs py-12">
+      <Carousel orientation="vertical" loop class="w-full">
+        <CarouselContent class="h-64">
           {SLIDES.map((value, index) => (
-            <Slide index={index} value={value} />
+            <CarouselItem index={index} class="basis-1/2">
+              <div class="p-1">
+                <Card>
+                  <CardContent class="flex items-center justify-center p-6">
+                    <span class="text-3xl font-semibold">{value}</span>
+                  </CardContent>
+                </Card>
+              </div>
+            </CarouselItem>
           ))}
         </CarouselContent>
         <CarouselPrevious />
