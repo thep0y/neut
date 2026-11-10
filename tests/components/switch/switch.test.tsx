@@ -17,6 +17,7 @@ function renderSwitch(
     disabled?: boolean;
     size?: "sm" | "md";
     id?: string;
+    onKeyDown?: (event: KeyboardEvent) => void;
   } = {},
 ) {
   return render(() => (
@@ -27,6 +28,7 @@ function renderSwitch(
       disabled={props.disabled}
       size={props.size}
       id={props.id}
+      onKeyDown={props.onKeyDown}
     />
   ));
 }
@@ -230,6 +232,69 @@ describe("Switch - disabled 状态", () => {
     renderSwitch();
 
     expect(sw()).not.toHaveAttribute("aria-disabled");
+  });
+});
+
+describe("Switch - 键盘", () => {
+  it("Space 切换并回调", () => {
+    const onCheckedChange = vi.fn();
+    renderSwitch({ onCheckedChange });
+
+    fireEvent.keyDown(sw(), { key: " " });
+
+    expect(sw()).toHaveAttribute("aria-checked", "true");
+    expect(onCheckedChange).toHaveBeenCalledWith(true);
+  });
+
+  it("Enter 切换并回调", () => {
+    const onCheckedChange = vi.fn();
+    renderSwitch({ onCheckedChange });
+
+    fireEvent.keyDown(sw(), { key: "Enter" });
+
+    expect(sw()).toHaveAttribute("aria-checked", "true");
+    expect(onCheckedChange).toHaveBeenCalledWith(true);
+  });
+
+  it("其他按键不切换", () => {
+    const onCheckedChange = vi.fn();
+    renderSwitch({ onCheckedChange });
+
+    fireEvent.keyDown(sw(), { key: "a" });
+
+    expect(sw()).toHaveAttribute("aria-checked", "false");
+    expect(onCheckedChange).not.toHaveBeenCalled();
+  });
+
+  it("disabled 时 Space / Enter 都不切换", () => {
+    const onCheckedChange = vi.fn();
+    renderSwitch({ disabled: true, onCheckedChange });
+
+    fireEvent.keyDown(sw(), { key: " " });
+    fireEvent.keyDown(sw(), { key: "Enter" });
+
+    expect(sw()).toHaveAttribute("aria-checked", "false");
+    expect(onCheckedChange).not.toHaveBeenCalled();
+  });
+
+  it("用户 onKeyDown 先执行，preventDefault 可阻止内部切换", () => {
+    const onKeyDown = vi.fn((event: KeyboardEvent) => {
+      event.preventDefault();
+    });
+    renderSwitch({ onKeyDown });
+
+    fireEvent.keyDown(sw(), { key: " " });
+
+    expect(onKeyDown).toHaveBeenCalledTimes(1);
+    expect(sw()).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("长按重复的 keydown 不会连续切换", () => {
+    renderSwitch();
+
+    fireEvent.keyDown(sw(), { key: " ", repeat: true });
+
+    expect(sw()).toHaveAttribute("aria-checked", "false");
   });
 });
 
