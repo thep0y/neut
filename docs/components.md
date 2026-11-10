@@ -50,7 +50,7 @@ import { Button } from "@neut/ui/components/button";
 | **RadioGroup** | `RadioGroup`、`RadioGroupItem` | `value`/`defaultValue`、`onValueChange(value: string)`、`name`、`disabled`；item 的 `value` 必填 |
 | **Select** | `Select`、`SelectTrigger`、`SelectValue`、`SelectContent`、`SelectItem`、`SelectGroup`、`SelectLabel`、`SelectSeparator` | `value`/`defaultValue`、`onValueChange`、`open`/`defaultOpen`、`onOpenChange`、`disabled`、`lockScroll`；`SelectContent` 用 `side`/`align`（默认 `bottom`/`start`）与 `alignItemWithTrigger`；`placement` 已弃用；窄屏最大宽度 `100vw - 1rem`，选项区可滚动。详见 [Select](./components/select.md) |
 | **Slider** | `Slider`、`SliderControl`、`SliderTrack`、`SliderIndicator`、`SliderThumb` | `value`/`defaultValue`：单值为 `number`、范围为 `number[]`；`min`、`max`、`step`、`orientation`、`disabled`、`onValueChange` |
-| **Switch** | `Switch` | `checked`/`defaultChecked`、`onCheckedChange(checked: boolean)`（注意不是 `onChange`）、`size="sm" \| "md"`、`disabled` |
+| **Switch** | `Switch` | `checked`/`defaultChecked`、`onCheckedChange(checked: boolean)`（注意不是 `onChange`）、`size="sm" \| "md"`、`disabled`；支持 Space / Enter 切换 |
 | **Textarea** | `Textarea` | 原生 textarea 属性；多态 |
 | **TimePicker** | `TimePicker`、`TimePickerTrigger`、`TimePickerContent`、`TimePickerColumn`、`TimePickerOption`、`useTimePickerContext` | `value`/`defaultValue`、`onValueChange(value, details)`、`hourCycle`、`showSeconds`、`hourStep`/`minuteStep`/`secondStep`、`locale`、`formatTime`、`open`/`defaultOpen`、`onOpenChange`。详见 [TimePicker](./components/time-picker.md) |
 | **Toggle** | `Toggle`、`toggleVariants` | `pressed`/`defaultPressed`、`onPressedChange`、`variant`/`size`、`value`（在 ToggleGroup 内使用） |
