@@ -7,6 +7,7 @@ import { Dialog } from "~/components/dialog/Dialog/Dialog";
 import { useDialogContentContext } from "~/components/dialog/DialogContent/DialogContent.context";
 import { DialogClose } from "~/components/dialog/DialogClose/DialogClose";
 import { DialogContent } from "~/components/dialog/DialogContent/DialogContent";
+import type { DialogContentProps } from "~/components/dialog/DialogContent/DialogContent.types";
 import { DialogDescription } from "~/components/dialog/DialogDescription/DialogDescription";
 import { DialogFooter } from "~/components/dialog/DialogFooter/DialogFooter";
 import { DialogHeader } from "~/components/dialog/DialogHeader/DialogHeader";
@@ -33,7 +34,7 @@ function renderDialog(
     onOpenChange?: (open: boolean) => void;
     lockScroll?: boolean;
     dismissOnEscape?: boolean;
-    contentProps?: Record<string, unknown>;
+    contentProps?: Partial<DialogContentProps>;
   } = {},
 ) {
   return render(() => (
@@ -371,6 +372,230 @@ describe("dialog 集成 - 无障碍", () => {
     fireEvent.keyDown(document, { key: "a" });
 
     expect(onOpenChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("dialog 集成 - 焦点陷阱与恢复", () => {
+  function renderFocusDialog() {
+    return render(() => (
+      <Dialog defaultOpen>
+        <DialogTrigger>打开</DialogTrigger>
+        <DialogContent showCloseButton={false}>
+          <button type="button">第一个</button>
+          <button type="button">第二个</button>
+        </DialogContent>
+      </Dialog>
+    ));
+  }
+
+  function buttons(): HTMLButtonElement[] {
+    return [
+      ...document.querySelectorAll<HTMLButtonElement>(
+        '[data-slot="dialog-content"] button',
+      ),
+    ];
+  }
+
+  async function nextFrame() {
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+  }
+
+  it("关闭后把焦点还给打开前的元素", async () => {
+    renderDialog({ defaultOpen: false });
+    const triggerEl = trigger();
+    triggerEl.focus();
+
+    fireEvent.click(triggerEl);
+    await nextFrame();
+    expect(document.activeElement).toBe(content());
+
+    fireEvent.click(document.querySelector('[data-slot="dialog-close"]')!);
+
+    expect(document.activeElement).toBe(triggerEl);
+  });
+
+  it("打开前的元素已从 DOM 移除时不恢复焦点", async () => {
+    renderDialog({ defaultOpen: false });
+    const triggerEl = trigger();
+    triggerEl.focus();
+
+    fireEvent.click(triggerEl);
+    await nextFrame();
+    triggerEl.remove();
+    fireEvent.click(document.querySelector('[data-slot="dialog-close"]')!);
+
+    expect(document.activeElement).not.toBe(triggerEl);
+  });
+
+  it("Tab 从最后一个可聚焦元素循环到第一个", async () => {
+    renderFocusDialog();
+    await nextFrame();
+    const [first, last] = buttons();
+
+    last.focus();
+    fireEvent.keyDown(last, { key: "Tab" });
+
+    expect(document.activeElement).toBe(first);
+  });
+
+  it("Shift+Tab 从第一个可聚焦元素循环到最后一个", async () => {
+    renderFocusDialog();
+    await nextFrame();
+    const [first, last] = buttons();
+
+    first.focus();
+    fireEvent.keyDown(first, { key: "Tab", shiftKey: true });
+
+    expect(document.activeElement).toBe(last);
+  });
+
+  it("焦点在 surface 上时 Tab/Shift+Tab 分别进入首尾元素", async () => {
+    renderFocusDialog();
+    await nextFrame();
+    const surface = document.querySelector<HTMLElement>(
+      "[data-dialog-surface]",
+    )!;
+    const [first, last] = buttons();
+
+    surface.focus();
+    fireEvent.keyDown(surface, { key: "Tab" });
+    expect(document.activeElement).toBe(first);
+
+    surface.focus();
+    fireEvent.keyDown(surface, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(last);
+  });
+
+  it("首尾之间的 Tab / Shift+Tab 不拦截", async () => {
+    render(() => (
+      <Dialog defaultOpen>
+        <DialogTrigger>打开</DialogTrigger>
+        <DialogContent showCloseButton={false}>
+          <button type="button">一</button>
+          <button type="button">二</button>
+          <button type="button">三</button>
+        </DialogContent>
+      </Dialog>
+    ));
+    await nextFrame();
+    const middle = buttons()[1];
+
+    middle.focus();
+    fireEvent.keyDown(middle, { key: "Tab" });
+    expect(document.activeElement).toBe(middle);
+
+    fireEvent.keyDown(middle, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(middle);
+  });
+
+  it("没有可聚焦元素时 Tab 停留在 surface", async () => {
+    render(() => (
+      <Dialog defaultOpen>
+        <DialogTrigger>打开</DialogTrigger>
+        <DialogContent showCloseButton={false}>
+          <p>没有按钮</p>
+          <button type="button" hidden>
+            隐藏
+          </button>
+          {/* biome-ignore lint/a11y/noAriaHiddenOnFocusable: 模拟第三方内容中 aria-hidden 的可聚焦元素，用于验证过滤器 */}
+          <button type="button" tabindex="-1" aria-hidden="true">
+            辅助技术隐藏
+          </button>
+        </DialogContent>
+      </Dialog>
+    ));
+    await nextFrame();
+    const surface = document.querySelector("[data-dialog-surface]")!;
+
+    fireEvent.keyDown(surface, { key: "Tab" });
+
+    expect(document.activeElement).toBe(surface);
+  });
+
+  it("焦点在浮层外时 Tab 会拉回第一个元素", async () => {
+    render(() => (
+      <div>
+        <button type="button" data-testid="outside">
+          外部
+        </button>
+        <Dialog defaultOpen>
+          <DialogTrigger>打开</DialogTrigger>
+          <DialogContent showCloseButton={false}>
+            <button type="button">第一个</button>
+            <button type="button">第二个</button>
+          </DialogContent>
+        </Dialog>
+      </div>
+    ));
+    await nextFrame();
+    const outside = document.querySelector(
+      '[data-testid="outside"]',
+    ) as HTMLElement;
+    const surface = document.querySelector("[data-dialog-surface]")!;
+    const [first] = buttons();
+
+    outside.focus();
+    fireEvent.keyDown(surface, { key: "Tab" });
+    expect(document.activeElement).toBe(first);
+
+    outside.focus();
+    fireEvent.keyDown(surface, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(buttons()[1]);
+  });
+
+  it("非 Tab 键不接管焦点", async () => {
+    renderFocusDialog();
+    await nextFrame();
+    const [first] = buttons();
+    const surface = document.querySelector("[data-dialog-surface]")!;
+
+    first.focus();
+    fireEvent.keyDown(surface, { key: "a" });
+
+    expect(document.activeElement).toBe(first);
+  });
+
+  it("打开时 activeElement 为空也能安全关闭", async () => {
+    Object.defineProperty(document, "activeElement", {
+      configurable: true,
+      get: () => null,
+    });
+
+    try {
+      render(() => (
+        <Dialog defaultOpen>
+          <DialogTrigger>打开</DialogTrigger>
+          <DialogContent showCloseButton={false}>内容</DialogContent>
+        </Dialog>
+      ));
+      await nextFrame();
+
+      fireEvent.click(document.querySelector('[data-slot="dialog-overlay"]')!);
+    } finally {
+      Reflect.deleteProperty(document, "activeElement");
+    }
+  });
+
+  it("用户 onKeyDown preventDefault 时不再执行 Tab 循环", async () => {
+    render(() => (
+      <Dialog defaultOpen>
+        <DialogTrigger>打开</DialogTrigger>
+        <DialogContent
+          showCloseButton={false}
+          onKeyDown={(event) => event.preventDefault()}
+        >
+          <button type="button">第一个</button>
+          <button type="button">第二个</button>
+        </DialogContent>
+      </Dialog>
+    ));
+    await nextFrame();
+    const last = buttons()[1];
+
+    last.focus();
+    fireEvent.keyDown(last, { key: "Tab" });
+
+    expect(document.activeElement).toBe(last);
   });
 });
 
