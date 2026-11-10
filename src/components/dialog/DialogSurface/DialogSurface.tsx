@@ -10,18 +10,26 @@ import { DialogPortal } from "../DialogPortal";
 import { DialogOverlay } from "../DialogOverlay";
 import { DialogContentContext } from "../DialogContent/DialogContent.context";
 import { useDialogContext } from "../Dialog";
+import { callEventHandler } from "~/utils";
+import { useDialogFocus } from "./useDialogFocus";
 
 export function DialogSurface(props: DialogSurfaceProps) {
   const { show, open, setShow } = useDialogContext();
 
-  const [local, others] = splitProps(props, [
-    "role",
-    "dismissOnOverlayClick",
-    "overlayClass",
-    "class",
-    "classList",
-    "children",
-  ]);
+  const [local, events, others] = splitProps(
+    props,
+    [
+      "role",
+      "dismissOnOverlayClick",
+      "overlayClass",
+      "class",
+      "classList",
+      "children",
+    ],
+    ["onKeyDown"],
+  );
+
+  const { handleKeyDown } = useDialogFocus(open);
 
   const [titleID, setTitleID] = createSignal<string>();
   const [descriptionID, setDescriptionID] = createSignal<string>();
@@ -66,6 +74,10 @@ export function DialogSurface(props: DialogSurfaceProps) {
             classList={local.classList}
             aria-labelledby={titleID()}
             aria-describedby={descriptionID()}
+            onKeyDown={(event) => {
+              callEventHandler(events.onKeyDown, event);
+              if (!event.defaultPrevented) handleKeyDown(event);
+            }}
             onAnimationEnd={() => {
               if (open()) return;
               setShow(false);
