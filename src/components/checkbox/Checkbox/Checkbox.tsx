@@ -85,7 +85,14 @@ export const Checkbox = (props: CheckboxProps) => {
         aria-disabled={local.disabled}
         data-disabled={local.disabled}
         data-checked={checked()}
-        aria-labelledby={local.id}
+        // 自引用 aria-labelledby 只在调用方没有提供 aria-label/aria-labelledby
+        // 时使用；否则它的优先级会让 aria-label 的可访问名变成空字符串。
+        aria-labelledby={
+          props["aria-label"] === undefined &&
+          props["aria-labelledby"] === undefined
+            ? local.id
+            : undefined
+        }
         class={clsx(classes, local.class)}
         classList={local.classList}
         onClick={(event) => handleClick(event)}
