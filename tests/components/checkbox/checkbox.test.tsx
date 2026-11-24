@@ -112,6 +112,24 @@ describe("Checkbox - 渲染与 ARIA", () => {
     expect(box()).toHaveAttribute("aria-labelledby", id!);
   });
 
+  it("传 aria-label 时不再输出自引用 aria-labelledby（否则名字会被清空）", () => {
+    render(() => <Checkbox aria-label="Select all" />);
+
+    expect(box()).toHaveAttribute("aria-label", "Select all");
+    expect(box()).not.toHaveAttribute("aria-labelledby");
+  });
+
+  it("传 aria-labelledby 时保留调用方的关联", () => {
+    render(() => (
+      <div>
+        <span id="external-label">Accept terms</span>
+        <Checkbox aria-labelledby="external-label" />
+      </div>
+    ));
+
+    expect(box()).toHaveAttribute("aria-labelledby", "external-label");
+  });
+
   it("name 默认回退到 id", () => {
     renderCheckbox();
 
