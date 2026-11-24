@@ -6,7 +6,7 @@ import {
   splitProps,
 } from "solid-js";
 import type { CheckboxProps } from "./Checkbox.types";
-import { clsx } from "~/utils";
+import { callEventHandler, clsx } from "~/utils";
 import { classes } from "./Checkbox.styles";
 import { CheckboxIndicator } from "../CheckboxIndicator";
 
@@ -17,16 +17,20 @@ export const Checkbox = (props: CheckboxProps) => {
     props,
   );
 
-  const [local, others] = splitProps(merged, [
-    "name",
-    "id",
-    "checked",
-    "defaultChecked",
-    "onChange",
-    "disabled",
-    "class",
-    "classList",
-  ]);
+  const [local, events, others] = splitProps(
+    merged,
+    [
+      "name",
+      "id",
+      "checked",
+      "defaultChecked",
+      "onChange",
+      "disabled",
+      "class",
+      "classList",
+    ],
+    ["onKeyDown"],
+  );
 
   const [internalChecked, setInternalChecked] = createSignal(
     local.defaultChecked,
@@ -59,6 +63,18 @@ export const Checkbox = (props: CheckboxProps) => {
     inputRef?.click();
   };
 
+  /**
+   * span[role=checkbox] 不会把 Space/Enter 合成 click（原生 button 才会）。
+   * 键盘必须显式转到隐藏 input，才能复用同一条 onChange 路径。
+   */
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (local.disabled) return;
+    if (event.key !== " " && event.key !== "Enter") return;
+    event.preventDefault();
+    if (event.repeat) return;
+    inputRef?.click();
+  };
+
   return (
     <>
       <span
@@ -73,6 +89,10 @@ export const Checkbox = (props: CheckboxProps) => {
         class={clsx(classes, local.class)}
         classList={local.classList}
         onClick={(event) => handleClick(event)}
+        onKeyDown={(event) => {
+          callEventHandler(events.onKeyDown, event);
+          if (!event.defaultPrevented) handleKeyDown(event);
+        }}
         {...others}
       >
         <CheckboxIndicator checked={checked()} />

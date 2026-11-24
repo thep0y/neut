@@ -20,6 +20,7 @@ function renderCheckbox(
     disabled?: boolean;
     id?: string;
     name?: string;
+    onKeyDown?: (event: KeyboardEvent) => void;
   } = {},
 ) {
   return render(() => (
@@ -30,6 +31,7 @@ function renderCheckbox(
       disabled={props.disabled}
       id={props.id}
       name={props.name}
+      onKeyDown={props.onKeyDown}
     />
   ));
 }
@@ -254,6 +256,73 @@ describe("Checkbox - 点击交互", () => {
 
     expect(onChange).not.toHaveBeenCalled();
     expect(box()).toHaveAttribute("aria-checked", "false");
+  });
+});
+
+describe("Checkbox - 键盘", () => {
+  it("Space 切换并回调", () => {
+    const onChange = vi.fn();
+    renderCheckbox({ onChange });
+
+    fireEvent.keyDown(box(), { key: " " });
+
+    expect(box()).toHaveAttribute("aria-checked", "true");
+    expect(onChange).toHaveBeenCalledWith(true);
+  });
+
+  it("Enter 切换并回调", () => {
+    const onChange = vi.fn();
+    renderCheckbox({ onChange });
+
+    fireEvent.keyDown(box(), { key: "Enter" });
+
+    expect(box()).toHaveAttribute("aria-checked", "true");
+    expect(onChange).toHaveBeenCalledWith(true);
+  });
+
+  it("其他按键不切换", () => {
+    const onChange = vi.fn();
+    renderCheckbox({ onChange });
+
+    fireEvent.keyDown(box(), { key: "a" });
+
+    expect(box()).toHaveAttribute("aria-checked", "false");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("disabled 时 Space / Enter 都不切换", () => {
+    const onChange = vi.fn();
+    renderCheckbox({ disabled: true, onChange });
+
+    fireEvent.keyDown(box(), { key: " " });
+    fireEvent.keyDown(box(), { key: "Enter" });
+
+    expect(box()).toHaveAttribute("aria-checked", "false");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("用户 onKeyDown 先执行，preventDefault 可阻止内部切换", () => {
+    const onKeyDown = vi.fn((event: KeyboardEvent) => {
+      event.preventDefault();
+    });
+    const onChange = vi.fn();
+    renderCheckbox({ onKeyDown, onChange });
+
+    fireEvent.keyDown(box(), { key: " " });
+
+    expect(onKeyDown).toHaveBeenCalledTimes(1);
+    expect(box()).toHaveAttribute("aria-checked", "false");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("长按重复的 keydown 不会连续切换", () => {
+    const onChange = vi.fn();
+    renderCheckbox({ onChange });
+
+    fireEvent.keyDown(box(), { key: " ", repeat: true });
+
+    expect(box()).toHaveAttribute("aria-checked", "false");
+    expect(onChange).not.toHaveBeenCalled();
   });
 });
 
