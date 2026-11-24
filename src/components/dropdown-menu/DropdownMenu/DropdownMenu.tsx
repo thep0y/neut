@@ -62,17 +62,22 @@ export function DropdownMenu(props: DropdownMenuProps): JSX.Element {
     next: boolean,
     reason: ContextMenuChangeEventReason,
     event?: Event,
-  ) => {
+  ): boolean => {
+    // 先回调再落状态：details.cancel() 可以否决本次变更。
+    // 之前与 ContextMenu 不一致，DropdownMenu 的 cancel() 完全无效。
+    const details = createChangeEventDetails(reason, event, trigger());
+    props.onOpenChange?.(next, details);
+    if (details.isCanceled) return false;
     if (props.open === undefined) setInternalOpen(next);
-    props.onOpenChange?.(
-      next,
-      createChangeEventDetails(reason, event, trigger()),
-    );
+    return true;
   };
 
   const closeAll = (reason: ContextMenuChangeEventReason, event?: Event) => {
     if (!open()) return;
-    commit(false, reason, event);
+    const wasOpen = open();
+    if (!commit(false, reason, event)) return;
+    // 受控模式下调用方可能不采纳本次变更；菜单实际还开着时不能抢焦点。
+    if (open() === wasOpen) return;
     if (reason !== "outside-press" && finalFocus()) restoreFocus();
   };
 

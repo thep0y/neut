@@ -119,6 +119,20 @@ describe("DropdownMenu - 开与关", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
   });
 
+  it("onOpenChange 里 cancel() 阻止关闭且不抢焦点", async () => {
+    const onOpenChange = vi.fn((_open: boolean, details?: unknown) => {
+      (details as { cancel: () => void } | undefined)?.cancel();
+    });
+    renderMenu({ defaultOpen: true, onOpenChange });
+    const user = userEvent.setup();
+
+    await user.click(items()[0]!);
+
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
+    expect(content()).toBeInTheDocument();
+    expect(document.activeElement).not.toBe(trigger());
+  });
+
   it("disabled 时点击不打开", async () => {
     const onOpenChange = vi.fn();
     renderMenu({ disabled: true, onOpenChange });
