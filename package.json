@@ -21,9 +21,10 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage && vitest run --config packages/positioner/vitest.config.ts",
     "test:positioner": "vitest run --config packages/positioner/vitest.config.ts",
-    "build:positioner": "vite build --config packages/positioner/vite.config.ts",
+    "build:positioner": "vite build --config packages/positioner/vite.config.ts && node .github/scripts/check-build-output.mjs",
     "check:positioner": "tsc -p packages/positioner/tsconfig.json --noEmit",
-    "check:branches": "node .github/scripts/check-branches.mjs"
+    "check:branches": "node .github/scripts/check-branches.mjs",
+    "check:build": "node .github/scripts/check-build-output.mjs"
   },
   "license": "MIT",
   "devDependencies": {
