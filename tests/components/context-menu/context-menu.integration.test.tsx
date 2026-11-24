@@ -106,6 +106,19 @@ describe("ContextMenu 集成 - 打开、导航与关闭", () => {
     );
   });
 
+  it("Tab 关闭菜单但不阻止浏览器移动焦点", async () => {
+    renderFullMenu();
+    fireEvent.contextMenu(trigger());
+    await waitForMount();
+
+    const notPrevented = fireEvent.keyDown(content()!, { key: "Tab" });
+
+    expect(content()).toBeNull();
+    // dispatchEvent 返回 false 表示 preventDefault 被调用；Tab 不能被吞掉
+    expect(notPrevented).toBe(true);
+    expect(document.activeElement).toBe(trigger());
+  });
+
   it("点击菜单外部关闭且焦点不回触发器", async () => {
     renderFullMenu();
     fireEvent.contextMenu(trigger());

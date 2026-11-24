@@ -217,13 +217,13 @@ describe("handleMenuKeyDown Escape / Tab", () => {
     expect(closeSubmenu).not.toHaveBeenCalled();
   });
 
-  it("Tab 关闭菜单且原因是 focus-out", () => {
+  it("Tab 关闭菜单且原因是 focus-out，但不阻止浏览器移动焦点", () => {
     const { dispatch, closeAll } = setup();
 
     const event = dispatch(key("Tab"));
 
     expect(closeAll).toHaveBeenCalledWith("focus-out", event);
-    expect(event.defaultPrevented).toBe(true);
+    expect(event.defaultPrevented).toBe(false);
   });
 });
 

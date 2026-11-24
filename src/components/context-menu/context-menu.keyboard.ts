@@ -100,8 +100,9 @@ export function handleMenuKeyDown(
       break;
     }
     case "Tab": {
-      // 关闭菜单并把焦点交还触发器，浏览器随后的 Tab 会从触发器之后继续
-      event.preventDefault();
+      // 关闭菜单并把焦点交还触发器；**不要** preventDefault，
+      // 否则浏览器默认的 Tab 焦点移动会被取消，焦点反而被困在触发器上。
+      // closeAll 同步把焦点还给 trigger，默认动作随后从 trigger 继续移动。
       ctx.closeAll("focus-out", event);
       break;
     }
