@@ -42,6 +42,8 @@ toast.promise(save(), {
 | `dir` | `"ltr" \| "rtl" \| "auto"` | `auto` | 书写方向 |
 | `theme` | — | — | **已弃用**：Toast 不再自行设置主题，请用 `<html data-theme>` |
 
+`expand`、鼠标悬停与热键共用同一展开态：展开时渲染全部 toast（不再受 `visibleToasts` 截断），移出或再按一次热键收起。
+
 `ToastOptions` 还可设置 `variant`、`class`、`classes`、`closeButtonAriaLabel`、`style`、`toasterId` 等。
 
 ## toast API

@@ -36,7 +36,13 @@ export interface ToasterState {
  * 这里不读全局 store —— `toasts` 由调用方注入，算法本身可以脱离 store 单独推理。
  */
 export function useToaster(options: UseToasterOptions): ToasterState {
-  const [expanded, setExpanded] = createSignal(false);
+  // 悬停/热键驱动的展开态；根级 expand 是强制默认值，二者取并集。
+  // 之前渲染条数只看 options.expand()、布局只看这个 signal，导致
+  // <Toaster expand /> 渲染全部却仍按折叠 grid 叠在一起。
+  const [expandedState, setExpanded] = createSignal(false);
+  const expanded = createMemo(
+    () => options.expand() === true || expandedState(),
+  );
 
   const filteredToasts = createMemo(() => {
     const id = options.toasterId();
@@ -66,7 +72,7 @@ export function useToaster(options: UseToasterOptions): ToasterState {
 
   const visibleToastsForPosition = (position: Position) => {
     const list = toastsForPosition(position);
-    if (options.expand()) return list;
+    if (expanded()) return list;
     return list.slice(0, options.visibleToasts());
   };
 
@@ -77,7 +83,7 @@ export function useToaster(options: UseToasterOptions): ToasterState {
         options
           .hotkey()
           .every((key) => (event as any)[key] || event.code === key);
-      if (hotkeyPressed) setExpanded(true);
+      if (hotkeyPressed) setExpanded((value) => !value);
       if (event.code === "Escape") setExpanded(false);
     };
 

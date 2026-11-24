@@ -146,14 +146,29 @@ describe("useToaster 展开态", () => {
     expect(result.expanded()).toBe(false);
   });
 
-  it("热键全部命中时展开", () => {
+  it("expand 置位时初始就是展开态", () => {
+    const { result } = setup({
+      expand: true,
+      visibleToasts: 2,
+      toasts: [toast("a"), toast("b"), toast("c")],
+    });
+
+    expect(result.expanded()).toBe(true);
+    expect(result.visibleToastsForPosition("bottom-right")).toHaveLength(3);
+  });
+
+  it("热键全部命中时展开，再按一次收起", () => {
     const { result } = setup();
 
     document.dispatchEvent(
       new KeyboardEvent("keydown", { altKey: true, code: "KeyT" }),
     );
-
     expect(result.expanded()).toBe(true);
+
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { altKey: true, code: "KeyT" }),
+    );
+    expect(result.expanded()).toBe(false);
   });
 
   it("只命中部分热键时不展开", () => {

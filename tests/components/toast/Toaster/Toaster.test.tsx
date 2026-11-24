@@ -113,29 +113,30 @@ describe("Toaster 选择与展开", () => {
     expect(renderedToasts()).toHaveLength(2);
   });
 
-  it("expand 置位时渲染全部", () => {
+  it("expand 置位时渲染全部并直接使用展开布局", () => {
     for (const message of ["一", "二", "三", "四"]) addToast(message);
 
     render(() => <Toaster expand />);
+    const [viewport] = viewports();
 
+    expect(viewport).toHaveClass("flex-col-reverse");
     expect(renderedToasts()).toHaveLength(4);
   });
 
-  it("鼠标移入展开、移出收起（只改变叠放布局，不改变渲染条数）", () => {
+  it("鼠标移入时同时展开布局并渲染全部，移出后收起", () => {
     for (const message of ["一", "二", "三", "四"]) addToast(message);
 
     render(() => <Toaster />);
     const [viewport] = viewports();
     expect(renderedToasts()).toHaveLength(3);
 
-    // 当前实现里 visibleToasts 是"渲染上限"，悬停只切换 grid ↔ flex 布局，
-    // 被截断的 toast 仍然不进入 DOM（根级 expand 才会全部渲染）
     viewport.dispatchEvent(new MouseEvent("mouseenter"));
     expect(viewport).toHaveClass("flex-col-reverse");
-    expect(renderedToasts()).toHaveLength(3);
+    expect(renderedToasts()).toHaveLength(4);
 
     viewport.dispatchEvent(new MouseEvent("mouseleave"));
     expect(viewport).toHaveClass("grid");
+    expect(renderedToasts()).toHaveLength(3);
   });
 
   it("收起时用 grid 叠放，展开时按位置改成正向/反向 flex 排列", () => {
