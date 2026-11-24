@@ -5,6 +5,10 @@ import { defineConfig } from "vite";
 export default defineConfig({
   root: import.meta.dirname,
   build: {
+    // 必须用绝对路径：rolldown 的 output.dir 按 process.cwd() 解析，
+    // 而脚本从仓库根执行；写成相对 "dist" 会把 JS 输出到根 dist，
+    // 覆盖 @neut/ui 的 dist/index.js（见 AUDIT_REPORT.md P0-1）。
+    outDir: path.resolve(import.meta.dirname, "dist"),
     sourcemap: true,
     target: "esnext",
     lib: {
@@ -15,7 +19,6 @@ export default defineConfig({
     rolldownOptions: {
       external: ["solid-js", "solid-js/web"],
       output: {
-        dir: "dist",
         preserveModules: true,
         preserveModulesRoot: "src",
         entryFileNames: "[name].js",
