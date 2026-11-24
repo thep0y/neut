@@ -187,6 +187,143 @@ describe("RadioGroupItem - 键盘", () => {
     expect(item("c").getAttribute("aria-checked")).toBe("true");
   });
 
+  it("方向键跳过 disabled 项，且不会选中它", () => {
+    const view = render(() => (
+      <RadioGroup defaultValue="a">
+        <RadioGroupItem value="a" />
+        <RadioGroupItem value="b" disabled />
+        <RadioGroupItem value="c" />
+      </RadioGroup>
+    ));
+    const item = (value: string) =>
+      view.container.querySelector<HTMLButtonElement>(
+        `[data-slot="radio-group-item"][data-value="${value}"]`,
+      )!;
+    const a = item("a");
+
+    a.focus();
+    fireEvent.keyDown(a, { key: "ArrowDown" });
+
+    expect(item("b").getAttribute("aria-checked")).toBe("false");
+    expect(item("c").getAttribute("aria-checked")).toBe("true");
+    expect(document.activeElement).toBe(item("c"));
+
+    fireEvent.keyDown(item("c"), { key: "ArrowUp" });
+    expect(item("a").getAttribute("aria-checked")).toBe("true");
+    expect(document.activeElement).toBe(item("a"));
+  });
+
+  it("roving tabindex：只有选中项（或首个可用项）是可 Tab 的", () => {
+    const { item } = renderGroup({ defaultValue: "b" });
+
+    expect(item("a").tabIndex).toBe(-1);
+    expect(item("b").tabIndex).toBe(0);
+    expect(item("c").tabIndex).toBe(-1);
+
+    fireEvent.click(item("c"));
+
+    expect(item("a").tabIndex).toBe(-1);
+    expect(item("b").tabIndex).toBe(-1);
+    expect(item("c").tabIndex).toBe(0);
+  });
+
+  it("RTL 下左右方向键反向", () => {
+    const view = render(() => (
+      <RadioGroup dir="rtl" defaultValue="b">
+        <RadioGroupItem value="a" />
+        <RadioGroupItem value="b" />
+        <RadioGroupItem value="c" />
+      </RadioGroup>
+    ));
+    const item = (value: string) =>
+      view.container.querySelector<HTMLButtonElement>(
+        `[data-slot="radio-group-item"][data-value="${value}"]`,
+      )!;
+
+    fireEvent.keyDown(item("b"), { key: "ArrowRight" });
+    expect(item("a").getAttribute("aria-checked")).toBe("true");
+
+    fireEvent.keyDown(item("b"), { key: "ArrowLeft" });
+    expect(item("c").getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("显式 dir=ltr 时左右方向键按 LTR 映射", () => {
+    const view = render(() => (
+      <RadioGroup dir="ltr" defaultValue="b">
+        <RadioGroupItem value="a" />
+        <RadioGroupItem value="b" />
+        <RadioGroupItem value="c" />
+      </RadioGroup>
+    ));
+    const item = (value: string) =>
+      view.container.querySelector<HTMLButtonElement>(
+        `[data-slot="radio-group-item"][data-value="${value}"]`,
+      )!;
+
+    fireEvent.keyDown(item("b"), { key: "ArrowRight" });
+    expect(item("c").getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("元素脱离 radiogroup 后更新 tabindex 不会抛错", async () => {
+    const view = render(() => (
+      <RadioGroup defaultValue="a">
+        <RadioGroupItem value="a" data-testid="orphan" />
+        <RadioGroupItem value="b" />
+      </RadioGroup>
+    ));
+    const orphan = view.getByTestId("orphan") as HTMLButtonElement;
+    document.body.appendChild(orphan);
+
+    fireEvent.click(
+      view.container.querySelector<HTMLButtonElement>(
+        '[data-slot="radio-group-item"][data-value="b"]',
+      )!,
+    );
+    await Promise.resolve();
+
+    expect(orphan.tabIndex).toBe(-1);
+  });
+
+  it("DOM data-value 与 value 不一致时方向键从边界开始", () => {
+    const view = render(() => (
+      <RadioGroup>
+        <RadioGroupItem value="ghost" data-value="a" />
+        <RadioGroupItem value="a" />
+        <RadioGroupItem value="b" />
+      </RadioGroup>
+    ));
+    const ghost = view.container.querySelector<HTMLButtonElement>(
+      '[data-slot="radio-group-item"][data-value="a"]',
+    )!;
+    const items = view.container.querySelectorAll<HTMLButtonElement>(
+      '[data-slot="radio-group-item"]',
+    );
+
+    fireEvent.keyDown(ghost, { key: "ArrowDown" });
+    expect(items[1].getAttribute("aria-checked")).toBe("true");
+
+    fireEvent.keyDown(ghost, { key: "ArrowUp" });
+    expect(items[2].getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("Enter 走原生 click，用户 onClick 只触发一次", () => {
+    const onClick = vi.fn();
+    const view = render(() => (
+      <RadioGroup defaultValue="a">
+        <RadioGroupItem value="a" />
+        <RadioGroupItem value="b" onClick={onClick} />
+      </RadioGroup>
+    ));
+    const b = view.container.querySelector<HTMLButtonElement>(
+      '[data-slot="radio-group-item"][data-value="b"]',
+    )!;
+
+    fireEvent.keyDown(b, { key: "Enter" });
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(b.getAttribute("aria-checked")).toBe("true");
+  });
+
   it("方向键按 DOM 顺序排列，不受 value 大小影响", () => {
     const { item } = renderGroup({ defaultValue: "b" }, ["b", "a"]);
 

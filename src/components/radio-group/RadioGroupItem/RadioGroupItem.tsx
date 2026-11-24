@@ -1,4 +1,10 @@
-import { Show, createMemo, onCleanup, splitProps } from "solid-js";
+import {
+  Show,
+  createEffect,
+  createMemo,
+  onCleanup,
+  splitProps,
+} from "solid-js";
 import { clsx } from "~/utils";
 import { useRadioGroupContext } from "../RadioGroup";
 import type { RadioGroupItemProps } from "./RadioGroupItem.types";
@@ -30,13 +36,46 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
 
   let unregister: (() => void) | undefined;
 
+  /** 当前项是否是组内唯一的 Tab 停靠点（roving tabindex） */
+  const resolveTabStop = (el: HTMLButtonElement) => {
+    if (isDisabled()) return false;
+    const group = el.closest<HTMLElement>('[data-slot="radio-group"]');
+    if (!group) return false;
+    const enabled = Array.from(
+      group.querySelectorAll<HTMLButtonElement>(
+        '[data-slot="radio-group-item"]:not(:disabled)',
+      ),
+    );
+    const current = ctx.value();
+    if (current !== undefined) {
+      const selected = enabled.find((item) => item.dataset.value === current);
+      if (selected) return selected === el;
+    }
+    return enabled[0] === el;
+  };
+
+  const isRTL = (el: HTMLElement) => {
+    const group = el.closest<HTMLElement>('[data-slot="radio-group"]');
+    const dir = group?.getAttribute("dir") ?? el.getAttribute("dir");
+    if (dir === "rtl") return true;
+    if (dir === "ltr") return false;
+    return getComputedStyle(el).direction === "rtl";
+  };
+
   const attachListeners = (el: HTMLButtonElement) => {
+    const syncTabIndex = () => {
+      el.tabIndex = resolveTabStop(el) ? 0 : -1;
+    };
+    syncTabIndex();
+    // ref 之后才能拿到元素；effect 跟随选中值/禁用状态更新 roving tabindex。
+    createEffect(syncTabIndex);
     const onClick = () => select();
     const onKeyDown = (e: KeyboardEvent) => {
       if (isDisabled()) return;
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        select();
+        // 走原生 click，保证用户的 onClick 与内部 select 同一条路径。
+        el.click();
         return;
       }
 
@@ -44,18 +83,26 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
         e.preventDefault();
         const group = el.closest<HTMLElement>('[data-slot="radio-group"]');
         const values = Array.from(
-          group?.querySelectorAll<HTMLElement>(
-            '[data-slot="radio-group-item"]',
+          group?.querySelectorAll<HTMLButtonElement>(
+            '[data-slot="radio-group-item"]:not(:disabled)',
           ) ?? [],
         )
           .map((item) => item.dataset.value)
           .filter((value): value is string => value !== undefined);
         if (values.length === 0) return;
         const currentIndex = values.indexOf(local.value);
-        const direction =
-          e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : -1;
+        const rtl = isRTL(el);
+        const forward =
+          e.key === "ArrowDown" ||
+          (e.key === "ArrowRight" && !rtl) ||
+          (e.key === "ArrowLeft" && rtl);
         const nextIndex =
-          (currentIndex + direction + values.length) % values.length;
+          currentIndex === -1
+            ? forward
+              ? 0
+              : values.length - 1
+            : (currentIndex + (forward ? 1 : -1) + values.length) %
+              values.length;
         const nextValue = values[nextIndex];
         ctx.setValue(nextValue);
         ctx.focusItem(nextValue);
