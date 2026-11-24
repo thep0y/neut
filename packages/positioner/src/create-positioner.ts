@@ -105,6 +105,9 @@ export function createPositioner(
     const floatEl = floating();
     if (!refEl || !floatEl) {
       setIsPositioned(false);
+      // 元素卸载后不能保留上一轮的 middlewareData：Tooltip/HoverCard 会把
+      // hide.referenceHidden 当作挂载门，残留 true 会让浮层永久无法重新挂载。
+      setMiddlewareData({});
       return;
     }
 
@@ -135,6 +138,7 @@ export function createPositioner(
 
     if (!refEl || !floatEl) {
       setIsPositioned(false);
+      setMiddlewareData({});
       return;
     }
 
