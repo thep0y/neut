@@ -137,4 +137,8 @@ import { Dynamic } from "solid-js/web";
 - Vite library 模式自动扫描 `src/components/*/index.ts`、`src/hooks/index.ts`、`src/utils/index.ts`。
 - 新增顶层组件：建 `src/components/<name>/index.ts`，在 `src/index.ts` 加 `export * from "~/components/<name>";`。
 - `package.json` 的 `exports` 提供 `@neut/ui`、`/hooks`、`/hooks/*`、`/utils`、`/utils/*`、`/components/*`。
-- `dist/` 是生成物，不要手改。
+- `bun run build` 同时生成两套产物：`dist/`（客户端，`solidPlugin` 客户端 transform）与
+  `dist/server/`（服务端，`vite.config.ssr.ts` 的 `solidPlugin({ ssr: true })`）。
+- `exports` 的 `node` 条件指向 `dist/server/`，避免 Node/SSR 直接 import 时触发
+  solid-js/web 的 “Client-only API called on the server side”；浏览器/打包器仍走 `import` 的客户端产物。
+- `dist/`、`dist/server/` 都是生成物，不要手改。
