@@ -41,11 +41,10 @@ export const SidebarProvider = (props: SidebarProviderProps) => {
 
   const setOpen = (value: boolean | ((value: boolean) => boolean)) => {
     const openState = typeof value === "function" ? value(open()) : value;
-    if (local.onOpenChange) {
-      local.onOpenChange(openState);
-    } else {
-      _setOpen(openState);
-    }
+    // 受控判定只看 open，不看回调是否存在；否则 defaultOpen + onOpenChange
+    // 这种最常见的“通知但不接管”用法会永远打不开。
+    if (local.open === undefined) _setOpen(openState);
+    local.onOpenChange?.(openState);
 
     // biome-ignore lint/suspicious/noDocumentCookie: This sets the cookie to keep the sidebar state.
     document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
