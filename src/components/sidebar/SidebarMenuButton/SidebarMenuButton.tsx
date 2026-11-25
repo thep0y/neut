@@ -73,7 +73,7 @@ export const SidebarMenuButton = <T extends ValidComponent = "button">(
         <TooltipContent
           side="right"
           align="center"
-          hidden={state() !== "collapsed" || isMobile}
+          hidden={state() !== "collapsed" || isMobile()}
           {...(typeof local.tooltip === "string"
             ? { children: local.tooltip }
             : local.tooltip)}

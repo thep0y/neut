@@ -46,7 +46,7 @@ export const Sidebar = (props: SidebarProps) => {
       }
     >
       <Show
-        when={!isMobile}
+        when={!isMobile()}
         fallback={
           <Sheet open={openMobile()} onOpenChange={setOpenMobile}>
             <SheetContent

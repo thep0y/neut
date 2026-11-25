@@ -80,7 +80,7 @@ export const SidebarProvider = (props: SidebarProviderProps) => {
         state,
         open,
         setOpen,
-        isMobile: isMobile(),
+        isMobile,
         openMobile,
         setOpenMobile,
         toggleSidebar,
