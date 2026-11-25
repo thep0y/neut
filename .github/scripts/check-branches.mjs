@@ -55,10 +55,6 @@ const UNREACHABLE = new Map([
     "禁用守卫：AccordionTrigger 只渲染 <button disabled>，Solid 的事件委托对 disabled 元素直接跳过，click 不会进入该处理器（禁用行为本身由 disabled 属性保证，另有用例断言）",
   ],
   [
-    "src/components/combobox/ComboboxInput/ComboboxInput.tsx:47",
-    "禁用守卫：keydown 走 Solid 事件委托，disabled 的 input 收不到委托事件",
-  ],
-  [
     "src/components/tabs/TabsTrigger/TabsTrigger.tsx:75",
     "禁用守卫：同上，禁用 tab 的 click 不进入委托处理器",
   ],
