@@ -1,6 +1,9 @@
 import { render } from "@solidjs/testing-library";
+import { createRoot } from "solid-js";
 import { afterEach, describe, expect, it } from "vitest";
-import ImagePreload from "~/components/image/ImagePreload";
+import ImagePreload, {
+  getImagePreloadHead,
+} from "~/components/image/ImagePreload";
 
 /**
  * ImagePreload 只做一件事：把 `<link rel="preload" as="image">` 通过 Portal
@@ -58,6 +61,39 @@ describe("ImagePreload", () => {
 
     expect(link.getAttribute("href")).toBe("https://example.com/b.png");
     expect(link.hasAttribute("imagesrcset")).toBe(false);
+  });
+
+  it("SSR 没有 document 时返回 null 而不是抛 ReferenceError", () => {
+    const originalDocument = globalThis.document;
+    Object.defineProperty(globalThis, "document", {
+      configurable: true,
+      value: undefined,
+    });
+    try {
+      // SSR 没有 head 可挂载；旧实现在 <Portal mount={document.head}>
+      // 的属性求值处直接抛 ReferenceError。
+      expect(getImagePreloadHead()).toBeUndefined();
+      createRoot((dispose) => {
+        expect(() =>
+          ImagePreload({
+            imgAttributes: {
+              src: "https://example.com/ssr.png",
+              srcSet: undefined,
+              sizes: undefined,
+              crossOrigin: undefined,
+              referrerPolicy: undefined,
+              fetchpriority: undefined,
+            },
+          }),
+        ).not.toThrow();
+        dispose();
+      });
+    } finally {
+      Object.defineProperty(globalThis, "document", {
+        configurable: true,
+        value: originalDocument,
+      });
+    }
   });
 
   it("相同 key 已存在时跳过注入（SSR hydrate 场景）", () => {
