@@ -50,6 +50,22 @@ export function usePopoverContent(
     }
   });
 
+  /**
+   * 二级浮层（Select/Combobox/菜单/嵌套 Popover）都 Portal 到 body，
+   * 从父 Popover 的 DOM 子树看是“外部”。点击这些浮层内部时不能关掉父层。
+   */
+  const NESTED_FLOATING_SELECTOR = [
+    '[data-slot="select-content"]',
+    '[data-slot="combobox-content"]',
+    '[data-slot="dropdown-menu-content"]',
+    '[data-slot="dropdown-menu-sub-content"]',
+    '[data-slot="context-menu-content"]',
+    '[data-slot="context-menu-sub-content"]',
+    '[data-slot="popover-content"]',
+    '[data-slot="hover-card-content"]',
+    '[data-slot="tooltip-content"]',
+  ].join(",");
+
   // 打开期间绑定 document 级监听：点击外部关闭 + Escape 关闭。
   createEffect(() => {
     if (!ctx.open()) return;
@@ -59,23 +75,23 @@ export function usePopoverContent(
       const targetElement =
         target instanceof Element ? target : target?.parentElement;
       const insideNestedFloating = !!targetElement?.closest(
-        '[data-slot="select-content"]',
+        NESTED_FLOATING_SELECTOR,
       );
       if (
         !insideNestedFloating &&
         !ctx.reference()?.contains(target) &&
         !ctx.floating()?.contains(target)
       ) {
+        // 不能 stopPropagation：document capture 阶段拦截会让页面其他元素
+        // 收不到 pointerdown（Slider/Resizable/第三方拖拽全部失效）。
         ctx.closePopover();
-        e.stopPropagation();
       }
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        ctx.closePopover();
-      }
+      if (e.key !== "Escape" || e.defaultPrevented || e.isComposing) return;
+      e.preventDefault();
+      ctx.closePopover();
     };
 
     document.addEventListener("pointerdown", onPointerDown, { capture: true });
