@@ -17,8 +17,8 @@ import {
 /**
  * `ComboboxChipsInput`：chips 模式下的搜索输入框。
  *
- * 与 `ComboboxInput` 的差异：它**只有** `onInput` / `onFocus`（无键盘导航），
- * 且 disabled 完全由根组件的 `disabled` 决定。
+ * 与 `ComboboxInput` 共用 combobox ARIA 与键盘导航；额外承担
+ * “输入为空时 Backspace 删除最后一颗 chip”的约定。
  */
 function renderChipsInput(
   options: Parameters<typeof renderCombobox>[0] = {},
@@ -95,6 +95,77 @@ describe("ComboboxChipsInput", () => {
     renderChipsInput({ disabled: true });
 
     expect(comboboxInput()).toBeDisabled();
+  });
+});
+
+describe("ComboboxChipsInput - combobox 语义与键盘", () => {
+  it("输入框是 combobox，并关联 listbox 与 active option", () => {
+    renderChipsInput();
+    const input = comboboxInput();
+
+    expect(input).toHaveAttribute("role", "combobox");
+    expect(input).toHaveAttribute("aria-expanded", "true");
+    expect(input).toHaveAttribute("aria-autocomplete", "list");
+    expect(input).toHaveAttribute("aria-controls", bySlot("combobox-list")!.id);
+
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+
+    expect(input).toHaveAttribute(
+      "aria-activedescendant",
+      comboboxOptions()[0].id,
+    );
+  });
+
+  it("ArrowDown + Enter 在 chips 模式下选中项", () => {
+    const onValueChange = vi.fn();
+    renderChipsInput({
+      multiple: true,
+      defaultValue: [],
+      onValueChange,
+    });
+    const input = comboboxInput();
+
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    expect(onValueChange).toHaveBeenCalledWith(["apple"], expect.anything());
+  });
+
+  it("Home / End 跳到首尾项，Escape 关闭面板", () => {
+    const onOpenChange = vi.fn();
+    renderChipsInput({ onOpenChange });
+    const input = comboboxInput();
+
+    fireEvent.keyDown(input, { key: "End" });
+    expect(input).toHaveAttribute(
+      "aria-activedescendant",
+      comboboxOptions()[2].id,
+    );
+
+    fireEvent.keyDown(input, { key: "Home" });
+    expect(input).toHaveAttribute(
+      "aria-activedescendant",
+      comboboxOptions()[0].id,
+    );
+
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
+  });
+
+  it("输入过滤后 ArrowDown/Enter 选中过滤结果", () => {
+    const onValueChange = vi.fn();
+    renderChipsInput({
+      multiple: true,
+      defaultValue: [],
+      onValueChange,
+    });
+    const input = comboboxInput();
+
+    fireEvent.input(input, { target: { value: "cher" } });
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    expect(onValueChange).toHaveBeenCalledWith(["cherry"], expect.anything());
   });
 });
 
