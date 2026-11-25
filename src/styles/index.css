@@ -375,3 +375,9 @@
         scrollbar-width: none;
     }
 }
+
+/* 方向性图标（箭头/侧栏切换）在 RTL 下水平镜像。业务代码用 class="cn-rtl-flip"。 */
+[dir="rtl"] .cn-rtl-flip,
+.cn-rtl-flip[dir="rtl"] {
+    transform: scaleX(-1);
+}
