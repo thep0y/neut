@@ -124,6 +124,15 @@ describe("ComboboxChipsInput - combobox 语义与键盘", () => {
     expect(input).not.toHaveAttribute("aria-controls");
   });
 
+  it("disabled 时键盘不导航", () => {
+    renderChipsInput({ disabled: true });
+    const input = comboboxInput();
+
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+
+    expect(input).not.toHaveAttribute("aria-activedescendant");
+  });
+
   it("ArrowDown + Enter 在 chips 模式下选中项", () => {
     const onValueChange = vi.fn();
     renderChipsInput({
