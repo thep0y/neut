@@ -163,7 +163,9 @@ export function SelectContent(props: SelectContentProps) {
           */}
         <div
           ref={setContentElement}
+          id={ctx.contentId}
           role="listbox"
+          aria-labelledby={ctx.triggerId}
           data-state={animationState()}
           {...dataAttrs()}
           style={{

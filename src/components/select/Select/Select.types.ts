@@ -41,6 +41,8 @@ export interface SelectContextValue<
   setOpen: (v: boolean) => void;
   disabled: Accessor<boolean>;
   contentId: string;
+  /** trigger 元素的 id，供 listbox 的 aria-labelledby 引用 */
+  triggerId: string;
   reference: Accessor<Element | undefined>;
   setReference: (el: Element | undefined) => void;
   floating: Accessor<HTMLElement | undefined>;
