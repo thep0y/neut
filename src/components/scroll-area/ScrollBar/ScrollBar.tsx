@@ -51,6 +51,7 @@ export const ScrollBar = (props: ScrollBarProps) => {
   });
 
   const ariaValueNow = createMemo(() => computeAriaValueNow(metrics()));
+  const scrollable = () => metrics().scrollable;
 
   const visible = createMemo(() =>
     isScrollBarVisible(ctx.hovering(), ctx.dragging(), orientation(), active()),
@@ -72,12 +73,13 @@ export const ScrollBar = (props: ScrollBarProps) => {
       data-slot="scroll-area-scrollbar"
       // WCAG 4.1.2: expose as scrollbar widget
       role="scrollbar"
-      aria-controls="scroll-area-viewport"
+      aria-controls={ctx.viewportId}
       aria-orientation={orientation()}
       aria-valuenow={ariaValueNow()}
       aria-valuemin={0}
       aria-valuemax={100}
-      tabIndex={0}
+      aria-hidden={!scrollable()}
+      tabIndex={scrollable() ? 0 : -1}
       onPointerDown={interaction.onTrackPointerDown}
       onKeyDown={interaction.onKeyDown}
       data-orientation={orientation()}

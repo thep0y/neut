@@ -13,6 +13,8 @@ interface ScrollAreaContextValue {
   setDragging: Setter<"vertical" | "horizontal" | null>;
   vertical: Accessor<ScrollMetrics>;
   horizontal: Accessor<ScrollMetrics>;
+  /** 视口元素的 id，供 scrollbar 的 aria-controls 引用 */
+  viewportId: string;
 }
 
 export const ScrollAreaContext = createContext<ScrollAreaContextValue>();
