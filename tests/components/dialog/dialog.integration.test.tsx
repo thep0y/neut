@@ -1,6 +1,6 @@
 import { fireEvent, render } from "@solidjs/testing-library";
 import userEvent from "@testing-library/user-event";
-import { createSignal } from "solid-js";
+import { Show, createSignal } from "solid-js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useDialogContext } from "~/components/dialog/Dialog/Dialog.context";
 import { Dialog } from "~/components/dialog/Dialog/Dialog";
@@ -361,6 +361,34 @@ describe("Dialog - 结构子组件", () => {
     expect(
       document.querySelector('[data-slot="dialog-description"]'),
     ).toBeInTheDocument();
+  });
+
+  it("条件卸载 Title/Description 后清空对应 aria 关联", () => {
+    const [showTitle, setShowTitle] = createSignal(true);
+    const [showDescription, setShowDescription] = createSignal(true);
+    render(() => (
+      <Dialog defaultOpen>
+        <DialogTrigger>打开</DialogTrigger>
+        <DialogContent>
+          <Show when={showTitle()}>
+            <DialogTitle>标题</DialogTitle>
+          </Show>
+          <Show when={showDescription()}>
+            <DialogDescription>描述</DialogDescription>
+          </Show>
+        </DialogContent>
+      </Dialog>
+    ));
+    const surface = content()!;
+
+    expect(surface).toHaveAttribute("aria-labelledby");
+    expect(surface).toHaveAttribute("aria-describedby");
+
+    setShowTitle(false);
+    setShowDescription(false);
+
+    expect(surface).not.toHaveAttribute("aria-labelledby");
+    expect(surface).not.toHaveAttribute("aria-describedby");
   });
 
   it("aria-labelledby / aria-describedby 关联到 Title / Description", () => {

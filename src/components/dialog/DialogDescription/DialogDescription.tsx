@@ -1,4 +1,4 @@
-import { createUniqueId, onMount, splitProps } from "solid-js";
+import { createUniqueId, onCleanup, onMount, splitProps } from "solid-js";
 import type { DialogDescriptionProps } from "./DialogDescription.types";
 import { clsx } from "~/utils";
 import { classes } from "./DialogDescription.styles";
@@ -14,6 +14,8 @@ export const DialogDescription = (props: DialogDescriptionProps) => {
   onMount(() => {
     setDescriptionID(id);
   });
+  // 条件卸载描述时清掉自己写入的 id，避免 aria-describedby 悬空。
+  onCleanup(() => setDescriptionID(undefined));
 
   return (
     <p
