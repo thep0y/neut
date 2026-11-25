@@ -117,6 +117,38 @@ describe("Combobox - 分组模式的键盘选择", () => {
     expect(onValueChange).toHaveBeenCalledWith("apple", expect.anything());
   });
 
+  it("分组缺少 items 数组时跳过该组，不影响其它组", () => {
+    const onValueChange = vi.fn();
+    const mixed = [{ label: "水果", items: ["apple"] }, { label: "空分组" }];
+    render(() => (
+      <Combobox items={mixed} open onValueChange={onValueChange}>
+        <ComboboxInput placeholder="搜索" />
+        <ComboboxContent>
+          <ComboboxList>
+            {(group: { label: string; items?: string[] }) => (
+              <ComboboxGroup>
+                <ComboboxLabel>{group.label}</ComboboxLabel>
+                {group.items ? (
+                  <ComboboxCollection items={group.items}>
+                    {(item: string) => (
+                      <ComboboxItem value={item}>{item}</ComboboxItem>
+                    )}
+                  </ComboboxCollection>
+                ) : null}
+              </ComboboxGroup>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
+    ));
+    const el = input();
+
+    fireEvent.keyDown(el, { key: "ArrowDown" });
+    fireEvent.keyDown(el, { key: "Enter" });
+
+    expect(onValueChange).toHaveBeenCalledWith("apple", expect.anything());
+  });
+
   it("输入过滤后仍能高亮并选中组内匹配项", () => {
     const onValueChange = vi.fn();
     const el = renderGrouped(onValueChange);
