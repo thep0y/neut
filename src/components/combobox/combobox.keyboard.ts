@@ -6,10 +6,7 @@ import type { ComboboxContextValue } from "./Combobox/Combobox.types";
  *
  * 只在输入框上处理按键，焦点始终留在输入框；高亮项通过 activeIndex 表达。
  */
-export function createComboboxKeyboard(
-  ctx: ComboboxContextValue,
-  isDisabled: () => boolean,
-) {
+export function createComboboxKeyboard(ctx: ComboboxContextValue) {
   /** 当前高亮项对应的 option 元素 id（没有高亮时为 undefined） */
   const activeOptionId = () => {
     const item = ctx.filteredItems()[ctx.activeIndex()];
@@ -17,7 +14,6 @@ export function createComboboxKeyboard(
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
-    if (isDisabled()) return;
     const list = ctx.filteredItems();
 
     if (e.key === "ArrowDown") {

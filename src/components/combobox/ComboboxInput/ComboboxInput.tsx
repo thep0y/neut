@@ -31,7 +31,7 @@ export function ComboboxInput(props: {
     }
   });
 
-  const { activeOptionId, onKeyDown } = createComboboxKeyboard(ctx, disabled);
+  const { activeOptionId, onKeyDown } = createComboboxKeyboard(ctx);
 
   const hasValue = () => {
     const current = ctx.value();

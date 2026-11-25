@@ -7,13 +7,9 @@ export function ComboboxChipsInput(props: {
   class?: string;
 }) {
   const ctx = useComboboxContext("ComboboxChipsInput");
-  const { activeOptionId, onKeyDown } = createComboboxKeyboard(ctx, () =>
-    ctx.disabled(),
-  );
+  const { activeOptionId, onKeyDown } = createComboboxKeyboard(ctx);
 
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (ctx.disabled()) return;
-
     // 输入框为空时按 Backspace 删除最后一颗 chip（chips 模式的常见约定）
     if (event.key === "Backspace" && ctx.inputValue() === "") {
       const current = ctx.value();
