@@ -134,6 +134,50 @@ describe("Dialog - 基础状态", () => {
     expect(content()).toBeNull();
   });
 
+  it("没有 animationend 时 300ms 兜底卸载", () => {
+    vi.useFakeTimers();
+    try {
+      renderDialog({ defaultOpen: true });
+      fireEvent.click(document.querySelector('[data-slot="dialog-overlay"]')!);
+
+      expect(content()).not.toBeNull();
+      vi.advanceTimersByTime(300);
+      expect(content()).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("兜底等待期间重新打开会取消卸载", () => {
+    vi.useFakeTimers();
+    try {
+      renderDialog({ defaultOpen: true });
+      fireEvent.click(document.querySelector('[data-slot="dialog-overlay"]')!);
+      vi.advanceTimersByTime(100);
+
+      fireEvent.click(trigger());
+      vi.advanceTimersByTime(300);
+
+      expect(content()).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("子元素的 animationend 不会提前卸载整层", () => {
+    renderDialog({ defaultOpen: true });
+    const surface = content()!;
+    fireEvent.click(document.querySelector('[data-slot="dialog-overlay"]')!);
+
+    const child = document.createElement("span");
+    surface.appendChild(child);
+    child.dispatchEvent(new Event("animationend", { bubbles: true }));
+
+    expect(content()).toBe(surface);
+    fireEvent.animationEnd(surface);
+    expect(content()).toBeNull();
+  });
+
   it("打开状态下 animationend 不会卸载节点", () => {
     renderDialog({ defaultOpen: true });
 
@@ -668,17 +712,20 @@ describe("dialog 集成 - Trigger 守卫", () => {
   });
 });
 
-describe("dialog 集成 - Overlay 的退场卸载", () => {
-  it("关闭后 overlay 的 animationend 也会卸载浮层", () => {
+describe("dialog 集成 - Overlay 不负责退场卸载", () => {
+  it("关闭后 overlay 的 animationend 不会抢在 surface 之前卸载", () => {
     renderDialog({ defaultOpen: true });
+    const surface = content()!;
 
     fireEvent.click(document.querySelector('[data-slot="dialog-overlay"]')!);
-    // 关闭后浮层仍在（等动画），overlay 的 animationend 负责收尾
     const overlay = document.querySelector(
       '[data-slot="dialog-overlay"]',
     ) as HTMLElement;
     fireEvent.animationEnd(overlay);
 
+    // overlay 动画更短；它不能替 surface 决定卸载时机
+    expect(content()).toBe(surface);
+    fireEvent.animationEnd(surface);
     expect(content()).toBeNull();
   });
 });

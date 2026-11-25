@@ -13,6 +13,9 @@ import { useDialogContext } from "../Dialog";
 import { callEventHandler } from "~/utils";
 import { useDialogFocus } from "./useDialogFocus";
 
+/** 没有触发 animationend 时的兜底卸载延迟（与 usePresence 保持一致） */
+const EXIT_FALLBACK_MS = 300;
+
 export function DialogSurface(props: DialogSurfaceProps) {
   const { show, open, setShow } = useDialogContext();
 
@@ -34,6 +37,7 @@ export function DialogSurface(props: DialogSurfaceProps) {
   const [titleID, setTitleID] = createSignal<string>();
   const [descriptionID, setDescriptionID] = createSignal<string>();
   let surfaceRef: HTMLElement | undefined;
+  let exitTimer: ReturnType<typeof setTimeout> | undefined;
 
   // 打开时把焦点移进浮层，否则键盘/读屏用户仍停在触发按钮上，
   // 拿不到"对话框已打开"的上下文（Drawer 同样处理）。
@@ -43,6 +47,25 @@ export function DialogSurface(props: DialogSurfaceProps) {
       surfaceRef?.focus({ preventScroll: true });
     });
     onCleanup(() => cancelAnimationFrame(frame));
+  });
+
+  // 不能只依赖 animationend：motion-reduce:animate-none、自定义 class 覆盖动画、
+  // 或忘记引入 keyframes 时，close 后节点会永久挂载，overlay 一直拦截点击。
+  createEffect(() => {
+    // 重开/已打开时直接返回：上一次 effect 的 onCleanup 已经清掉旧定时器，
+    // 这里不再重复判断，避免出现一条永远走不到的防御分支。
+    if (open() || !show()) return;
+
+    exitTimer = setTimeout(() => {
+      exitTimer = undefined;
+      setShow(false);
+    }, EXIT_FALLBACK_MS);
+    onCleanup(() => {
+      if (exitTimer !== undefined) {
+        clearTimeout(exitTimer);
+        exitTimer = undefined;
+      }
+    });
   });
 
   return (
@@ -78,7 +101,9 @@ export function DialogSurface(props: DialogSurfaceProps) {
               callEventHandler(events.onKeyDown, event);
               if (!event.defaultPrevented) handleKeyDown(event);
             }}
-            onAnimationEnd={() => {
+            onAnimationEnd={(event) => {
+              // 只认 surface 自己播放的退场动画，子元素的 animationend 不卸载整层。
+              if (event.target !== event.currentTarget) return;
               if (open()) return;
               setShow(false);
             }}
