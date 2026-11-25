@@ -30,6 +30,30 @@ function stubMobile(matches: boolean) {
   );
 }
 
+/** 可切换断点的 matchMedia：保留 change listener 供测试手动触发 */
+function stubMobileSwitch(initial = false) {
+  let listener: ((event: MediaQueryListEvent) => void) | undefined;
+  vi.stubGlobal(
+    "matchMedia",
+    vi.fn(() => ({
+      matches: initial,
+      media: "",
+      addEventListener: (
+        _event: string,
+        callback: (event: MediaQueryListEvent) => void,
+      ) => {
+        listener = callback;
+      },
+      removeEventListener: () => {},
+    })),
+  );
+  return {
+    set(matches: boolean) {
+      listener?.({ matches } as MediaQueryListEvent);
+    },
+  };
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
@@ -61,6 +85,7 @@ function renderProvider(props: SidebarProviderProps = {}) {
         <span data-testid="state">{ctx.state()}</span>
         <span data-testid="open">{String(ctx.open())}</span>
         <span data-testid="open-mobile">{String(ctx.openMobile())}</span>
+        <span data-testid="is-mobile">{String(ctx.isMobile())}</span>
         <button type="button" data-testid="toggle" onClick={ctx.toggleSidebar}>
           切换
         </button>
@@ -161,6 +186,21 @@ describe("SidebarProvider - 非受控状态", () => {
     expect(document.querySelector('[data-testid="open"]')).toHaveTextContent(
       "true",
     );
+  });
+
+  it("断点变化时 isMobile 跟随更新", () => {
+    const media = stubMobileSwitch(false);
+    renderProvider();
+
+    expect(
+      document.querySelector('[data-testid="is-mobile"]'),
+    ).toHaveTextContent("false");
+
+    media.set(true);
+
+    expect(
+      document.querySelector('[data-testid="is-mobile"]'),
+    ).toHaveTextContent("true");
   });
 
   it("移动端下 toggleSidebar 走 openMobile 分支（不再碰 open）", () => {
