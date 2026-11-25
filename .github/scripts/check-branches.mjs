@@ -73,10 +73,6 @@ const UNREACHABLE = new Map([
     "src/components/image/ImageElement.tsx:77",
     "`import.meta.env.PROD` 被 Vite 在转换期静态替换，测试环境恒为 DEV，生产侧在测试里不可达",
   ],
-  [
-    "src/components/image/ImagePreload.tsx:42",
-    "SSR 守卫：jsdom 环境固定存在 document",
-  ],
   // ── 由 DOM / 框架保证，条件恒真或恒假 ──
   [
     "src/components/questionnaire/questionnaire.utils.ts:101",

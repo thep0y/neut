@@ -30,23 +30,29 @@ export interface ImagePreloadProps {
  * 注意：
  * - 故意省略 href（当 imagesrcset 存在时），以避免不支持 srcset 的浏览器
  *   加载错误尺寸的图片。详见 HTML spec §attr-link-imagesrcset。
- * - SolidJS SSR 环境可将此组件替换为 server-side head injection。
+ * - SolidJS SSR 环境直接降级为不渲染：服务端没有 document.head，
+ *   Portal 的 mount 属性会在组件函数体里同步求值，不能只守卫 querySelector。
  */
+export function getImagePreloadHead(): HTMLHeadElement | undefined {
+  return typeof document === "undefined" ? undefined : document.head;
+}
+
 const ImagePreload: Component<ImagePreloadProps> = (props) => {
+  const head = getImagePreloadHead();
+  if (!head) return null;
+
   const { imgAttributes: a } = props;
 
   // 唯一 key 避免重复插入相同的 preload
   const linkKey = `__img-preload-${a.src}-${a.srcSet ?? ""}-${a.sizes ?? ""}`;
 
   // 若已存在相同 key 的 link，则跳过（SSR hydrate 场景）
-  if (typeof document !== "undefined") {
-    if (document.head.querySelector(`link[data-img-key="${linkKey}"]`)) {
-      return null;
-    }
+  if (head.querySelector(`link[data-img-key="${linkKey}"]`)) {
+    return null;
   }
 
   return (
-    <Portal mount={document.head}>
+    <Portal mount={head}>
       <link
         rel="preload"
         as="image"
