@@ -116,6 +116,14 @@ describe("ComboboxChipsInput - combobox 语义与键盘", () => {
     );
   });
 
+  it("关闭时不输出 aria-controls", () => {
+    renderChipsInput({ open: false });
+    const input = comboboxInput();
+
+    expect(input).toHaveAttribute("aria-expanded", "false");
+    expect(input).not.toHaveAttribute("aria-controls");
+  });
+
   it("ArrowDown + Enter 在 chips 模式下选中项", () => {
     const onValueChange = vi.fn();
     renderChipsInput({
