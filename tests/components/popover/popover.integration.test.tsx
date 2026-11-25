@@ -212,6 +212,32 @@ describe("Popover - 关闭行为", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("外部 pointerdown 不被 document capture 监听吞掉", () => {
+    renderPopover({ defaultOpen: true });
+
+    const outside = document.createElement("div");
+    document.body.appendChild(outside);
+    const handler = vi.fn();
+    outside.addEventListener("pointerdown", handler);
+
+    fireEvent.pointerDown(outside);
+
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it("点击嵌套浮层内容不关闭父 Popover", () => {
+    const onOpenChange = vi.fn();
+    renderPopover({ defaultOpen: true, onOpenChange });
+
+    const nested = document.createElement("div");
+    nested.dataset.slot = "select-content";
+    document.body.appendChild(nested);
+
+    fireEvent.pointerDown(nested);
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
   it("点击 trigger 内部不触发外部关闭", () => {
     const onOpenChange = vi.fn();
     renderPopover({ defaultOpen: true, onOpenChange });
