@@ -384,6 +384,37 @@ describe("Drawer - 点击外部关闭", () => {
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 
+  it.each(["select-content", "dropdown-menu-content", "popover-content"])(
+    "pointerdown 落在嵌套浮层 %s 内时不关闭",
+    (slot) => {
+      const onOpenChange = vi.fn();
+      renderDrawer({ defaultOpen: true, onOpenChange });
+
+      const nested = document.createElement("div");
+      nested.dataset.slot = slot;
+      document.body.appendChild(nested);
+
+      fireEvent.pointerDown(nested);
+
+      expect(stateOf("open-state")).toBe("true");
+      expect(onOpenChange).not.toHaveBeenCalled();
+      nested.remove();
+    },
+  );
+
+  it("pointerdown 的 target 不是 Element 时仍按外部关闭", () => {
+    const onOpenChange = vi.fn();
+    renderDrawer({ defaultOpen: true, onOpenChange });
+
+    fireEvent.pointerDown(document);
+
+    expect(stateOf("open-state")).toBe("false");
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ reason: "outside-press" }),
+    );
+  });
+
   it("pointerdown 落在 trigger 上时不关闭", () => {
     const onOpenChange = vi.fn();
     renderDrawer({ defaultOpen: true, onOpenChange });
