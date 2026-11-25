@@ -1,4 +1,5 @@
 import { createSignal, createMemo, createEffect, onCleanup } from "solid-js";
+import { useEscapeLayer } from "~/hooks";
 import { createPositioner, type Positioner } from "~/lib";
 import { usePopoverContext } from "../Popover/Popover.context";
 import {
@@ -19,6 +20,11 @@ export function usePopoverContent(
   props: () => PopoverContentProps,
 ): UsePopoverContentResult {
   const ctx = usePopoverContext("PopoverContent");
+
+  useEscapeLayer({
+    enabled: ctx.open,
+    onEscape: () => ctx.closePopover(),
+  });
 
   const pos = createPositioner(ctx.reference, ctx.floating, {
     placement: () =>
@@ -88,19 +94,11 @@ export function usePopoverContent(
       }
     };
 
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Escape" || e.defaultPrevented || e.isComposing) return;
-      e.preventDefault();
-      ctx.closePopover();
-    };
-
     document.addEventListener("pointerdown", onPointerDown, { capture: true });
-    document.addEventListener("keydown", onKeyDown);
     onCleanup(() => {
       document.removeEventListener("pointerdown", onPointerDown, {
         capture: true,
       });
-      document.removeEventListener("keydown", onKeyDown);
     });
   });
 

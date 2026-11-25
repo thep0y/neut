@@ -14,6 +14,9 @@ import { DialogHeader } from "~/components/dialog/DialogHeader/DialogHeader";
 import { DialogTitle } from "~/components/dialog/DialogTitle/DialogTitle";
 import { DialogTrigger } from "~/components/dialog/DialogTrigger/DialogTrigger";
 import { DialogSurface } from "~/components/dialog/DialogSurface/DialogSurface";
+import { Popover } from "~/components/popover/Popover/Popover";
+import { PopoverContent } from "~/components/popover/PopoverContent/PopoverContent";
+import { PopoverTrigger } from "~/components/popover/PopoverTrigger/PopoverTrigger";
 
 /**
  * Dialog 集成测试。
@@ -69,6 +72,37 @@ function content(): HTMLElement | null {
 afterEach(() => {
   document.body.innerHTML = "";
   vi.restoreAllMocks();
+});
+
+describe("Dialog - Escape 层栈", () => {
+  it("嵌套 Popover 打开时，第一次 Escape 只关 Popover", () => {
+    render(() => (
+      <Dialog defaultOpen>
+        <DialogTrigger>打开</DialogTrigger>
+        <DialogContent>
+          <DialogTitle>标题</DialogTitle>
+          <Popover defaultOpen>
+            <PopoverTrigger>打开浮层</PopoverTrigger>
+            <PopoverContent>浮层内容</PopoverContent>
+          </Popover>
+        </DialogContent>
+      </Dialog>
+    ));
+
+    expect(
+      document.querySelector('[data-slot="popover-content"]'),
+    ).not.toBeNull();
+    expect(trigger()).toHaveAttribute("data-state", "open");
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(document.querySelector('[data-slot="popover-content"]')).toBeNull();
+    expect(trigger()).toHaveAttribute("data-state", "open");
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(trigger()).toHaveAttribute("data-state", "closed");
+  });
 });
 
 describe("Dialog - 基础状态", () => {

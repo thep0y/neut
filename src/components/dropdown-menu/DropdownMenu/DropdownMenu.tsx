@@ -6,7 +6,7 @@ import {
   onCleanup,
   type JSX,
 } from "solid-js";
-import { useScrollLock } from "~/hooks";
+import { useEscapeLayer, useScrollLock } from "~/hooks";
 import { ContextMenuContext } from "~/components/context-menu/ContextMenu/ContextMenu.context";
 import type {
   ContextMenuChangeEventReason,
@@ -113,7 +113,12 @@ export function DropdownMenu(props: DropdownMenuProps): JSX.Element {
     };
   };
 
-  // 打开期间：点击菜单与触发器之外关闭 + Escape 兜底关闭。
+  useEscapeLayer({
+    enabled: open,
+    onEscape: (event) => closeAll("escape-key", event),
+  });
+
+  // 打开期间：点击菜单与触发器之外关闭。
   createEffect(() => {
     if (!open()) return;
 
@@ -123,16 +128,9 @@ export function DropdownMenu(props: DropdownMenuProps): JSX.Element {
       closeAll("outside-press", e);
     };
 
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.defaultPrevented) return;
-      if (e.key === "Escape") closeAll("escape-key", e);
-    };
-
     document.addEventListener("pointerdown", onPointerDown, true);
-    document.addEventListener("keydown", onKeyDown);
     onCleanup(() => {
       document.removeEventListener("pointerdown", onPointerDown, true);
-      document.removeEventListener("keydown", onKeyDown);
     });
   });
 
