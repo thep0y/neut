@@ -76,6 +76,7 @@ function setup(
   // track 高 402（含 2px 内边距），滑块高 100
   setMetrics(scrollBar, { clientHeight: 402, clientWidth: 100 });
   setMetrics(thumb, { clientHeight: 100, clientWidth: 20 });
+  fireEvent.scroll(viewport);
 
   const scrollTo = vi.fn();
   viewport.scrollTo = scrollTo as unknown as HTMLElement["scrollTo"];
@@ -94,12 +95,54 @@ afterEach(() => {
 });
 
 describe("ScrollBar - 渲染与 ARIA", () => {
-  it("track 暴露为 scrollbar widget 并关联视口", () => {
-    const { scrollBar } = setup();
+  it("track 暴露为 scrollbar widget 并关联当前视口", () => {
+    const { scrollBar, viewport } = setup();
 
     expect(scrollBar).toHaveAttribute("role", "scrollbar");
-    expect(scrollBar).toHaveAttribute("aria-controls", "scroll-area-viewport");
+    expect(scrollBar).toHaveAttribute("aria-controls", viewport.id);
+    expect(viewport.id).toMatch(/^scroll-area-viewport-/);
     expect(scrollBar).toHaveAttribute("aria-orientation", "vertical");
+  });
+
+  it("不可滚动时 aria-hidden=true 且移出 Tab 序列", () => {
+    render(() => (
+      <ScrollArea>
+        <div>短内容</div>
+      </ScrollArea>
+    ));
+    const scrollBar = document.querySelector(
+      '[data-slot="scroll-area-scrollbar"]',
+    ) as HTMLElement;
+
+    expect(scrollBar).toHaveAttribute("aria-hidden", "true");
+    expect(scrollBar).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("多个 ScrollArea 的 viewport id 不串台", () => {
+    render(() => (
+      <>
+        <ScrollArea>
+          <div>一</div>
+        </ScrollArea>
+        <ScrollArea>
+          <div>二</div>
+        </ScrollArea>
+      </>
+    ));
+    const bars = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        '[data-slot="scroll-area-scrollbar"]',
+      ),
+    );
+    const viewports = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        '[data-slot="scroll-area-viewport"]',
+      ),
+    );
+
+    expect(bars[0]).toHaveAttribute("aria-controls", viewports[0].id);
+    expect(bars[1]).toHaveAttribute("aria-controls", viewports[1].id);
+    expect(viewports[0].id).not.toBe(viewports[1].id);
   });
 
   it("aria-valuemin / max 固定为 0 / 100", () => {
@@ -375,6 +418,7 @@ describe("ScrollBar - 无可用视口时的守卫", () => {
           viewportRef: () => undefined,
           dragging: () => null,
           setDragging: () => {},
+          viewportId: "test-scroll-area-viewport",
           vertical: () => ({
             thumbRatio: 1,
             thumbOffset: 0,

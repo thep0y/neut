@@ -1,4 +1,4 @@
-import { createSignal, splitProps } from "solid-js";
+import { createSignal, createUniqueId, splitProps } from "solid-js";
 import type { ScrollAreaProps } from "./ScrollArea.types";
 import { clsx } from "~/utils";
 import { ScrollBar } from "../ScrollBar";
@@ -29,6 +29,7 @@ export const ScrollArea = (props: ScrollAreaProps) => {
   >(null);
 
   const metrics = useScrollAreaMetrics();
+  const viewportId = `scroll-area-viewport-${createUniqueId()}`;
 
   const overflowClass = () => {
     if (local.orientation === "vertical") {
@@ -57,10 +58,12 @@ export const ScrollArea = (props: ScrollAreaProps) => {
           setDragging,
           vertical: metrics.vertical,
           horizontal: metrics.horizontal,
+          viewportId,
         }}
       >
         <div
           ref={metrics.setup}
+          id={viewportId}
           data-slot="scroll-area-viewport"
           role="region"
           aria-label={local["aria-label"] ?? "Scrollable content"}
