@@ -137,12 +137,27 @@ describe("carousel 整机 - 水平导航", () => {
 
     const next = screen.getByRole("button", { name: "Next slide" });
     expect(next).toBeEnabled();
+    // 一屏 3 个：当前索引 0 时 0/1/2 都可见，不能被 aria-hidden 摘掉
+    expect([0, 1, 2, 3, 4].map((i) => slideHidden(container, i))).toEqual([
+      "false",
+      "false",
+      "false",
+      "true",
+      "true",
+    ]);
 
     fireEvent.click(next);
     expect(next).toBeEnabled();
 
     fireEvent.click(next);
     expect(selected()).toEqual(["false", "false", "true", "false", "false"]);
+    expect([0, 1, 2, 3, 4].map((i) => slideHidden(container, i))).toEqual([
+      "true",
+      "true",
+      "false",
+      "false",
+      "false",
+    ]);
     expect(next).toBeDisabled();
   });
 });

@@ -55,7 +55,7 @@ describe("CarouselItem - slide 语义", () => {
     expect(item(container, 2)).toHaveAttribute("aria-label", "Slide 3");
   });
 
-  it("未传 index 时使用无编号的 aria-label，且永远不是当前项", () => {
+  it("未传 index 时使用无编号的 aria-label，但不把 slide 隐藏", () => {
     render(() => (
       <Carousel>
         <CarouselContent>
@@ -66,7 +66,7 @@ describe("CarouselItem - slide 语义", () => {
 
     const slide = screen.getByRole("group", { hidden: true });
     expect(slide).toHaveAttribute("aria-label", "Slide");
-    expect(slide).toHaveAttribute("aria-hidden", "true");
+    expect(slide).toHaveAttribute("aria-hidden", "false");
   });
 });
 
