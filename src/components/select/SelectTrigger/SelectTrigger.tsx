@@ -23,6 +23,7 @@ export const SelectTrigger = <
       component={(props.component as ValidComponent) ?? Button<"button">}
       variant={props.variant ?? "outline"}
       ref={mergeRefs(ctx.setReference, props.ref, attachListeners)}
+      id={props.id ?? ctx.triggerId}
       role="combobox"
       aria-haspopup="listbox"
       aria-expanded={ctx.open()}

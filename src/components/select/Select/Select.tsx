@@ -70,6 +70,7 @@ export function Select<T extends SelectOptionValue = string>(
     [],
   );
   const contentId = `select-content-${createUniqueId()}`;
+  const triggerId = `select-trigger-${createUniqueId()}`;
 
   const registerItem = (item: SelectItemMeta<SelectOptionValue>) => {
     setItems(produce((list) => list.push(item)));
@@ -101,6 +102,7 @@ export function Select<T extends SelectOptionValue = string>(
     setOpen,
     disabled,
     contentId,
+    triggerId,
     reference,
     setReference,
     floating,

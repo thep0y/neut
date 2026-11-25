@@ -111,7 +111,7 @@ const UNREACHABLE = new Map([
     "`if (applied)` 的 false 侧不可达：函数入口已排除 `!viewport`，而 `applied` 的三个来源里，`scrollToEnd`/`scrollToStart` 只在 `!viewport` 时返回 false；`scrollToElement` 只在 `!viewport` 或 `!content.contains(element)` 时返回 false，而它拿到的元素来自 `measure.items()`（即 `content.children`），同一同步执行内 content 不变，故必被包含",
   ],
   [
-    "src/components/select/Select/Select.tsx:80",
+    "src/components/select/Select/Select.tsx:81",
     "注销闭包只在对应 item 已注册时调用，`list` 必含该 value；此前用变异测试确认（去掉守卫后全量仍绿）",
   ],
 ]);

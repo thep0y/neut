@@ -110,6 +110,19 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe("Select - listbox 关联", () => {
+  it("trigger 的 aria-controls 指向真实 listbox，listbox 由 trigger 命名", () => {
+    renderSelect({ defaultOpen: true });
+    const t = trigger();
+    const listbox = document.querySelector('[role="listbox"]') as HTMLElement;
+
+    expect(t.id).toMatch(/^select-trigger-/);
+    expect(listbox.id).toMatch(/^select-content-/);
+    expect(t).toHaveAttribute("aria-controls", listbox.id);
+    expect(listbox).toHaveAttribute("aria-labelledby", t.id);
+  });
+});
+
 describe("Select - 基础状态", () => {
   it("默认关闭：不渲染 content", () => {
     renderSelect();
