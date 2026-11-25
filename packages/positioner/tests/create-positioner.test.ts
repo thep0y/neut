@@ -128,6 +128,29 @@ describe("createPositioner", () => {
     cleanup();
   });
 
+  it("floating 卸载后清空 middlewareData，避免 hide 残留成死锁", async () => {
+    const reference = elementWithRect(REF);
+    const [floatingEl, setFloatingEl] = createSignal<HTMLElement | undefined>(
+      elementWithRect(FLOATING),
+    );
+
+    const { result, cleanup } = renderHook(() =>
+      createPositioner(() => reference, floatingEl, {
+        middleware: [{ name: "mark", fn: () => ({ data: { hidden: true } }) }],
+      }),
+    );
+
+    expect(result.middlewareData()).toEqual({ mark: { hidden: true } });
+
+    setFloatingEl(undefined);
+    await Promise.resolve();
+
+    expect(result.isPositioned()).toBe(false);
+    expect(result.middlewareData()).toEqual({});
+
+    cleanup();
+  });
+
   it("floatingStyles 用 transform 表达坐标并取整", () => {
     const { result, cleanup } = renderHook(() =>
       createPositioner(
