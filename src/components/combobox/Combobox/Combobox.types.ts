@@ -48,6 +48,9 @@ export interface ComboboxProps<T = any> extends ParentProps {
 
 export interface ComboboxContextValue<T = any> {
   items: Accessor<T[]>;
+  /** 分组展开后的全部叶子项（未过滤） */
+  flatItems: Accessor<T[]>;
+  /** 叶子项按当前输入过滤后的结果，键盘/高亮/Enter 都以此为下标 */
   filteredItems: Accessor<T[]>;
   isGrouped: Accessor<boolean>;
   inputValue: Accessor<string>;

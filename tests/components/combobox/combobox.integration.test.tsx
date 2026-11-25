@@ -1,11 +1,14 @@
-import { render } from "@solidjs/testing-library";
+import { fireEvent, render } from "@solidjs/testing-library";
 import userEvent from "@testing-library/user-event";
 import { createSignal } from "solid-js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Combobox } from "~/components/combobox/Combobox/Combobox";
+import { ComboboxCollection } from "~/components/combobox/ComboboxCollection/ComboboxCollection";
 import { ComboboxContent } from "~/components/combobox/ComboboxContent/ComboboxContent";
+import { ComboboxGroup } from "~/components/combobox/ComboboxGroup/ComboboxGroup";
 import { ComboboxInput } from "~/components/combobox/ComboboxInput/ComboboxInput";
 import { ComboboxItem } from "~/components/combobox/ComboboxItem/ComboboxItem";
+import { ComboboxLabel } from "~/components/combobox/ComboboxLabel/ComboboxLabel";
 import { ComboboxList } from "~/components/combobox/ComboboxList/ComboboxList";
 
 /**
@@ -71,6 +74,61 @@ function options(): HTMLElement[] {
 afterEach(() => {
   document.body.innerHTML = "";
   vi.restoreAllMocks();
+});
+
+describe("Combobox - 分组模式的键盘选择", () => {
+  const groups = [
+    { label: "水果", items: ["apple", "apricot"] },
+    { label: "饮料", items: ["banana"] },
+  ];
+
+  function renderGrouped(onValueChange = vi.fn()) {
+    render(() => (
+      <Combobox items={groups} open onValueChange={onValueChange}>
+        <ComboboxInput placeholder="搜索" />
+        <ComboboxContent>
+          <ComboboxList>
+            {(group: (typeof groups)[number]) => (
+              <ComboboxGroup>
+                <ComboboxLabel>{group.label}</ComboboxLabel>
+                <ComboboxCollection items={group.items}>
+                  {(item: string) => (
+                    <ComboboxItem value={item}>{item}</ComboboxItem>
+                  )}
+                </ComboboxCollection>
+              </ComboboxGroup>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
+    ));
+    return input();
+  }
+
+  it("ArrowDown/Enter 选中组内叶子项，而不是组对象", () => {
+    const onValueChange = vi.fn();
+    const el = renderGrouped(onValueChange);
+
+    fireEvent.keyDown(el, { key: "ArrowDown" });
+
+    expect(el.getAttribute("aria-activedescendant")).toBe(options()[0].id);
+    fireEvent.keyDown(el, { key: "Enter" });
+
+    expect(onValueChange).toHaveBeenCalledWith("apple", expect.anything());
+  });
+
+  it("输入过滤后仍能高亮并选中组内匹配项", () => {
+    const onValueChange = vi.fn();
+    const el = renderGrouped(onValueChange);
+
+    fireEvent.input(el, { target: { value: "ban" } });
+    expect(options().map((option) => option.textContent)).toEqual(["banana"]);
+
+    fireEvent.keyDown(el, { key: "ArrowDown" });
+    fireEvent.keyDown(el, { key: "Enter" });
+
+    expect(onValueChange).toHaveBeenCalledWith("banana", expect.anything());
+  });
 });
 
 describe("Combobox - 渲染与 ARIA", () => {
