@@ -151,6 +151,18 @@ describe("SidebarProvider - 非受控状态", () => {
     expect(document.cookie).toContain("sidebar_state=false");
   });
 
+  it("defaultOpen + onOpenChange 仍是非受控：切换写内部状态并回调", () => {
+    const onOpenChange = vi.fn();
+    renderProvider({ defaultOpen: false, onOpenChange });
+
+    fireEvent.click(document.querySelector('[data-testid="toggle"]')!);
+
+    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(document.querySelector('[data-testid="open"]')).toHaveTextContent(
+      "true",
+    );
+  });
+
   it("移动端下 toggleSidebar 走 openMobile 分支（不再碰 open）", () => {
     stubMobile(true);
     const { getByTestId } = renderProvider();
