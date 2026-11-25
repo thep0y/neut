@@ -14,13 +14,18 @@
  *
  * 注意：只做产物形状校验，不 import 包（导入会受 Solid 客户端/服务端条件影响）。
  */
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const positionerEntry = path.join(root, "packages/positioner/dist/index.js");
 const uiEntry = path.join(root, "dist/index.js");
 const uiTypes = path.join(root, "dist/index.d.ts");
+const serverEntry = path.join(root, "dist/server/index.js");
+const serverButton = path.join(root, "dist/server/components/button/index.js");
+const requireServer = process.env.REQUIRE_SERVER_BUILD === "1";
 
 const failures = [];
 
@@ -58,10 +63,40 @@ if (existsSync(uiTypes) && !read(uiTypes).includes("./components/accordion")) {
   );
 }
 
+if (!existsSync(serverEntry)) {
+  if (requireServer) {
+    failures.push(
+      "找不到 dist/server/index.js；SSR 构建缺失，Node/SSR import 仍会加载客户端产物。",
+    );
+  }
+} else {
+  if (!existsSync(serverButton)) {
+    failures.push(
+      "dist/server/components/button/index.js 缺失；SSR 子路径入口不完整。",
+    );
+  }
+
+  const probe = spawnSync(
+    process.execPath,
+    [
+      "-e",
+      `import(${JSON.stringify(pathToFileURL(serverEntry).href)}).catch((error) => { console.error(error); process.exit(1); })`,
+    ],
+    { cwd: root, encoding: "utf8" },
+  );
+  if (probe.status !== 0) {
+    failures.push(
+      `dist/server/index.js 无法在 Node 中 import：${(probe.stderr || probe.stdout).trim()}`,
+    );
+  }
+}
+
 if (failures.length > 0) {
   console.error("构建产物校验失败：");
   for (const failure of failures) console.error(`  - ${failure}`);
   process.exit(1);
 }
 
-console.log("构建产物校验通过：positioner 在包内 dist，根入口仍是 @neut/ui。");
+console.log(
+  "构建产物校验通过：positioner 在包内 dist，根入口仍是 @neut/ui，SSR 入口可在 Node 中 import。",
+);
