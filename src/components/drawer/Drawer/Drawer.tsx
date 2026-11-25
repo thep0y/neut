@@ -6,7 +6,7 @@ import {
   onCleanup,
   type JSX,
 } from "solid-js";
-import { useScrollLock } from "~/hooks";
+import { useEscapeLayer, useScrollLock } from "~/hooks";
 import { DrawerContext } from "./Drawer.context";
 import { createDrawerChangeEventDetails } from "./create-change-event-details";
 import type { DrawerProps } from "./Drawer.types";
@@ -87,17 +87,15 @@ export function Drawer(props: DrawerProps): JSX.Element {
     '[data-slot="sheet-content"]',
   ].join(",");
 
-  // 打开期间：Esc 关闭 +（非 disablePointerDismissal）点击外部关闭
+  // 打开期间：Esc 关闭（共享层栈，只关最上层）
+  useEscapeLayer({
+    enabled: open,
+    onEscape: (event) => setOpen(false, "escape-key", event),
+  });
+
+  // （非 disablePointerDismissal）点击外部关闭
   createEffect(() => {
     if (!open()) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.defaultPrevented) return;
-      if (e.key === "Escape") {
-        e.preventDefault();
-        setOpen(false, "escape-key", e);
-      }
-    };
 
     const onPointerDown = (e: PointerEvent) => {
       if (disablePointerDismissal()) return;
@@ -110,10 +108,8 @@ export function Drawer(props: DrawerProps): JSX.Element {
       setOpen(false, "outside-press", e);
     };
 
-    document.addEventListener("keydown", onKeyDown);
     document.addEventListener("pointerdown", onPointerDown, true);
     onCleanup(() => {
-      document.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("pointerdown", onPointerDown, true);
     });
   });

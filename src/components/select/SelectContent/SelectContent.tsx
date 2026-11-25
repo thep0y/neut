@@ -1,6 +1,7 @@
 import { onCleanup, splitProps, createMemo, createEffect } from "solid-js";
 import { Portal } from "solid-js/web";
 import { useSelectContent } from "./useSelectContent";
+import { useEscapeLayer } from "~/hooks";
 import { ScrollArrows } from "~/components/scroll-arrows";
 import type { SelectContentProps } from "./SelectContent.types";
 import { clsx } from "~/utils";
@@ -18,6 +19,11 @@ export function SelectContent(props: SelectContentProps) {
     contentElement,
     setContentElement,
   } = useSelectContent(() => props);
+
+  useEscapeLayer({
+    enabled: ctx.open,
+    onEscape: () => ctx.close(),
+  });
 
   const [local, rest] = splitProps(props, [
     "side",
@@ -69,10 +75,6 @@ export function SelectContent(props: SelectContentProps) {
         e.preventDefault();
         if (ctx.activeValue() !== undefined)
           ctx.selectValue(ctx.activeValue()!);
-        break;
-      case "Escape":
-        e.preventDefault();
-        ctx.close();
         break;
       case "Tab":
         ctx.setOpen(false);

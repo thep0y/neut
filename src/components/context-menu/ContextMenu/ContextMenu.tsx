@@ -7,7 +7,7 @@ import {
   type JSX,
 } from "solid-js";
 import { createVirtualElement, type VirtualElement } from "~/lib";
-import { useScrollLock } from "~/hooks";
+import { useEscapeLayer, useScrollLock } from "~/hooks";
 import { ContextMenuContext } from "./ContextMenu.context";
 import type { ContextMenuProps } from "./ContextMenu.types";
 import type {
@@ -134,8 +134,12 @@ export function ContextMenu(props: ContextMenuProps): JSX.Element {
     };
   };
 
-  // 打开期间绑定 document 级监听:点击外部/再次右键外部关闭 + Escape 兜底关闭。
-  // 菜单内部的 Escape 会由浮层自己处理并 stopPropagation,不会走到这里。
+  useEscapeLayer({
+    enabled: open,
+    onEscape: (event) => closeAll("escape-key", event),
+  });
+
+  // 打开期间绑定 document 级监听:点击外部/再次右键外部关闭。
   createEffect(() => {
     if (!open()) return;
 
@@ -157,21 +161,11 @@ export function ContextMenu(props: ContextMenuProps): JSX.Element {
       }
     };
 
-    const onKeyDown = (e: KeyboardEvent) => {
-      // 菜单浮层自己处理 Escape 时会 preventDefault + stopPropagation。
-      // 这里再检查一次 defaultPrevented:键盘事件在 Solid 里是委托到 document 的,
-      // 同元素上的其它监听器不会被 stopPropagation 拦下,靠这个标记避免重复关闭。
-      if (e.defaultPrevented) return;
-      if (e.key === "Escape") closeAll("escape-key", e);
-    };
-
     document.addEventListener("pointerdown", onPointerDown, true);
     document.addEventListener("contextmenu", onContextMenu, true);
-    document.addEventListener("keydown", onKeyDown);
     onCleanup(() => {
       document.removeEventListener("pointerdown", onPointerDown, true);
       document.removeEventListener("contextmenu", onContextMenu, true);
-      document.removeEventListener("keydown", onKeyDown);
     });
   });
 
