@@ -87,10 +87,25 @@ export function Combobox<T = any>(props: ComboboxProps<T>): JSX.Element {
     ),
   );
 
+  /**
+   * 键盘/高亮/Enter 需要的是“可选中的叶子项”，不是分组对象。
+   * 分组渲染仍由 ComboboxList + ComboboxCollection 负责，这里只做数据展开。
+   */
+  const flatItems = createMemo(() => {
+    const all = items();
+    if (!isGrouped()) return all;
+    const flat: T[] = [];
+    for (const group of all) {
+      const groupItems = (group as any)?.items;
+      if (Array.isArray(groupItems)) flat.push(...groupItems);
+    }
+    return flat;
+  });
+
   const filteredItems = createMemo(() => {
     const query = filterValue().toLowerCase().trim();
-    if (!query) return items();
-    return items().filter((item) =>
+    if (!query) return flatItems();
+    return flatItems().filter((item) =>
       itemToStringValue()(item).toLowerCase().includes(query),
     );
   });
@@ -133,6 +148,7 @@ export function Combobox<T = any>(props: ComboboxProps<T>): JSX.Element {
 
   const ctx: ComboboxContextValue<T> = {
     items,
+    flatItems,
     filteredItems,
     isGrouped,
     inputValue,
