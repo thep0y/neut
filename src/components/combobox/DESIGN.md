@@ -45,8 +45,9 @@ Combobox                     # headless 根:items / value / open / filter / acti
   渲染整组，`ComboboxCollection` 自己做组内过滤。
 - **空态**：`ComboboxEmpty` 的类名里目前写死了 `hidden`，没有“有结果就隐藏/无结果就显示”的接线；
   需要空态时由调用方覆盖 `class`（这是一处待修的实现细节，不是使用方配置错误）。
-- **高亮**：`activeIndex` 指向 `filteredItems` 的下标；`optionId` 由 `listId + value` 派生，
-  供输入框的 `aria-activedescendant` 使用。
+- **高亮**：`flatItems` 把分组展开成叶子项，`filteredItems` 在其上做输入过滤；
+  `activeIndex` 指向 `filteredItems` 的下标，不会指向分组对象。`optionId` 由
+  `listId + value` 派生，供输入框的 `aria-activedescendant` 使用。
 - **多选**：`selectItem` 在已选中时移除、否则追加；单选择回填并关闭。
 - **滚动锁定**：`open() && lockScroll()` 时调用共享 `useScrollLock`，放行
   `[data-slot="combobox-content"]` 内部滚动。

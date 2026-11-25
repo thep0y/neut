@@ -7,6 +7,7 @@ import {
 import { clsx } from "~/utils";
 import { useComboboxContext } from "../Combobox/Combobox.context";
 import { ComboboxClear } from "../ComboboxClear";
+import { createComboboxKeyboard } from "../combobox.keyboard";
 
 export function ComboboxInput(props: {
   placeholder?: string;
@@ -30,58 +31,13 @@ export function ComboboxInput(props: {
     }
   });
 
-  /** 当前高亮项对应的 option 元素 id（没有高亮时为 undefined） */
-  const activeOptionId = () => {
-    const value = ctx.filteredItems()[ctx.activeIndex()];
-    return value === undefined ? undefined : ctx.optionId(value);
-  };
+  const { activeOptionId, onKeyDown } = createComboboxKeyboard(ctx);
 
   const hasValue = () => {
     const current = ctx.value();
     if (current == null) return false;
     if (Array.isArray(current)) return current.length > 0;
     return current !== "";
-  };
-
-  const onKeyDown = (e: KeyboardEvent) => {
-    if (disabled()) return;
-    const list = ctx.filteredItems();
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      ctx.setOpen(true, "input-change", e);
-      ctx.setActiveIndex(
-        list.length === 0 ? -1 : (ctx.activeIndex() + 1) % list.length,
-      );
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      ctx.setOpen(true, "input-change", e);
-      // 没有高亮时 ArrowUp 应落在**最后一项**：此前用
-      // `(activeIndex - 1 + len) % len`，activeIndex 为 -1 时得到 len-2，
-      // 三项时错误地停在第二项。
-      ctx.setActiveIndex(
-        list.length === 0
-          ? -1
-          : ctx.activeIndex() <= 0
-            ? list.length - 1
-            : ctx.activeIndex() - 1,
-      );
-    } else if (e.key === "Home") {
-      // Home / End 跳到第一项 / 最后一项
-      e.preventDefault();
-      ctx.setOpen(true, "input-change", e);
-      ctx.setActiveIndex(list.length === 0 ? -1 : 0);
-    } else if (e.key === "End") {
-      e.preventDefault();
-      ctx.setOpen(true, "input-change", e);
-      ctx.setActiveIndex(list.length === 0 ? -1 : list.length - 1);
-    } else if (e.key === "Enter" && ctx.open()) {
-      e.preventDefault();
-      const item = ctx.filteredItems()[ctx.activeIndex()];
-      if (item !== undefined) ctx.selectItem(item, e);
-    } else if (e.key === "Escape" && ctx.open()) {
-      e.preventDefault();
-      ctx.close("escape-key", e);
-    }
   };
 
   return (

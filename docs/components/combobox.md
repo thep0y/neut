@@ -67,6 +67,7 @@ const [value, setValue] = createSignal<(typeof items)[number] | null>(null);
 - `ArrowDown` / `ArrowUp` 打开并循环高亮；`Home` / `End` 跳首尾。
 - `Enter` 选择当前高亮项；`Escape` 关闭；输入会过滤 `items`。
 - 高亮用 `aria-activedescendant` 指向 `ComboboxItem` 的 id，焦点始终在输入框。
+- `ComboboxChipsInput` 与普通 `ComboboxInput` 共用同一套键盘与 ARIA；多选选中后输入框清空、面板保持打开。
 
 ## 与 Select 的差异
 
