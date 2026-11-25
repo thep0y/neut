@@ -68,6 +68,25 @@ export function Drawer(props: DrawerProps): JSX.Element {
     allowedSelector: '[data-slot="drawer-popup"]',
   });
 
+  /**
+   * Drawer 内部打开 Select/Popover/Menu 等 Portal 浮层时，pointerdown 的
+   * DOM 祖先不在 drawer-popup 里；不识别这些层就会先关 Drawer，丢掉表单。
+   */
+  const NESTED_FLOATING_SELECTOR = [
+    '[data-slot="select-content"]',
+    '[data-slot="combobox-content"]',
+    '[data-slot="dropdown-menu-content"]',
+    '[data-slot="dropdown-menu-sub-content"]',
+    '[data-slot="context-menu-content"]',
+    '[data-slot="context-menu-sub-content"]',
+    '[data-slot="popover-content"]',
+    '[data-slot="hover-card-content"]',
+    '[data-slot="tooltip-content"]',
+    '[data-slot="dialog-content"]',
+    '[data-slot="alert-dialog-content"]',
+    '[data-slot="sheet-content"]',
+  ].join(",");
+
   // 打开期间：Esc 关闭 +（非 disablePointerDismissal）点击外部关闭
   createEffect(() => {
     if (!open()) return;
@@ -85,6 +104,9 @@ export function Drawer(props: DrawerProps): JSX.Element {
       const target = e.target as Node | null;
       if (popup()?.contains(target)) return;
       if (trigger()?.contains(target)) return;
+      const targetElement =
+        target instanceof Element ? target : target?.parentElement;
+      if (targetElement?.closest(NESTED_FLOATING_SELECTOR)) return;
       setOpen(false, "outside-press", e);
     };
 
