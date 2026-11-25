@@ -14,7 +14,7 @@ export const DialogOverlay = (props: DialogOverlayProps) => {
     "onClick",
   ]);
 
-  const { open, setShow, setOpen } = useDialogContext();
+  const { open, setOpen } = useDialogContext();
 
   return (
     <div
@@ -35,10 +35,6 @@ export const DialogOverlay = (props: DialogOverlayProps) => {
           | undefined;
         userOnClick?.(event);
         if (local.dismissOnOverlayClick) setOpen(false);
-      }}
-      onAnimationEnd={() => {
-        if (open()) return;
-        setShow(false);
       }}
       {...others}
     />
