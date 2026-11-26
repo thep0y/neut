@@ -222,6 +222,28 @@ describe("ContextMenuSub - openSubmenu", () => {
   });
 });
 
+describe("ContextMenuSub - cancel 语义", () => {
+  it("closeSubmenu 被 cancel 时不清父登记、不移焦点", () => {
+    const onOpenChange = vi.fn((_open: boolean, details?: unknown) => {
+      (details as { cancel: () => void }).cancel();
+    });
+    const harness = setup({ defaultOpen: true, onOpenChange });
+    harness.ctx().setItemId("item-1");
+    harness.setOpenPopupState({
+      id: "item-1",
+      reason: "trigger-press",
+      event: undefined,
+    });
+
+    harness.ctx().closeSubmenu("escape-key", undefined, true);
+
+    expect(harness.ctx().open()).toBe(true);
+    expect(harness.closeOpenPopup).not.toHaveBeenCalled();
+    expect(harness.setActiveId).not.toHaveBeenCalled();
+    expect(harness.popupFocus).not.toHaveBeenCalled();
+  });
+});
+
 describe("ContextMenuSub - closeSubmenu", () => {
   it("打开状态下以给定原因关闭，并清理父浮层登记", () => {
     const onOpenChange = vi.fn();
