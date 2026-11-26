@@ -1,4 +1,5 @@
 import {
+  createEffect,
   createSignal,
   createUniqueId,
   onCleanup,
@@ -120,7 +121,13 @@ export function createContextMenuPopupRuntime(
   const typeahead = createTypeahead({
     candidates: () =>
       enabledItems().map((item) => ({ id: item.id, label: item.label() })),
+    activeId: () => activeId(),
     onMatch: (id) => setActiveId(id),
+  });
+
+  // 关闭时清空前缀缓冲：500ms 内重新打开不能继续吃旧输入。
+  createEffect(() => {
+    if (!options.open()) typeahead.reset();
   });
 
   onCleanup(() => typeahead.dispose());

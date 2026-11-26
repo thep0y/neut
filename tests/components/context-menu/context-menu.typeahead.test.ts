@@ -80,6 +80,46 @@ describe("createTypeahead", () => {
     expect(onMatch).not.toHaveBeenCalled();
   });
 
+  it("从当前高亮项之后开始匹配并循环", () => {
+    const candidates = [
+      { id: "apple", label: "Apple" },
+      { id: "apricot", label: "Apricot" },
+      { id: "banana", label: "Banana" },
+    ];
+    let active: string | undefined;
+    const onMatch = vi.fn((id: string) => {
+      active = id;
+    });
+    const typeahead = createTypeahead({
+      candidates: () => candidates,
+      onMatch,
+      activeId: () => active,
+    });
+
+    typeahead.handle("a");
+    expect(onMatch).toHaveBeenLastCalledWith("apple");
+
+    typeahead.handle("a");
+    expect(onMatch).toHaveBeenLastCalledWith("apricot");
+
+    typeahead.handle("a");
+    expect(onMatch).toHaveBeenLastCalledWith("apple");
+  });
+
+  it("reset 清空未到期的前缀缓冲", () => {
+    const { typeahead, onMatch } = setup();
+
+    typeahead.handle("b");
+    typeahead.handle("a");
+    expect(onMatch).toHaveBeenLastCalledWith("banana");
+
+    typeahead.reset();
+    onMatch.mockClear();
+    typeahead.handle("a");
+
+    expect(onMatch).not.toHaveBeenCalled();
+  });
+
   it("窗口到期后缓冲清空，同样输入从头匹配", () => {
     const { typeahead, onMatch } = setup();
 
