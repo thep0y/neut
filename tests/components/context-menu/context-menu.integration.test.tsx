@@ -69,6 +69,32 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe("ContextMenu 集成 - 无锚点", () => {
+  it("defaultOpen 且连触发器都没有时不渲染菜单", () => {
+    render(() => (
+      <ContextMenu defaultOpen>
+        <ContextMenuContent>
+          <ContextMenuItem>复制</ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+    ));
+
+    expect(content()).toBeNull();
+  });
+
+  it("受控 open=true 且没有触发器时不渲染菜单", () => {
+    render(() => (
+      <ContextMenu open>
+        <ContextMenuContent>
+          <ContextMenuItem>复制</ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+    ));
+
+    expect(content()).toBeNull();
+  });
+});
+
 describe("ContextMenu 集成 - 打开、导航与关闭", () => {
   it("右键打开、方向键导航、Enter 激活后关闭并把焦点还给触发器", async () => {
     renderFullMenu();
