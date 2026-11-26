@@ -69,6 +69,7 @@ export function ComboboxInput(props: {
           const next = String(value);
           ctx.setInputValue(next);
           ctx.setFilterValue(next);
+          ctx.setActiveIndex(-1);
           ctx.setOpen(true, "input-change");
           if (!ctx.multiple() && next.trim() === "") {
             ctx.setValue(null);

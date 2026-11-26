@@ -1,4 +1,10 @@
-import { createMemo, createSignal, createUniqueId, type JSX } from "solid-js";
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  createUniqueId,
+  type JSX,
+} from "solid-js";
 import { useScrollLock } from "~/hooks";
 import { createChangeEventDetails } from "~/utils";
 import { ComboboxContext } from "./Combobox.context";
@@ -77,8 +83,17 @@ export function Combobox<T = any>(props: ComboboxProps<T>): JSX.Element {
   const [floating, setFloating] = createSignal<HTMLElement>();
   const contentId = `combobox-content-${createUniqueId()}`;
   const listId = `combobox-list-${createUniqueId()}`;
-  // 选项 id 由 listId + 值派生：aria-activedescendant 需要能指向当前高亮项
-  const optionId = (value: unknown) => `${listId}-option-${String(value)}`;
+  // 选项 id 不能用 String(value) 派生：对象会变成 [object Object]，含空格的值
+  // 会产生非法 id。用注册顺序生成唯一、无空白的 id。
+  const optionIds = new Map<unknown, string>();
+  let optionSeq = 0;
+  const optionId = (value: unknown) => {
+    const existing = optionIds.get(value);
+    if (existing) return existing;
+    const id = `${listId}-option-${optionSeq++}`;
+    optionIds.set(value, id);
+    return id;
+  };
 
   const isGrouped = createMemo(() =>
     items().some(
@@ -110,6 +125,29 @@ export function Combobox<T = any>(props: ComboboxProps<T>): JSX.Element {
     );
   });
 
+  const [disabledItems, setDisabledItems] = createSignal<Set<T>>(new Set());
+  const isItemDisabled = (item: T) => disabledItems().has(item);
+  const registerItemDisabled = (item: T) => {
+    setDisabledItems((prev) => {
+      const next = new Set(prev);
+      next.add(item);
+      return next;
+    });
+    return () => {
+      setDisabledItems((prev) => {
+        const next = new Set(prev);
+        next.delete(item);
+        return next;
+      });
+    };
+  };
+
+  // 关闭或过滤时不能继续保留上一次的高亮下标，否则 aria-activedescendant
+  // 会指向已经不存在的项。
+  createEffect(() => {
+    if (!open()) setActiveIndex(-1);
+  });
+
   const selectedItems = createMemo(() => {
     const current = value();
     if (current == null) return [] as T[];
@@ -123,7 +161,7 @@ export function Combobox<T = any>(props: ComboboxProps<T>): JSX.Element {
     setOpen(false, reason, event);
 
   const selectItem = (item: T, event?: Event) => {
-    if (disabled()) return;
+    if (disabled() || isItemDisabled(item)) return;
     const applied = setValue(
       props.multiple
         ? isSelected(item)
@@ -163,6 +201,8 @@ export function Combobox<T = any>(props: ComboboxProps<T>): JSX.Element {
     setValue,
     selectItem,
     isSelected,
+    isItemDisabled,
+    registerItemDisabled,
     itemToStringValue: (item) => itemToStringValue()(item),
     activeIndex,
     setActiveIndex,

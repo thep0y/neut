@@ -1,4 +1,11 @@
-import { Show, createMemo, createSignal, type JSX } from "solid-js";
+import {
+  Show,
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  type JSX,
+} from "solid-js";
 import { Check } from "lucide-solid";
 import { clsx } from "~/utils";
 import { useComboboxContext } from "../Combobox/Combobox.context";
@@ -16,12 +23,18 @@ export function ComboboxItem(props: {
   );
   const [hovered, setHovered] = createSignal(false);
 
+  createEffect(() => {
+    if (!props.disabled) return;
+    const unregister = ctx.registerItemDisabled(props.value);
+    onCleanup(unregister);
+  });
+
   return (
     <div
       id={ctx.optionId(props.value)}
       data-slot="combobox-item"
       role="option"
-      tabIndex={props.disabled ? -1 : 0}
+      tabIndex={-1}
       aria-selected={selected()}
       data-highlighted={active() || hovered() ? "" : undefined}
       class={clsx(

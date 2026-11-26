@@ -163,6 +163,89 @@ describe("Combobox - 分组模式的键盘选择", () => {
   });
 });
 
+describe("Combobox - 选项身份与键盘守卫", () => {
+  it("对象项的 option id 不是 [object Object]，也不含空白", () => {
+    const objects = [
+      { id: 1, label: "Apple" },
+      { id: 2, label: "Banana" },
+    ];
+    render(() => (
+      <Combobox items={objects} itemToStringValue={(item) => item.label} open>
+        <ComboboxInput placeholder="搜索" />
+        <ComboboxContent>
+          <ComboboxList>
+            {(item: (typeof objects)[number]) => (
+              <ComboboxItem value={item}>{item.label}</ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
+    ));
+
+    const ids = options().map((option) => option.id);
+    expect(ids.every((id) => /^combobox-list-.*-option-[0-9]+$/.test(id))).toBe(
+      true,
+    );
+    expect(ids.join(" ")).not.toContain("[object Object]");
+  });
+
+  it("方向键跳过 disabled 项，Enter 不能选中它", () => {
+    const onValueChange = vi.fn();
+    render(() => (
+      <Combobox
+        items={["apple", "banana", "cherry"]}
+        open
+        onValueChange={onValueChange}
+      >
+        <ComboboxInput placeholder="搜索" />
+        <ComboboxContent>
+          <ComboboxList>
+            {(item: string) => (
+              <ComboboxItem value={item} disabled={item === "banana"}>
+                {item}
+              </ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
+    ));
+    const el = input();
+
+    fireEvent.keyDown(el, { key: "ArrowDown" });
+    fireEvent.keyDown(el, { key: "ArrowDown" });
+
+    expect(el.getAttribute("aria-activedescendant")).toBe(options()[2].id);
+    fireEvent.keyDown(el, { key: "Enter" });
+
+    expect(onValueChange).toHaveBeenCalledWith("cherry", expect.anything());
+    expect(onValueChange).not.toHaveBeenCalledWith("banana", expect.anything());
+  });
+
+  it("输入过滤后重置高亮，Enter 不会选中旧项", () => {
+    const onValueChange = vi.fn();
+    render(() => (
+      <Combobox items={["apple", "banana"]} open onValueChange={onValueChange}>
+        <ComboboxInput placeholder="搜索" />
+        <ComboboxContent>
+          <ComboboxList>
+            {(item: string) => <ComboboxItem value={item}>{item}</ComboboxItem>}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
+    ));
+    const el = input();
+
+    fireEvent.keyDown(el, { key: "ArrowDown" });
+    expect(el).toHaveAttribute("aria-activedescendant");
+
+    fireEvent.input(el, { target: { value: "ban" } });
+
+    expect(el).not.toHaveAttribute("aria-activedescendant");
+    fireEvent.keyDown(el, { key: "Enter" });
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
+});
+
 describe("Combobox - 渲染与 ARIA", () => {
   it("渲染输入框", () => {
     renderCombobox();
