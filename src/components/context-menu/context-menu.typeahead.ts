@@ -11,6 +11,8 @@ export interface CreateTypeaheadOptions {
   candidates: () => TypeaheadCandidate[];
   /** 命中后的高亮回调 */
   onMatch: (id: string) => void;
+  /** 当前高亮项；匹配会从它之后开始循环 */
+  activeId?: () => string | undefined;
   /** 缓冲窗口，默认 500ms */
   timeoutMs?: number;
 }
@@ -18,6 +20,8 @@ export interface CreateTypeaheadOptions {
 export interface Typeahead {
   /** 处理一个可打印字符 */
   handle: (char: string) => void;
+  /** 清理缓冲与未到期的定时器（关闭菜单时调用） */
+  reset: () => void;
   /** 清理未到期的定时器（组件卸载时调用） */
   dispose: () => void;
 }
@@ -40,20 +44,46 @@ export function createTypeahead(options: CreateTypeaheadOptions): Typeahead {
     }
   };
 
+  const reset = () => {
+    clearTimer();
+    buffer = "";
+  };
+
   return {
     handle(char) {
-      buffer += char.toLowerCase();
+      const lower = char.toLowerCase();
+      // 连续按同一个字母表示在同一前缀里循环，而不是把 "a" 攒成 "aa"。
+      buffer =
+        buffer.length > 0 &&
+        buffer[0] === lower &&
+        [...buffer].every((value) => value === lower)
+          ? lower
+          : buffer + lower;
       clearTimer();
       timer = window.setTimeout(() => {
         buffer = "";
         timer = undefined;
       }, timeoutMs);
 
-      const match = options
-        .candidates()
-        .find((candidate) => candidate.label.toLowerCase().startsWith(buffer));
-      if (match) options.onMatch(match.id);
+      const candidates = options.candidates();
+      if (candidates.length === 0) return;
+      const active = options.activeId?.();
+      const start = active
+        ? candidates.findIndex((candidate) => candidate.id === active)
+        : -1;
+      for (let i = 0; i < candidates.length; i++) {
+        const candidate =
+          candidates[
+            (((start + 1 + i) % candidates.length) + candidates.length) %
+              candidates.length
+          ];
+        if (candidate.label.toLowerCase().startsWith(buffer)) {
+          options.onMatch(candidate.id);
+          return;
+        }
+      }
     },
+    reset,
     dispose: clearTimer,
   };
 }
