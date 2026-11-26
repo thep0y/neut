@@ -56,7 +56,14 @@ export function SelectContent(props: SelectContentProps) {
     const list = enabledItems();
     if (list.length === 0) return;
     const currentIndex = list.findIndex((it) => it.value === ctx.activeValue());
-    const nextIndex = (currentIndex + dir + list.length) % list.length;
+    // 没有高亮时 ArrowDown 从第一项开始，ArrowUp 从最后一项开始；
+    // 直接用 -1 + (-1) 会得到 len-2，跳过最后一项。
+    const nextIndex =
+      currentIndex === -1
+        ? dir === 1
+          ? 0
+          : list.length - 1
+        : (currentIndex + dir + list.length) % list.length;
     ctx.setActiveValue(list[nextIndex].value);
   };
 
@@ -73,8 +80,12 @@ export function SelectContent(props: SelectContentProps) {
       case "Enter":
       case " ":
         e.preventDefault();
-        if (ctx.activeValue() !== undefined)
+        if (
+          ctx.activeValue() !== undefined &&
+          enabledItems().some((it) => it.value === ctx.activeValue())
+        ) {
           ctx.selectValue(ctx.activeValue()!);
+        }
         break;
       case "Tab":
         ctx.setOpen(false);

@@ -64,6 +64,15 @@ describe("SelectContent - 文档级键盘", () => {
     expect(highlighted()).toBe(items()[0]);
   });
 
+  it("没有高亮时 ArrowUp 从最后一个可用项开始", async () => {
+    await renderOpen();
+
+    fireEvent.keyDown(document, { key: "ArrowUp" });
+
+    // cherry 是 disabled，最后一个可用项是 banana
+    expect(highlighted()).toBe(items()[1]);
+  });
+
   it("高亮会跳过 disabled 项", async () => {
     await renderOpen();
 
