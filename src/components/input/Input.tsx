@@ -24,22 +24,52 @@ export const Input = (props: InputProps) => {
     "ref",
   ]);
 
-  const handleInput: JSX.IntrinsicElements["input"]["onInput"] = (e) => {
-    let value: string | number = e.target.value;
-    if (local.type === "number") {
-      value = Number(e.target.value);
+  /**
+   * number 输入框在编辑过程中会经历 ""、"-"、"-."、"1e" 这类中间态；
+   * 直接 Number() 会把它们变成 0/NaN，既让空串误报 0，也让负数根本输入不进去。
+   * 中间态不回调，交给原生 input 保留文本，等成为合法数字再上报。
+   */
+  const parseNumber = (raw: string): number | undefined => {
+    const isIntermediate =
+      raw === "" ||
+      raw === "-" ||
+      raw === "+" ||
+      raw === "." ||
+      raw === "-." ||
+      raw === "+." ||
+      raw.endsWith(".") ||
+      /[eE][+-]?$/.test(raw);
+    if (isIntermediate) return undefined;
+    // type=number 的原生 value 已经被浏览器清洗过，非数字输入会变成 ""；
+    // 走到这里的 raw 一定是可解析的完整数字。
+    return Number(raw);
+  };
+
+  const emit = (
+    handler: ((value: string | number) => void) | undefined,
+    raw: string,
+  ) => {
+    if (!handler) return;
+    if (local.type !== "number") {
+      handler(raw);
+      return;
     }
-    // @ts-expect-error
-    local.onInput?.(value);
+    const parsed = parseNumber(raw);
+    if (parsed !== undefined) handler(parsed);
+  };
+
+  const handleInput: JSX.IntrinsicElements["input"]["onInput"] = (e) => {
+    emit(
+      local.onInput as ((value: string | number) => void) | undefined,
+      e.target.value,
+    );
   };
 
   const handleChange: JSX.IntrinsicElements["input"]["onChange"] = (e) => {
-    let value: string | number = e.target.value;
-    if (local.type === "number") {
-      value = Number(e.target.value);
-    }
-    // @ts-expect-error
-    local.onChange?.(value);
+    emit(
+      local.onChange as ((value: string | number) => void) | undefined,
+      e.target.value,
+    );
   };
 
   const isControlled = () => local.value !== undefined;
