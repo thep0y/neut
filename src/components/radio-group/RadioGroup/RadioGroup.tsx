@@ -1,4 +1,4 @@
-import { createMemo, createSignal, splitProps, type JSX } from "solid-js";
+import { Show, createMemo, createSignal, splitProps, type JSX } from "solid-js";
 import { clsx } from "~/utils";
 import { RadioGroupContext } from "./RadioGroup.context";
 import type {
@@ -80,6 +80,15 @@ export function RadioGroup(props: RadioGroupProps): JSX.Element {
       <RadioGroupContext.Provider value={ctx}>
         {local.children}
       </RadioGroupContext.Provider>
+      {/* 用单个隐藏 input 把选中值带进原生表单；radio 的 name 属于组而不是项 */}
+      <Show when={local.name !== undefined && value() !== undefined}>
+        <input
+          type="hidden"
+          name={local.name}
+          value={value()}
+          disabled={disabled()}
+        />
+      </Show>
     </div>
   );
 }

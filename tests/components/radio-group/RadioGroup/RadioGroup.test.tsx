@@ -34,6 +34,30 @@ describe("RadioGroup - 结构", () => {
     expect(group?.getAttribute("role")).toBe("radiogroup");
   });
 
+  it("name + 选中值进入 FormData", () => {
+    const { container } = render(() => (
+      <form>
+        <RadioGroup name="size" defaultValue="comfortable">
+          <Probe />
+        </RadioGroup>
+      </form>
+    ));
+
+    const data = new FormData(container.querySelector("form")!);
+
+    expect(data.get("size")).toBe("comfortable");
+  });
+
+  it("未传 name 时不渲染隐藏表单字段", () => {
+    const { container } = render(() => (
+      <RadioGroup defaultValue="comfortable">
+        <Probe />
+      </RadioGroup>
+    ));
+
+    expect(container.querySelector('input[type="hidden"]')).toBeNull();
+  });
+
   it("合并类名、classList、style、dir 并透传其余属性", () => {
     const { container } = render(() => (
       <RadioGroup
