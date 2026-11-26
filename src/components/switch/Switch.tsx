@@ -15,6 +15,8 @@ export const Switch = (props: SwitchProps) => {
       "onCheckedChange",
       "size",
       "disabled",
+      "name",
+      "value",
       "class",
       "classList",
     ],
@@ -88,6 +90,8 @@ export const Switch = (props: SwitchProps) => {
         aria-hidden="true"
         type="checkbox"
         checked={checked()}
+        name={local.name}
+        value={local.value}
         class="sr-only"
         disabled={local.disabled}
       />

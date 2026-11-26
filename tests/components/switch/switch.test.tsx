@@ -17,6 +17,8 @@ function renderSwitch(
     disabled?: boolean;
     size?: "sm" | "md";
     id?: string;
+    name?: string;
+    value?: string;
     onKeyDown?: (event: KeyboardEvent) => void;
   } = {},
 ) {
@@ -28,6 +30,8 @@ function renderSwitch(
       disabled={props.disabled}
       size={props.size}
       id={props.id}
+      name={props.name}
+      value={props.value}
       onKeyDown={props.onKeyDown}
     />
   ));
@@ -73,6 +77,20 @@ describe("Switch - 渲染与 ARIA", () => {
     renderSwitch({ size: "sm" });
 
     expect(sw()).toHaveAttribute("data-size", "sm");
+  });
+
+  it("name/value 进入 FormData，且不落到可见 span 上", () => {
+    const { container } = render(() => (
+      <form>
+        <Switch name="notifications" value="enabled" defaultChecked />
+      </form>
+    ));
+    const form = container.querySelector("form")!;
+    const data = new FormData(form);
+
+    expect(data.get("notifications")).toBe("enabled");
+    expect(sw()).not.toHaveAttribute("name");
+    expect(sw()).not.toHaveAttribute("value");
   });
 
   it("可聚焦（tabIndex=0）", () => {
