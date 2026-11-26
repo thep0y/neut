@@ -1,4 +1,4 @@
-import { onMount, onCleanup, createMemo } from "solid-js";
+import { createEffect, onCleanup, createMemo } from "solid-js";
 import { useSelectContext } from "../Select/Select.context";
 import type { SelectItemProps } from "./SelectItem.types";
 import type { SelectOptionValue } from "../Select/Select.types";
@@ -23,7 +23,9 @@ export function useSelectItem<T extends SelectOptionValue = SelectOptionValue>(
     return typeof p.children === "string" ? p.children : String(p.value);
   };
 
-  onMount(() => {
+  // 注册项会进入 store；label/disabled 是响应式的，props 变化后必须
+  // 重新登记，否则 SelectValue 与键盘导航会一直读旧快照。
+  createEffect(() => {
     const p = props();
     const unregister = ctx.registerItem({
       value: p.value,
