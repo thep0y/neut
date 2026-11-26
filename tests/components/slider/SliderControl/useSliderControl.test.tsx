@@ -55,6 +55,27 @@ describe("useSliderControl", () => {
     expect(setActiveThumbIndex).toHaveBeenCalledWith(0);
   });
 
+  it("RTL 横向：从右往左递增", () => {
+    const track = stubRect(document.createElement("div"), {
+      left: 0,
+      top: 0,
+      width: 200,
+      height: 10,
+    });
+    const updateValue = vi.fn();
+    const { result } = renderHook(() => useSliderControl(), {
+      wrapper: contextWrapper(
+        fakeCtx({ dir: () => "rtl", trackRef: () => track, updateValue }),
+      ),
+    });
+
+    result.handlePointerDown(
+      pointerOn("pointerdown", element, { clientX: 50 }),
+    );
+
+    expect(updateValue).toHaveBeenCalledWith(0, 75);
+  });
+
   it("横向：clientX 超出右边界时换算值大于 max（由 updateValue 负责夹取）", () => {
     const track = stubRect(document.createElement("div"), {
       left: 100,

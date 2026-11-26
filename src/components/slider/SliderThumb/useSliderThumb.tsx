@@ -24,11 +24,18 @@ export const useSliderThumb = (index: number) => {
 
     const step = e.shiftKey ? ctx.step() * 10 : ctx.step();
     const isVertical = ctx.orientation() === "vertical";
+    const isRtl = !isVertical && ctx.dir() === "rtl";
 
-    const increaseKeys = isVertical ? ["ArrowUp"] : ["ArrowRight", "ArrowUp"];
+    const increaseKeys = isVertical
+      ? ["ArrowUp"]
+      : isRtl
+        ? ["ArrowLeft", "ArrowUp"]
+        : ["ArrowRight", "ArrowUp"];
     const decreaseKeys = isVertical
       ? ["ArrowDown"]
-      : ["ArrowLeft", "ArrowDown"];
+      : isRtl
+        ? ["ArrowRight", "ArrowDown"]
+        : ["ArrowLeft", "ArrowDown"];
 
     if (increaseKeys.includes(e.key)) {
       e.preventDefault();

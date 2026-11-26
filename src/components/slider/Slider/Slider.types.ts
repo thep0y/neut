@@ -7,6 +7,8 @@ interface BaseSliderProps<T> {
   max?: number;
   step?: number;
   orientation?: "horizontal" | "vertical";
+  /** 阅读方向；RTL 下水平滑块从右往左递增 */
+  dir?: "ltr" | "rtl";
   onValueChange?: (value: T) => void;
   disabled?: boolean;
 }

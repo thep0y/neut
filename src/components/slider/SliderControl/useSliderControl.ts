@@ -17,6 +17,7 @@ export const useSliderControl = () => {
       ratio = 1 - (clientY - rect.top) / rect.height;
     } else {
       ratio = (clientX - rect.left) / rect.width;
+      if (ctx.dir() === "rtl") ratio = 1 - ratio;
     }
 
     return ctx.min() + ratio * (ctx.max() - ctx.min());

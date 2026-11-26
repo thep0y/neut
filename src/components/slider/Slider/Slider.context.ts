@@ -6,6 +6,7 @@ interface SliderContextValue {
   max: Accessor<number>;
   step: Accessor<number>;
   orientation: Accessor<"horizontal" | "vertical">;
+  dir: Accessor<"ltr" | "rtl">;
   disabled: Accessor<boolean>;
   activeThumbIndex: Accessor<number>;
   setActiveThumbIndex: (index: number) => void;
