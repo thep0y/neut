@@ -1,7 +1,7 @@
 import { Show, onCleanup, splitProps } from "solid-js";
 import { Portal } from "solid-js/web";
 import { getAlignment, getSide, getTransformOrigin } from "~/lib";
-import { clsx } from "~/utils";
+import { callEventHandler, clsx } from "~/utils";
 import { useHoverCardContent } from "./useHoverCardContent";
 import type { HoverCardContentProps } from "../hover-card.types";
 
@@ -13,16 +13,20 @@ export function HoverCardContent(props: HoverCardContentProps) {
   const { ctx, pos, mounted, animationState, setContentElement } =
     useHoverCardContent(() => props);
 
-  const [local, rest] = splitProps(props, [
-    "side",
-    "align",
-    "sideOffset",
-    "alignOffset",
-    "collisionPadding",
-    "class",
-    "style",
-    "children",
-  ]);
+  const [local, events, rest] = splitProps(
+    props,
+    [
+      "side",
+      "align",
+      "sideOffset",
+      "alignOffset",
+      "collisionPadding",
+      "class",
+      "style",
+      "children",
+    ],
+    ["onMouseEnter", "onMouseLeave"],
+  );
 
   return (
     <Show when={mounted()}>
@@ -48,8 +52,14 @@ export function HoverCardContent(props: HoverCardContentProps) {
             data-state={animationState()}
             data-side={getSide(pos.placement())}
             data-align={getAlignment(pos.placement()) ?? "center"}
-            onMouseEnter={ctx.keepOpen}
-            onMouseLeave={() => ctx.requestClose()}
+            onMouseEnter={(event) => {
+              ctx.keepOpen();
+              callEventHandler(events.onMouseEnter, event);
+            }}
+            onMouseLeave={(event) => {
+              ctx.requestClose();
+              callEventHandler(events.onMouseLeave, event);
+            }}
             style={{
               "transform-origin": getTransformOrigin(pos.placement()),
               ...(typeof local.style === "object" ? local.style : undefined),

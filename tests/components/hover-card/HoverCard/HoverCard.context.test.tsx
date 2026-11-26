@@ -80,6 +80,23 @@ describe("HoverCard context - openImmediate", () => {
     expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
 
+  it("已打开时重复 openImmediate 只回调一次", async () => {
+    const { ctx, onOpenChange } = await renderConsumer({});
+
+    ctx.openImmediate();
+    ctx.openImmediate();
+
+    expect(onOpenChange).toHaveBeenCalledTimes(1);
+  });
+
+  it("从未打开时 closeImmediate 不回调", async () => {
+    const { ctx, onOpenChange } = await renderConsumer({});
+
+    ctx.closeImmediate();
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
   it("未禁用时 openImmediate 跳过 delay 立即打开", async () => {
     const { ctx, onOpenChange } = await renderConsumer({});
 
