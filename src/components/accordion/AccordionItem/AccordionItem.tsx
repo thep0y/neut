@@ -6,7 +6,7 @@ import type { AccordionItemProps } from "./AccordionItem.types";
 import s from "./AccordionItem.styles";
 
 export const AccordionItem = (props: AccordionItemProps) => {
-  const { orientation, isOpen } = useAccordionContext();
+  const { orientation, isOpen, disabled } = useAccordionContext();
 
   const [local, others] = splitProps(props, [
     "value",
@@ -24,6 +24,7 @@ export const AccordionItem = (props: AccordionItemProps) => {
   const value = () => local.value ?? id;
 
   const open = () => isOpen(value());
+  const isDisabled = () => disabled() || !!local.disabled;
 
   return (
     <div
@@ -32,7 +33,7 @@ export const AccordionItem = (props: AccordionItemProps) => {
       data-slot="accordion-item"
       data-orientation={orientation}
       data-open={open()}
-      data-disabled={props.disabled ? "" : null}
+      data-disabled={isDisabled() ? "" : null}
       {...others}
     >
       <AccordionItemContext.Provider
@@ -41,7 +42,8 @@ export const AccordionItem = (props: AccordionItemProps) => {
           triggerId,
           contentId,
           open,
-          disabled: props.disabled,
+          disabled: isDisabled,
+          onOpenChange: local.onOpenChange,
         }}
       >
         {local.children}

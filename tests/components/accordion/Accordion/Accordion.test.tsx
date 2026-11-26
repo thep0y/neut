@@ -115,6 +115,28 @@ describe("Accordion - 键盘导航", () => {
     expect(document.activeElement).toBe(t3);
   });
 
+  it("loopFocus=false 时 ArrowDown/ArrowUp 在边界停住", () => {
+    const { getByTestId, container } = render(() => (
+      <Accordion loopFocus={false}>
+        <button type="button" data-accordion-trigger="" data-testid="t1">
+          一
+        </button>
+        <button type="button" data-accordion-trigger="" data-testid="t2">
+          二
+        </button>
+      </Accordion>
+    ));
+    const root = rootOf(container)!;
+
+    getByTestId("t2").focus();
+    fireEvent.keyDown(root, { key: "ArrowDown" });
+    expect(document.activeElement).toBe(getByTestId("t2"));
+
+    getByTestId("t1").focus();
+    fireEvent.keyDown(root, { key: "ArrowUp" });
+    expect(document.activeElement).toBe(getByTestId("t1"));
+  });
+
   it("Home / End 跳到第一个 / 最后一个", () => {
     const { getByTestId, container } = renderTriggers();
     const root = rootOf(container)!;

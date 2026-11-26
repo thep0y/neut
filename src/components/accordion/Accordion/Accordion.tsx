@@ -35,7 +35,9 @@ export const Accordion = (props: AccordionProps) => {
     "children",
   ]);
 
-  const { handleKeyDown } = useAccordion();
+  const { handleKeyDown } = useAccordion({
+    loopFocus: () => local.loopFocus,
+  });
 
   return (
     <section
@@ -49,6 +51,7 @@ export const Accordion = (props: AccordionProps) => {
     >
       <AccordionProvider
         orientation={local.orientation}
+        disabled={local.disabled}
         defaultValue={props.defaultValue}
         value={props.value}
         multiple={props.multiple}

@@ -13,7 +13,7 @@ function ItemProbe() {
       <span data-testid="open">{String(ctx.open())}</span>
       <span data-testid="trigger-id">{ctx.triggerId}</span>
       <span data-testid="content-id">{ctx.contentId}</span>
-      <span data-testid="disabled">{String(ctx.disabled ?? false)}</span>
+      <span data-testid="disabled">{String(ctx.disabled())}</span>
     </div>
   );
 }

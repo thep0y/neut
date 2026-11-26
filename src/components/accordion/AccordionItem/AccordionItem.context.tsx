@@ -6,7 +6,8 @@ interface AccordionItemContextValue {
   triggerId: string;
   contentId: string;
   open: () => boolean;
-  disabled?: boolean;
+  disabled: () => boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export const AccordionItemContext = createContext<AccordionItemContextValue>();
