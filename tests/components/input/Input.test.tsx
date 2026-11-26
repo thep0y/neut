@@ -122,6 +122,25 @@ describe("Input - onInput / onChange 的值转换", () => {
     expect(onInput).toHaveBeenCalledWith(42);
   });
 
+  it("数字类型：空串与中间态不回调，负数完整后回调", () => {
+    const onInput = vi.fn();
+    const { container } = render(() => (
+      <Input type="number" onInput={onInput} />
+    ));
+    const input = inputOf(container);
+
+    fireEvent.input(input, { target: { value: "" } });
+    fireEvent.input(input, { target: { value: "-" } });
+    fireEvent.input(input, { target: { value: "1." } });
+
+    expect(onInput).not.toHaveBeenCalled();
+
+    fireEvent.input(input, { target: { value: "-1.5" } });
+
+    expect(onInput).toHaveBeenCalledTimes(1);
+    expect(onInput).toHaveBeenCalledWith(-1.5);
+  });
+
   it("文本类型：onChange 收到字符串值", () => {
     const onChange = vi.fn();
     const { container } = render(() => <Input onChange={onChange} />);
