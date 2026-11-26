@@ -1,4 +1,4 @@
-import { createEffect, splitProps } from "solid-js";
+import { createEffect, Show, splitProps } from "solid-js";
 import { useContextMenuContext } from "../ContextMenu/ContextMenu.context";
 import { ContextMenuPopupSurface } from "./ContextMenuPopupSurface";
 import type { ContextMenuContentProps } from "./ContextMenuContent.types";
@@ -48,20 +48,22 @@ export function ContextMenuContent(props: ContextMenuContentProps) {
   createEffect(() => root.setFinalFocus(local.finalFocus !== false));
 
   return (
-    <ContextMenuPopupSurface
-      runtime={runtime}
-      dataSlot="context-menu-content"
-      contentId={root.contentId}
-      open={root.open}
-      side={side}
-      dir={() => local.dir}
-      registerMenuElement={root.registerMenuElement}
-      class={local.class}
-      style={local.style}
-      onKeyDown={local.onKeyDown}
-      rest={rest}
-    >
-      {local.children}
-    </ContextMenuPopupSurface>
+    <Show when={root.anchor() !== undefined}>
+      <ContextMenuPopupSurface
+        runtime={runtime}
+        dataSlot="context-menu-content"
+        contentId={root.contentId}
+        open={root.open}
+        side={side}
+        dir={() => local.dir}
+        registerMenuElement={root.registerMenuElement}
+        class={local.class}
+        style={local.style}
+        onKeyDown={local.onKeyDown}
+        rest={rest}
+      >
+        {local.children}
+      </ContextMenuPopupSurface>
+    </Show>
   );
 }

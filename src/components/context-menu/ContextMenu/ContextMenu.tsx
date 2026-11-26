@@ -55,16 +55,32 @@ export function ContextMenu(props: ContextMenuProps): JSX.Element {
   );
   const modal = createMemo(() => props.modal ?? true);
 
-  // 打开期间锁定页面滚动(Base UI menu 的 modal 默认行为),关闭时恢复。
-  // 菜单自身(含子菜单)允许继续滚动。
-  useScrollLock(() => open() && modal(), {
-    allowedSelector: MENU_POPUP_SELECTOR,
-  });
-
   const [finalFocus, setFinalFocus] = createSignal(true);
   const [trigger, setTrigger] = createSignal<HTMLElement>();
   const [anchor, setAnchor] = createSignal<VirtualElement>();
   const contentId = `context-menu-content-${createUniqueId()}`;
+
+  // defaultOpen / 受控 open 没有鼠标坐标时，退回到触发器中心作为锚点；
+  // 连触发器都没有才真正不渲染菜单。
+  createEffect(() => {
+    if (!open() || anchor() !== undefined) return;
+    const el = trigger();
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setAnchor(
+      createVirtualElement({
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+        contextElement: el,
+      }),
+    );
+  });
+
+  // 打开期间锁定页面滚动(Base UI menu 的 modal 默认行为),关闭时恢复。
+  // 菜单自身(含子菜单)允许继续滚动。没有锚点时菜单无法定位，也不应该锁滚动。
+  useScrollLock(() => open() && modal() && anchor() !== undefined, {
+    allowedSelector: MENU_POPUP_SELECTOR,
+  });
 
   // 已挂载的浮层容器(根菜单 + 各级子菜单),用于判断指针是否落在菜单内部。
   // 这里刻意不用响应式结构:它只在事件回调里读取,变化本身不需要驱动渲染。

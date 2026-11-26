@@ -151,11 +151,11 @@ describe("ContextMenuContent - 高亮与键盘", () => {
 });
 
 describe("ContextMenuContent - 定位与动画", () => {
-  it("没有锚点时 opacity 为 0，右键打开后完成定位", async () => {
+  it("defaultOpen 没有鼠标坐标时回退到 trigger 中心并完成定位", async () => {
     renderMenu();
     await Promise.resolve();
 
-    expect(positioner()!.style.opacity).toBe("0");
+    expect(positioner()!.style.opacity).toBe("1");
   });
 
   it("右键打开后 positioner 完成定位并给出可用高度", async () => {
