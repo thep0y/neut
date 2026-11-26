@@ -1,5 +1,6 @@
+import { fireEvent } from "@solidjs/testing-library";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { ComboboxContent } from "~/components/combobox/ComboboxContent/ComboboxContent";
 import { ComboboxGroup } from "~/components/combobox/ComboboxGroup/ComboboxGroup";
 import { ComboboxInput } from "~/components/combobox/ComboboxInput/ComboboxInput";
@@ -88,6 +89,28 @@ describe("ComboboxList", () => {
     ));
 
     expect(bySlot("combobox-list")).toHaveTextContent("固定内容");
+  });
+
+  it("高亮变化时把当前 option 滚入视野", () => {
+    const original = Element.prototype.scrollIntoView;
+    const scroll = vi.fn();
+    Element.prototype.scrollIntoView = scroll;
+    try {
+      renderCombobox({ open: true, items: ["apple", "banana"] }, () => (
+        <>
+          <ComboboxInput />
+          <ComboboxList>
+            {(item: string) => <ComboboxItem value={item}>{item}</ComboboxItem>}
+          </ComboboxList>
+        </>
+      ));
+
+      fireEvent.keyDown(comboboxInput(), { key: "ArrowDown" });
+
+      expect(scroll).toHaveBeenCalledWith({ block: "nearest" });
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
   });
 
   it("作为 ComboboxContent 的子节点时渲染在浮层内", () => {
