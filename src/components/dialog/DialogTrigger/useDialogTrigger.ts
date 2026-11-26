@@ -24,7 +24,7 @@ export function useDialogTrigger<T extends ValidComponent>(
     const onClick = () => {
       if (isDisabled()) return;
       if (open()) return;
-      setOpen(true);
+      setOpen(true, "trigger-press");
     };
 
     el.addEventListener("click", onClick);

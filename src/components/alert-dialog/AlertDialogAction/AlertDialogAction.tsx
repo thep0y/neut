@@ -11,7 +11,7 @@ export const AlertDialogAction = (props: AlertDialogActionProps) => {
       data-slot="alert-dialog-action"
       onClick={(event) => {
         props.onClick?.(event);
-        setOpen(false);
+        setOpen(false, "close-press", event);
       }}
     />
   );

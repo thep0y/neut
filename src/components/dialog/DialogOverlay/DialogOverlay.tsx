@@ -34,7 +34,7 @@ export const DialogOverlay = (props: DialogOverlayProps) => {
           | ((e: typeof event) => void)
           | undefined;
         userOnClick?.(event);
-        if (local.dismissOnOverlayClick) setOpen(false);
+        if (local.dismissOnOverlayClick) setOpen(false, "overlay-press", event);
       }}
       {...others}
     />

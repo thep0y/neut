@@ -1,4 +1,15 @@
+import type { ChangeEventDetails } from "~/utils";
 import type { BaseProps, PolymorphicProps } from "~/types";
+
+export type DialogChangeEventReason =
+  | "trigger-press"
+  | "close-press"
+  | "overlay-press"
+  | "escape-key"
+  | "none";
+
+export type DialogChangeEventDetails =
+  ChangeEventDetails<DialogChangeEventReason>;
 
 interface BaseDialogProps {
   /**
@@ -9,7 +20,7 @@ interface BaseDialogProps {
   /** 非受控模式下的初始打开状态 */
   defaultOpen?: boolean;
   /** 打开状态变化时回调 */
-  onOpenChange?: (open: boolean) => void;
+  onOpenChange?: (open: boolean, details: DialogChangeEventDetails) => void;
   /**
    * 按 Escape 是否关闭，默认 true。
    * AlertDialog 需要"必须显式选择"，因此传 false（对齐 Base UI 的 alert dialog 语义）。

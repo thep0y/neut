@@ -4,6 +4,7 @@ import { Show, createSignal } from "solid-js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useDialogContext } from "~/components/dialog/Dialog/Dialog.context";
 import { Dialog } from "~/components/dialog/Dialog/Dialog";
+import type { DialogProps } from "~/components/dialog/Dialog/Dialog.types";
 import { useDialogContentContext } from "~/components/dialog/DialogContent/DialogContent.context";
 import { DialogClose } from "~/components/dialog/DialogClose/DialogClose";
 import { DialogContent } from "~/components/dialog/DialogContent/DialogContent";
@@ -34,7 +35,7 @@ function renderDialog(
   props: {
     defaultOpen?: boolean;
     open?: boolean;
-    onOpenChange?: (open: boolean) => void;
+    onOpenChange?: DialogProps["onOpenChange"];
     lockScroll?: boolean;
     dismissOnEscape?: boolean;
     contentProps?: Partial<DialogContentProps>;
@@ -128,7 +129,7 @@ describe("Dialog - 基础状态", () => {
     await user.click(trigger());
 
     expect(content()).toBeInTheDocument();
-    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
   });
 
   it("trigger 已打开时点击不再切换（Dialog 只负责打开）", async () => {
@@ -151,7 +152,7 @@ describe("Dialog - 基础状态", () => {
     // 关闭方式：Escape / DialogClose / 点击 overlay
     fireEvent.click(document.querySelector('[data-slot="dialog-overlay"]')!);
 
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
     expect(trigger()).toHaveAttribute("data-state", "closed");
     // 仍在挂载中，等待退场动画
     expect(content()).toBe(surface);
@@ -249,7 +250,7 @@ describe("Dialog - 关闭途径", () => {
 
     await user.click(document.querySelector('[data-slot="dialog-close"]')!);
 
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
   });
 
   it("默认展示内置关闭按钮", () => {
@@ -277,7 +278,7 @@ describe("Dialog - 关闭途径", () => {
 
     fireEvent.click(document.querySelector('[data-slot="dialog-overlay"]')!);
 
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
   });
 
   it("dismissOnOverlayClick=false 时点击 overlay 不关闭", () => {
@@ -305,6 +306,45 @@ describe("Dialog - 关闭途径", () => {
   });
 });
 
+describe("Dialog - ChangeEventDetails", () => {
+  it("onOpenChange 的 details 带 reason 与 event", () => {
+    const onOpenChange = vi.fn();
+    renderDialog({ onOpenChange });
+
+    fireEvent.click(trigger());
+    expect(onOpenChange).toHaveBeenLastCalledWith(
+      true,
+      expect.objectContaining({ reason: "trigger-press" }),
+    );
+
+    fireEvent.click(document.querySelector('[data-slot="dialog-overlay"]')!);
+    expect(onOpenChange).toHaveBeenLastCalledWith(
+      false,
+      expect.objectContaining({
+        reason: "overlay-press",
+        event: expect.any(MouseEvent),
+      }),
+    );
+  });
+
+  it("cancel() 阻止关闭，内容保持打开", () => {
+    const onOpenChange = vi.fn(
+      (open: boolean, details: { cancel: () => void }) => {
+        if (!open) details.cancel();
+      },
+    );
+    renderDialog({ defaultOpen: true, onOpenChange });
+
+    fireEvent.click(document.querySelector('[data-slot="dialog-overlay"]')!);
+
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ reason: "overlay-press" }),
+    );
+    expect(content()).toHaveAttribute("data-open", "true");
+  });
+});
+
 describe("Dialog - 受控模式", () => {
   it("受控 open=false 时点击 trigger 只回调，UI 不变", async () => {
     const onOpenChange = vi.fn();
@@ -313,7 +353,7 @@ describe("Dialog - 受控模式", () => {
 
     await user.click(trigger());
 
-    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
     expect(content()).toBeNull();
   });
 
@@ -323,7 +363,7 @@ describe("Dialog - 受控模式", () => {
 
     fireEvent.click(document.querySelector('[data-slot="dialog-overlay"]')!);
 
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
     expect(content()).toBeInTheDocument();
   });
 
@@ -459,7 +499,7 @@ describe("dialog 集成 - 无障碍", () => {
 
     fireEvent.keyDown(document, { key: "Escape" });
 
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
   });
 
   it("dismissOnEscape=false 时 Escape 不关闭", () => {

@@ -17,7 +17,7 @@ export const AlertDialogCancel = (props: AlertDialogCancelProps) => {
         // 与 AlertDialogAction 一致：先转发调用方回调再关闭，
         // 否则用户的 onClick 会被这一行静默替换掉
         local.onClick?.(event);
-        setOpen(false);
+        setOpen(false, "close-press", event);
       }}
     />
   );

@@ -1,6 +1,7 @@
 import { createEffect, createMemo, createSignal, splitProps } from "solid-js";
 import { useEscapeLayer, useScrollLock } from "~/hooks";
-import type { DialogProps } from "./Dialog.types";
+import { createChangeEventDetails } from "~/utils";
+import type { DialogChangeEventReason, DialogProps } from "./Dialog.types";
 import { DialogContext } from "./Dialog.context";
 
 export const Dialog = (props: DialogProps) => {
@@ -33,17 +34,22 @@ export const Dialog = (props: DialogProps) => {
     allowedSelector: "[data-dialog-surface]",
   });
 
-  const setOpen = (next: boolean) => {
-    if (local.open === undefined) {
-      setInternalOpen(next);
-    }
-    local.onOpenChange?.(next);
+  const setOpen = (
+    next: boolean,
+    reason: DialogChangeEventReason = "none",
+    event?: Event,
+  ) => {
+    const details = createChangeEventDetails(reason, event);
+    // 先回调再落状态：调用方可以在 details.cancel() 里否决本次变更。
+    local.onOpenChange?.(next, details);
+    if (details.isCanceled) return;
+    if (local.open === undefined) setInternalOpen(next);
   };
 
   // 打开期间按 Escape 关闭；共享层栈保证只关最上层
   useEscapeLayer({
     enabled: () => open() && local.dismissOnEscape !== false,
-    onEscape: () => setOpen(false),
+    onEscape: (event) => setOpen(false, "escape-key", event),
   });
 
   // 打开时立刻挂载；关闭时保留挂载直到动画结束，由 Content/Overlay 的
