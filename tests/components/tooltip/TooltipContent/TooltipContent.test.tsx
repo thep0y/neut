@@ -155,6 +155,26 @@ describe("TooltipContent - 内容上的鼠标行为", () => {
     expect(trigger()).toHaveAttribute("data-state", "open");
   });
 
+  it("用户 onMouseEnter/onMouseLeave 与内部 keepOpen/requestClose 串联", async () => {
+    const onMouseEnter = vi.fn();
+    const onMouseLeave = vi.fn();
+    renderContent({ onMouseEnter, onMouseLeave });
+
+    expect(content()).toHaveAttribute("data-slot", "tooltip-content");
+
+    fireEvent.pointerLeave(trigger());
+    fireEvent.mouseEnter(content()!);
+    await vi.advanceTimersByTimeAsync(500);
+
+    expect(onMouseEnter).toHaveBeenCalledTimes(1);
+    expect(trigger()).toHaveAttribute("data-state", "open");
+
+    fireEvent.mouseLeave(content()!);
+    expect(onMouseLeave).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(160);
+    expect(trigger()).toHaveAttribute("data-state", "closed");
+  });
+
   it("没有待执行关闭时移入内容也保持打开", async () => {
     renderContent();
 
