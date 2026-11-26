@@ -58,6 +58,23 @@ describe("DropdownMenuCheckboxItem - 非受控切换", () => {
     expect(slot("dropdown-menu-content")).toBeInTheDocument();
   });
 
+  it("onCheckedChange 里 cancel() 时不切换状态", async () => {
+    const onCheckedChange = vi.fn(
+      (_value: boolean, details: { cancel: () => void }) => details.cancel(),
+    );
+    renderOpenMenu(() => (
+      <DropdownMenuCheckboxItem onCheckedChange={onCheckedChange}>
+        显示工具栏
+      </DropdownMenuCheckboxItem>
+    ));
+    await waitForMount();
+
+    fireEvent.click(item());
+
+    expect(item()).toHaveAttribute("aria-checked", "false");
+    expect(slot("dropdown-menu-content")).toBeInTheDocument();
+  });
+
   it("再次点击取消勾选", async () => {
     const onCheckedChange = vi.fn();
     renderOpenMenu(() => (

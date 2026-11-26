@@ -45,6 +45,23 @@ describe("DropdownMenuRadioItem - 状态属性", () => {
 });
 
 describe("DropdownMenuRadioItem - 点击行为", () => {
+  it("onValueChange 里 cancel() 时不更新选中值", async () => {
+    const onValueChange = vi.fn(
+      (_value: string, details: { cancel: () => void }) => details.cancel(),
+    );
+    renderOpenMenu(() => (
+      <DropdownMenuRadioGroup onValueChange={onValueChange}>
+        <DropdownMenuRadioItem value="a">浅色</DropdownMenuRadioItem>
+      </DropdownMenuRadioGroup>
+    ));
+    await waitForMount();
+
+    fireEvent.click(item());
+
+    expect(item()).toHaveAttribute("aria-checked", "false");
+    expect(slot("dropdown-menu-content")).toBeInTheDocument();
+  });
+
   it("默认不关闭菜单", async () => {
     const onValueChange = vi.fn();
     renderOpenMenu(() => (

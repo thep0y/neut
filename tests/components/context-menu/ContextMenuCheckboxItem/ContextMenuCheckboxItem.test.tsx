@@ -74,6 +74,23 @@ describe("ContextMenuCheckboxItem - 非受控", () => {
     expect(slot("context-menu-content")).toBeInTheDocument();
   });
 
+  it("onCheckedChange 里 cancel() 时不切换状态", async () => {
+    const onCheckedChange = vi.fn(
+      (_value: boolean, details: { cancel: () => void }) => details.cancel(),
+    );
+    renderOpenMenu(() => (
+      <ContextMenuCheckboxItem onCheckedChange={onCheckedChange}>
+        书签栏
+      </ContextMenuCheckboxItem>
+    ));
+    await waitForMount();
+
+    fireEvent.click(item());
+
+    expect(item()).toHaveAttribute("aria-checked", "false");
+    expect(slot("context-menu-content")).toBeInTheDocument();
+  });
+
   it("再次点击取消勾选", async () => {
     const onCheckedChange = vi.fn();
     renderOpenMenu(() => (

@@ -43,7 +43,7 @@ export function ContextMenuRadioItem(props: ContextMenuRadioItemProps) {
     local.onClick?.(e);
     if (e.defaultPrevented) return;
 
-    group.setValue(props.value, e);
+    if (!group.setValue(props.value, e)) return;
 
     if (local.closeOnClick) entry.popup.closeAll("item-press", e);
   };

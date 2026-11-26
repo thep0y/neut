@@ -181,7 +181,8 @@ export interface ContextMenuSubmenuContextValue {
 /** RadioGroup 共享给 RadioItem 的选中状态 */
 export interface ContextMenuRadioGroupContextValue {
   value: Accessor<any>;
-  setValue: (value: any, event?: Event) => void;
+  /** 返回 false 表示 onValueChange 里 cancel() 了本次变更 */
+  setValue: (value: any, event?: Event) => boolean;
   disabled: Accessor<boolean>;
 }
 

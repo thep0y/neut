@@ -31,11 +31,11 @@ export function DropdownMenuRadioGroup(props: DropdownMenuRadioGroupProps) {
   const ctx: ContextMenuRadioGroupContextValue = {
     value,
     setValue: (next, event) => {
+      const details = createChangeEventDetails("item-press", event);
+      props.onValueChange?.(next, details);
+      if (details.isCanceled) return false;
       if (props.value === undefined) setInternalValue(() => next);
-      props.onValueChange?.(
-        next,
-        createChangeEventDetails("item-press", event),
-      );
+      return true;
     },
     disabled: () => !!local.disabled,
   };
