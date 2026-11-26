@@ -120,7 +120,7 @@ describe("TooltipContent - 进出场状态机", () => {
     stubTriggerRect();
 
     fireEvent.pointerEnter(trigger());
-    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(700);
     expect(trigger()).toHaveAttribute("data-state", "open");
     expect(content()).toHaveAttribute("data-state", "closed");
 
@@ -134,7 +134,7 @@ describe("TooltipContent - 进出场状态机", () => {
     stubTriggerRect();
 
     fireEvent.pointerEnter(trigger());
-    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(700);
     await vi.advanceTimersByTimeAsync(16);
     expect(content()).toHaveAttribute("data-state", "open");
 

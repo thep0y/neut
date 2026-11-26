@@ -6,7 +6,7 @@ import type {
 } from "./TooltipProvider.types";
 
 export function TooltipProvider(props: TooltipProviderProps): JSX.Element {
-  const delay = createMemo(() => props.delay ?? 0);
+  const delay = createMemo(() => props.delay ?? 700);
   const closeDelay = createMemo(() => props.closeDelay ?? 150);
 
   const ctx: TooltipProviderContextValue = { delay, closeDelay };
