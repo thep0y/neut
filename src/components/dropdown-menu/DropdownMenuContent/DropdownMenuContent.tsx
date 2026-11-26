@@ -1,6 +1,7 @@
 import { splitProps } from "solid-js";
 import { clsx } from "~/utils";
 import { useContextMenuContext } from "~/components/context-menu/ContextMenu/ContextMenu.context";
+import { useDropdownMenuContext } from "../DropdownMenu/DropdownMenu.context";
 import { ContextMenuPopupSurface } from "~/components/context-menu/ContextMenuContent/ContextMenuPopupSurface";
 import { createContextMenuPopupRuntime } from "~/components/context-menu/ContextMenuContent/useContextMenuContent";
 import type { DropdownMenuContentProps } from "./DropdownMenuContent.types";
@@ -11,6 +12,7 @@ import type { DropdownMenuContentProps } from "./DropdownMenuContent.types";
  */
 export function DropdownMenuContent(props: DropdownMenuContentProps) {
   const root = useContextMenuContext("DropdownMenuContent");
+  const dropdown = useDropdownMenuContext("DropdownMenuContent");
   const [local, rest] = splitProps(props, [
     "side",
     "align",
@@ -31,6 +33,7 @@ export function DropdownMenuContent(props: DropdownMenuContentProps) {
     open: root.open,
     isSubmenu: false,
     reference: root.trigger,
+    initialHighlight: () => dropdown.pendingHighlight(),
     side,
     align,
     sideOffset: () => local.sideOffset ?? 4,

@@ -94,6 +94,28 @@ describe("DropdownMenu context - setOpen / toggle", () => {
     expect(details.reason).toBe("imperative-action");
   });
 
+  it("disabled / 已打开时 openWithHighlight 是空操作", async () => {
+    const disabled = await renderProbe({ disabled: true });
+    disabled.menu.openWithHighlight("last");
+    expect(disabled.onOpenChange).not.toHaveBeenCalled();
+
+    const opened = await renderProbe({ defaultOpen: true });
+    opened.menu.openWithHighlight("last");
+    expect(opened.onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("openWithHighlight 被 cancel 时清除 pending 状态", async () => {
+    const onOpenChange = vi.fn(
+      (_open: boolean, details: { cancel: () => void }) => details.cancel(),
+    );
+    const { menu } = await renderProbe({}, onOpenChange);
+
+    menu.openWithHighlight("last");
+
+    expect(menu.open()).toBe(false);
+    expect(menu.pendingHighlight()).toBeUndefined();
+  });
+
   it("已关闭时 closeAll 不重复回调", async () => {
     const { root, onOpenChange } = await renderProbe({});
 

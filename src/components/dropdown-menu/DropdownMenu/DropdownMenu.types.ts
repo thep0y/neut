@@ -26,6 +26,10 @@ export interface DropdownMenuContextValue {
   disabled: Accessor<boolean>;
   /** 设置打开状态（受控模式下只回调） */
   setOpen: (open: boolean, event?: Event) => void;
+  /** 打开并指定首次高亮：ArrowDown → first，ArrowUp → last */
+  openWithHighlight: (highlight: "first" | "last", event?: Event) => void;
+  /** 由触发键决定的初始高亮，打开完成后由 content 消费 */
+  pendingHighlight: Accessor<"first" | "last" | undefined>;
   /** 触发器用：打开/关闭切换 */
   toggle: (event?: Event) => void;
   trigger: Accessor<HTMLElement | undefined>;

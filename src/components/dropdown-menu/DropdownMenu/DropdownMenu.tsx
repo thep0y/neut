@@ -46,6 +46,9 @@ export function DropdownMenu(props: DropdownMenuProps): JSX.Element {
   });
 
   const [finalFocus, setFinalFocus] = createSignal(true);
+  const [pendingHighlight, setPendingHighlight] = createSignal<
+    "first" | "last"
+  >();
   const [trigger, setTrigger] = createSignal<HTMLElement>();
   const contentId = `dropdown-menu-content-${createUniqueId()}`;
 
@@ -86,6 +89,17 @@ export function DropdownMenu(props: DropdownMenuProps): JSX.Element {
     if (next === open()) return;
     commit(next, next ? "trigger-press" : "imperative-action", event);
   };
+
+  const openWithHighlight = (highlight: "first" | "last", event?: Event) => {
+    if (disabled() || open()) return;
+    setPendingHighlight(highlight);
+    if (!commit(true, "trigger-press", event)) setPendingHighlight(undefined);
+  };
+
+  // 关闭后清掉待消费的高亮，避免下一次点击打开沿用上次的 ArrowUp。
+  createEffect(() => {
+    if (!open()) setPendingHighlight(undefined);
+  });
 
   const toggle = (event?: Event) => {
     if (disabled()) return;
@@ -160,6 +174,8 @@ export function DropdownMenu(props: DropdownMenuProps): JSX.Element {
           open,
           disabled,
           setOpen,
+          openWithHighlight,
+          pendingHighlight,
           toggle,
           trigger,
           setTrigger,
