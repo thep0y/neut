@@ -44,11 +44,11 @@ export function DropdownMenuCheckboxItem(props: DropdownMenuCheckboxItemProps) {
     if (e.defaultPrevented) return;
 
     const next = !checked();
+    const details = createChangeEventDetails("item-press", e, element);
+    props.onCheckedChange?.(next, details);
+    if (details.isCanceled) return;
+
     if (props.checked === undefined) setInternalChecked(next);
-    props.onCheckedChange?.(
-      next,
-      createChangeEventDetails("item-press", e, element),
-    );
 
     if (local.closeOnClick) entry.popup.closeAll("item-press", e);
   };

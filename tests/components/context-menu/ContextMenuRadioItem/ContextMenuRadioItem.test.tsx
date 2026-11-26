@@ -57,6 +57,22 @@ describe("ContextMenuRadioItem - 渲染与 ARIA", () => {
 });
 
 describe("ContextMenuRadioItem - 点击行为", () => {
+  it("onValueChange 里 cancel() 时不更新选中值", async () => {
+    const onValueChange = vi.fn(
+      (_value: string, details: { cancel: () => void }) => details.cancel(),
+    );
+    renderOpenMenu(() => (
+      <ContextMenuRadioGroup onValueChange={onValueChange}>
+        <ContextMenuRadioItem value="a">浅色</ContextMenuRadioItem>
+      </ContextMenuRadioGroup>
+    ));
+    await waitForMount();
+
+    fireEvent.click(item());
+
+    expect(item()).toHaveAttribute("aria-checked", "false");
+  });
+
   it("点击调用 group.setValue 且默认不关闭菜单", async () => {
     const onValueChange = vi.fn();
     renderOpenMenu(() => (
