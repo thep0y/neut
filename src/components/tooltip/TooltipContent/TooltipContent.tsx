@@ -5,7 +5,7 @@ import { TooltipContentContext } from "./TooltipContent.context";
 import { getTransformOrigin } from "./TooltipContent.utils";
 import { getSide, getAlignment } from "~/lib";
 import type { TooltipContentProps } from "./TooltipContent.types";
-import { clsx } from "~/utils";
+import { callEventHandler, clsx } from "~/utils";
 
 /**
  * Tooltip 的浮层内容。挂 Portal 到 body，用 position:fixed 定位。
@@ -29,16 +29,20 @@ export function TooltipContent(props: TooltipContentProps) {
 
   // 只摘出内部要单独处理的几个字段，剩下的（style、data-*、onXxx 等任意原生
   // prop）原样透传给内层元素——和 TooltipTrigger 是同一套约定。
-  const [local, rest] = splitProps(props, [
-    "side",
-    "align",
-    "sideOffset",
-    "alignOffset",
-    "collisionPadding",
-    "class",
-    "style",
-    "children",
-  ]);
+  const [local, events, rest] = splitProps(
+    props,
+    [
+      "side",
+      "align",
+      "sideOffset",
+      "alignOffset",
+      "collisionPadding",
+      "class",
+      "style",
+      "children",
+    ],
+    ["onMouseEnter", "onMouseLeave"],
+  );
 
   return (
     <Show when={mounted()}>
@@ -127,11 +131,18 @@ export function TooltipContent(props: TooltipContentProps) {
               ref={setContentElement}
               id={ctx.contentId}
               role="tooltip"
+              data-slot="tooltip-content"
               data-state={animationState()}
               data-side={getSide(pos.placement())}
               data-align={getAlignment(pos.placement()) ?? "center"}
-              onMouseEnter={ctx.keepOpen}
-              onMouseLeave={ctx.requestClose}
+              onMouseEnter={(event) => {
+                ctx.keepOpen();
+                callEventHandler(events.onMouseEnter, event);
+              }}
+              onMouseLeave={(event) => {
+                ctx.requestClose();
+                callEventHandler(events.onMouseLeave, event);
+              }}
               style={{
                 "transform-origin": getTransformOrigin(pos.placement()),
                 ...(typeof local.style === "object" ? local.style : undefined),
