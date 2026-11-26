@@ -52,6 +52,8 @@ export const Accordion = (props: AccordionProps) => {
       <AccordionProvider
         orientation={local.orientation}
         disabled={local.disabled}
+        keepMounted={local.keepMounted}
+        hiddenUntilFound={local.hiddenUntilFound}
         defaultValue={props.defaultValue}
         value={props.value}
         multiple={props.multiple}

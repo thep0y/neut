@@ -59,6 +59,36 @@ describe("AccordionContent - 挂载与卸载", () => {
     expect(element.getAttribute("data-orientation")).toBe("vertical");
   });
 
+  it("keepMounted 时初始就挂在 DOM 里并带 hidden", () => {
+    const { panel } = renderContent({ value: "a" }, { keepMounted: true });
+
+    expect(panel()).not.toBeNull();
+    expect(panel()).toHaveAttribute("hidden");
+    expect(panel()).toHaveAttribute("data-open", "false");
+  });
+
+  it("hiddenUntilFound 时关闭态用 hidden=until-found", () => {
+    const { panel } = renderContent({ value: "a" }, { hiddenUntilFound: true });
+
+    expect(panel()).toHaveAttribute("hidden", "until-found");
+  });
+
+  it("keepMounted 时收起动画结束也不卸载", () => {
+    const { panel, container } = renderContent(
+      { value: "a" },
+      { defaultValue: ["a"], keepMounted: true },
+    );
+    const trigger = container.querySelector<HTMLButtonElement>(
+      "[data-accordion-trigger]",
+    )!;
+
+    fireEvent.click(trigger);
+    expect(panel()).toHaveAttribute("data-open", "false");
+
+    endCollapseAnimation(panel()!);
+    expect(panel()).not.toBeNull();
+  });
+
   it("展开后渲染内容，收起动画结束后再卸载", () => {
     const { panel, container } = renderContent();
     const trigger = container.querySelector<HTMLButtonElement>(

@@ -15,6 +15,10 @@ import s from "./AccordionContent.styles";
 export const AccordionContent = (props: AccordionContentProps) => {
   const { orientation } = useAccordionContext();
   const { triggerId, open, contentId } = useAccordionItemContext();
+  const {
+    keepMounted: rootKeepMounted,
+    hiddenUntilFound: rootHiddenUntilFound,
+  } = useAccordionContext();
 
   const [local, others] = splitProps(props, [
     "hiddenUntilFound",
@@ -25,12 +29,35 @@ export const AccordionContent = (props: AccordionContentProps) => {
     "style",
   ]);
 
+  const keepMounted = () => local.keepMounted ?? rootKeepMounted();
+  const hiddenUntilFound = () =>
+    local.hiddenUntilFound ?? rootHiddenUntilFound();
+  // hidden=until-found 需要内容留在 DOM 里，关闭时由浏览器隐藏。
+  const keepContent = () => keepMounted() || hiddenUntilFound();
+
   // 控制 DOM 是否存在，用untrack避免追踪open变化
-  const [mounted, setMounted] = createSignal(untrack(open));
+  const [mounted, setMounted] = createSignal(untrack(open) || keepContent());
   // 记录测量到的真实高度
   const [panelHeight, setPanelHeight] = createSignal<number | null>(null);
 
   let contentRef: HTMLDivElement | undefined;
+  let panelRef: HTMLDivElement | undefined;
+
+  // Solid 会把 hidden 的字符串值归一成布尔属性，until-found 必须手写。
+  const syncHidden = (el: HTMLDivElement) => {
+    if (open()) {
+      el.removeAttribute("hidden");
+    } else if (hiddenUntilFound()) {
+      el.setAttribute("hidden", "until-found");
+    } else {
+      el.setAttribute("hidden", "");
+    }
+  };
+
+  createEffect(() => {
+    if (!mounted()) return;
+    syncHidden(panelRef!);
+  });
 
   createEffect(
     on(open, (isOpen) => {
@@ -39,6 +66,11 @@ export const AccordionContent = (props: AccordionContentProps) => {
       }
     }),
   );
+
+  // keepMounted 可能在挂载后才变为 true，同样需要把内容留在 DOM 里。
+  createEffect(() => {
+    if (keepContent()) setMounted(true);
+  });
 
   // 挂载后测量高度
   createEffect(() => {
@@ -49,7 +81,7 @@ export const AccordionContent = (props: AccordionContentProps) => {
   });
 
   const handleAnimationEnd = (e: AnimationEvent) => {
-    if (!open() && e.animationName === "accordion-up") {
+    if (!open() && e.animationName === "accordion-up" && !keepContent()) {
       setMounted(false);
       setPanelHeight(null);
     }
@@ -58,6 +90,10 @@ export const AccordionContent = (props: AccordionContentProps) => {
   return (
     <Show when={mounted()}>
       <div
+        ref={(el) => {
+          panelRef = el;
+          syncHidden(el);
+        }}
         id={contentId}
         role="region"
         aria-labelledby={triggerId}
