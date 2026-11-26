@@ -5,6 +5,8 @@ import { createStore, produce } from "solid-js/store";
 interface AccordionContextValue {
   orientation: "horizontal" | "vertical";
   disabled: () => boolean;
+  keepMounted: () => boolean;
+  hiddenUntilFound: () => boolean;
   isOpen: (value: string | number) => boolean;
   toggle: (value: string | number) => void;
 }
@@ -15,6 +17,8 @@ export function AccordionProvider(
   props: ParentProps & {
     orientation: "horizontal" | "vertical";
     disabled?: boolean;
+    keepMounted?: boolean;
+    hiddenUntilFound?: boolean;
     defaultValue?: AccordionValue[];
     value?: AccordionValue[];
     multiple?: boolean;
@@ -91,6 +95,8 @@ export function AccordionProvider(
       return props.orientation;
     },
     disabled: () => !!props.disabled,
+    keepMounted: () => !!props.keepMounted,
+    hiddenUntilFound: () => !!props.hiddenUntilFound,
     isOpen,
     toggle,
   };
