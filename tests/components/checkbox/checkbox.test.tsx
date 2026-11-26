@@ -16,6 +16,7 @@ function renderCheckbox(
   props: {
     defaultChecked?: boolean;
     checked?: boolean;
+    indeterminate?: boolean;
     onChange?: (checked: boolean) => void;
     disabled?: boolean;
     id?: string;
@@ -27,6 +28,7 @@ function renderCheckbox(
     <Checkbox
       defaultChecked={props.defaultChecked}
       checked={props.checked}
+      indeterminate={props.indeterminate}
       onChange={props.onChange}
       disabled={props.disabled}
       id={props.id}
@@ -89,6 +91,24 @@ describe("Checkbox - 渲染与 ARIA", () => {
 
     expect(box()).toHaveAttribute("aria-checked", "true");
     expect(box()).toHaveAttribute("data-checked", "true");
+  });
+
+  it("indeterminate 映射为 aria-checked=mixed 与 input.indeterminate", () => {
+    renderCheckbox({ indeterminate: true });
+
+    expect(box()).toHaveAttribute("aria-checked", "mixed");
+    expect(box()).toHaveAttribute("data-indeterminate");
+    expect(hiddenInput().indeterminate).toBe(true);
+  });
+
+  it("indeterminate 变化时同步到原生 input", () => {
+    const [indeterminate, setIndeterminate] = createSignal(true);
+    render(() => <Checkbox indeterminate={indeterminate()} />);
+
+    expect(hiddenInput().indeterminate).toBe(true);
+    setIndeterminate(false);
+    expect(hiddenInput().indeterminate).toBe(false);
+    expect(box()).not.toHaveAttribute("data-indeterminate");
   });
 
   it("原生 input 的 checked 与可见状态保持一致", () => {
