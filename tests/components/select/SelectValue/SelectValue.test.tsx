@@ -1,4 +1,5 @@
 import { render } from "@solidjs/testing-library";
+import { createSignal } from "solid-js";
 import { describe, expect, it } from "vitest";
 import { Select } from "~/components/select/Select/Select";
 import { SelectContent } from "~/components/select/SelectContent/SelectContent";
@@ -49,6 +50,28 @@ describe("SelectValue - 展示文本推导", () => {
     });
 
     expect(triggerText()).toContain("苹果（label）");
+  });
+
+  it("item label 变化后 SelectValue 跟随更新", async () => {
+    const [label, setLabel] = createSignal("苹果");
+    render(() => (
+      <Select defaultOpen defaultValue="apple">
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="apple">{label()}</SelectItem>
+        </SelectContent>
+      </Select>
+    ));
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(triggerText()).toContain("苹果");
+
+    setLabel("Apricot");
+
+    expect(triggerText()).toContain("Apricot");
   });
 
   it("未选中且未传 placeholder 时展示空串（不报错）", async () => {
