@@ -40,6 +40,22 @@ describe("AccordionTrigger - 结构与 ARIA", () => {
     expect(button().textContent).toContain("标题");
   });
 
+  it("根 Accordion disabled 让所有 trigger 禁用", () => {
+    const { button } = renderTrigger({ value: "a" }, { disabled: true });
+
+    expect(button().disabled).toBe(true);
+    expect(button().getAttribute("aria-disabled")).toBe("true");
+  });
+
+  it("点击时回调 item 的 onOpenChange（传下一状态）", () => {
+    const onOpenChange = vi.fn();
+    const { button } = renderTrigger({ value: "a", onOpenChange });
+
+    fireEvent.click(button());
+
+    expect(onOpenChange).toHaveBeenCalledWith(true);
+  });
+
   it("aria-expanded 与 data-open 跟随打开状态", () => {
     const closed = renderTrigger();
     expect(closed.button().getAttribute("aria-expanded")).toBe("false");

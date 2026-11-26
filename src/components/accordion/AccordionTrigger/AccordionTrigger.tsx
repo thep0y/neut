@@ -8,7 +8,7 @@ import classes from "./AccordionTrigger.styles";
 
 export const AccordionTrigger = (props: AccordionTriggerProps) => {
   const { orientation, toggle } = useAccordionContext();
-  const { value, open, disabled, triggerId, contentId } =
+  const { value, open, disabled, onOpenChange, triggerId, contentId } =
     useAccordionItemContext();
 
   const [local, others] = splitProps(props, [
@@ -19,7 +19,8 @@ export const AccordionTrigger = (props: AccordionTriggerProps) => {
   ]);
 
   const handleClick = () => {
-    if (disabled) return;
+    if (disabled()) return;
+    onOpenChange?.(!open());
     toggle(value);
   };
 
@@ -28,7 +29,7 @@ export const AccordionTrigger = (props: AccordionTriggerProps) => {
       class={classes.title}
       data-orientation={orientation}
       data-open={open()}
-      data-disabled={disabled ? "" : null}
+      data-disabled={disabled() ? "" : null}
       {...others}
     >
       <button
@@ -36,14 +37,14 @@ export const AccordionTrigger = (props: AccordionTriggerProps) => {
         id={triggerId}
         aria-controls={contentId}
         aria-expanded={open()}
-        aria-disabled={disabled}
+        aria-disabled={disabled()}
         data-accordion-trigger=""
         class={clsx(classes.button, local.class)}
         classList={local.classList}
         onClick={handleClick}
         data-orientation={orientation}
         data-open={open()}
-        disabled={disabled}
+        disabled={disabled()}
       >
         {local.children}
         <ChevronDown

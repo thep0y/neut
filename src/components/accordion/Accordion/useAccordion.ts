@@ -1,4 +1,9 @@
-export const useAccordion = () => {
+export interface UseAccordionOptions {
+  /** 首尾是否循环 */
+  loopFocus: () => boolean;
+}
+
+export const useAccordion = (options: UseAccordionOptions) => {
   // 键盘无障碍导航
   const handleKeyDown = (e: KeyboardEvent) => {
     // 只有这四个键需要处理
@@ -21,13 +26,24 @@ export const useAccordion = () => {
     if (currentIndex === -1) return;
 
     let nextIndex = currentIndex;
+    const loopFocus = options.loopFocus();
 
     switch (e.key) {
       case "ArrowDown":
-        nextIndex = (currentIndex + 1) % triggers.length; // 循环向下
+        nextIndex =
+          currentIndex === triggers.length - 1
+            ? loopFocus
+              ? 0
+              : currentIndex
+            : currentIndex + 1;
         break;
       case "ArrowUp":
-        nextIndex = (currentIndex - 1 + triggers.length) % triggers.length; // 循环向上
+        nextIndex =
+          currentIndex === 0
+            ? loopFocus
+              ? triggers.length - 1
+              : currentIndex
+            : currentIndex - 1;
         break;
       case "Home":
         nextIndex = 0; // 跳到第一个
