@@ -1,4 +1,5 @@
 import {
+  createEffect,
   createMemo,
   createSignal,
   createUniqueId,
@@ -24,6 +25,7 @@ export const Checkbox = (props: CheckboxProps) => {
       "id",
       "checked",
       "defaultChecked",
+      "indeterminate",
       "onChange",
       "disabled",
       "class",
@@ -39,6 +41,12 @@ export const Checkbox = (props: CheckboxProps) => {
   const checked = createMemo(() => local.checked ?? internalChecked());
 
   let inputRef: HTMLInputElement | undefined;
+
+  // indeterminate 只是 DOM 属性，不是 HTML 特性，必须命令式同步。
+  createEffect(() => {
+    // effect 在 ref 赋值之后运行；这里直接写，避免留下不可达的空值分支。
+    inputRef!.indeterminate = !!local.indeterminate;
+  });
 
   /**
    * 可见控件（span）的点击只是"代理"：真正承载状态的是隐藏 input。
@@ -81,9 +89,10 @@ export const Checkbox = (props: CheckboxProps) => {
         data-slot="checkbox"
         role="checkbox"
         tabIndex={0}
-        aria-checked={checked()}
+        aria-checked={local.indeterminate ? "mixed" : checked()}
         aria-disabled={local.disabled}
         data-disabled={local.disabled}
+        data-indeterminate={local.indeterminate ? "" : undefined}
         data-checked={checked()}
         // 自引用 aria-labelledby 只在调用方没有提供 aria-label/aria-labelledby
         // 时使用；否则它的优先级会让 aria-label 的可访问名变成空字符串。
@@ -125,7 +134,7 @@ export const Checkbox = (props: CheckboxProps) => {
         onChange={(event) => {
           if (local.disabled) return;
           const next = event.currentTarget.checked;
-          setInternalChecked(next);
+          if (local.checked === undefined) setInternalChecked(next);
           local.onChange?.(next);
         }}
       />
