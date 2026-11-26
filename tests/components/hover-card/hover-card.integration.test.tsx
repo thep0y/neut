@@ -22,6 +22,7 @@ function renderCard(
     delay?: number;
     closeDelay?: number;
     triggerProps?: Record<string, unknown>;
+    contentProps?: Record<string, unknown>;
   } = {},
 ) {
   return render(() => (
@@ -34,7 +35,7 @@ function renderCard(
       closeDelay={props.closeDelay}
     >
       <HoverCardTrigger {...props.triggerProps}>悬停我</HoverCardTrigger>
-      <HoverCardContent>卡片内容</HoverCardContent>
+      <HoverCardContent {...props.contentProps}>卡片内容</HoverCardContent>
     </HoverCard>
   ));
 }
@@ -456,6 +457,24 @@ describe("HoverCard - 受控模式与用户事件", () => {
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(trigger()).toHaveAttribute("data-state", "open");
+  });
+
+  it("用户 onMouseEnter/onMouseLeave 与内部 keepOpen/requestClose 串联", async () => {
+    const onMouseEnter = vi.fn();
+    const onMouseLeave = vi.fn();
+    renderCard({
+      defaultOpen: true,
+      contentProps: { onMouseEnter, onMouseLeave },
+    });
+
+    fireEvent.mouseEnter(content()!);
+    expect(onMouseEnter).toHaveBeenCalledTimes(1);
+
+    fireEvent.mouseLeave(content()!);
+    await vi.advanceTimersByTimeAsync(300);
+
+    expect(onMouseLeave).toHaveBeenCalledTimes(1);
+    expect(content()).toHaveAttribute("data-state", "closed");
   });
 
   it("用户自己的 onClick 不会被内部监听覆盖", () => {

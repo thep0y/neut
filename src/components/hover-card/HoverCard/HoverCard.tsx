@@ -44,6 +44,9 @@ export function HoverCard(props: HoverCardProps): JSX.Element {
   };
 
   const commit = (next: boolean) => {
+    // 已处于目标状态时不再回调：openImmediate 可能重复触发，
+    // closeImmediate 也可能在从未打开时被调用。
+    if (next === open()) return;
     if (props.open === undefined) setInternalOpen(next);
     props.onOpenChange?.(next);
   };
