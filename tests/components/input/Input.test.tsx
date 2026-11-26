@@ -63,6 +63,22 @@ describe("Input - 值与双模式", () => {
     expect(inputOf(container).value).toBe("初始");
   });
 
+  it("非受控：form.reset() 恢复 defaultValue", () => {
+    const { container } = render(() => (
+      <form>
+        <Input defaultValue="初始" />
+      </form>
+    ));
+    const input = inputOf(container);
+
+    fireEvent.input(input, { target: { value: "修改后" } });
+    expect(input.value).toBe("修改后");
+
+    container.querySelector("form")!.reset();
+
+    expect(input.value).toBe("初始");
+  });
+
   it("value 优先于 defaultValue", () => {
     const { container } = render(() => (
       <Input value="受控" defaultValue="默认" />
