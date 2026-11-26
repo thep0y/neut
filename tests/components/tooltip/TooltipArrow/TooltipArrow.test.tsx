@@ -126,7 +126,7 @@ describe("TooltipArrow - 真实浮层中的装配", () => {
     stubWidth(document.querySelector("button")!, 60);
 
     fireEvent.pointerEnter(document.querySelector("button")!);
-    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(700);
 
     const content = document.querySelector('[role="tooltip"]')!;
     const arrow = content.querySelector<HTMLElement>('[aria-hidden="true"]')!;

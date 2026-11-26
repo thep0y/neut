@@ -81,4 +81,24 @@ describe("Tooltip context - openImmediate", () => {
     expect(onOpenChange).toHaveBeenCalledWith(true);
     expect(document.querySelector('[role="tooltip"]')).toBeInTheDocument();
   });
+
+  it("已打开时重复 openImmediate 只回调一次", async () => {
+    const { ctx, onOpenChange } = await renderConsumer({});
+
+    ctx.openImmediate();
+    ctx.openImmediate();
+
+    expect(onOpenChange).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Tooltip context - requestClose", () => {
+  it("从未打开时不会回调 false", async () => {
+    const { ctx, onOpenChange } = await renderConsumer({});
+
+    ctx.requestClose();
+    await vi.advanceTimersByTimeAsync(200);
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
 });

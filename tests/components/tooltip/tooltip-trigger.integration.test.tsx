@@ -101,12 +101,14 @@ describe("Tooltip - hover 延时", () => {
     expect(trigger()).toHaveAttribute("data-state", "closed");
   });
 
-  it("默认 openDelay 为 0：hover 后立刻打开", async () => {
+  it("默认 openDelay 为 700：hover 后到点才打开", async () => {
     renderTooltip();
 
     fireEvent.pointerEnter(trigger());
-    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(699);
+    expect(content()).toBeNull();
 
+    await vi.advanceTimersByTimeAsync(1);
     expect(content()).toBeInTheDocument();
   });
 
@@ -280,7 +282,7 @@ describe("Tooltip - 受控模式与回调", () => {
     renderTooltip({ open: false, onOpenChange });
 
     fireEvent.pointerEnter(trigger());
-    await vi.advanceTimersByTimeAsync(100);
+    await vi.advanceTimersByTimeAsync(700);
 
     expect(onOpenChange).toHaveBeenCalledWith(true);
     expect(trigger()).toHaveAttribute("data-state", "closed");

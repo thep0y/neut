@@ -51,12 +51,14 @@ afterEach(() => {
 });
 
 describe("TooltipProvider - 打开延时", () => {
-  it("不传 delay 时默认 0：hover 后立即打开", async () => {
+  it("不传 delay 时默认 700：到点才打开", async () => {
     renderWithProvider({});
 
     fireEvent.pointerEnter(trigger());
-    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(699);
+    expect(content()).toBeNull();
 
+    await vi.advanceTimersByTimeAsync(1);
     expect(content()).toBeInTheDocument();
   });
 

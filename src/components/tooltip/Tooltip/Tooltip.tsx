@@ -12,7 +12,7 @@ import { useTooltipGroupContext } from "../TooltipGroup/TooltipGroup.context";
 import type { TooltipContextValue, TooltipProps } from "./Tooltip.types";
 import type { Rect } from "~/lib";
 
-const DEFAULT_OPEN_DELAY = 0;
+const DEFAULT_OPEN_DELAY = 700;
 const DEFAULT_CLOSE_DELAY = 150;
 
 /**
@@ -51,6 +51,9 @@ export function Tooltip(props: TooltipProps): JSX.Element {
   const [suppressExitAnimation, setSuppressExitAnimation] = createSignal(false);
 
   const commit = (next: boolean) => {
+    // 已处于目标状态时不再回调：requestClose 可能在从未打开时被调用，
+    // openImmediate 也可能在已打开时重复触发。
+    if (next === open()) return;
     if (props.open === undefined) setInternalOpen(next);
     props.onOpenChange?.(next);
   };
