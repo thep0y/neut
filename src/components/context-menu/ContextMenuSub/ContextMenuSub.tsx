@@ -52,12 +52,13 @@ export function ContextMenuSub(props: ContextMenuSubProps): JSX.Element {
     next: boolean,
     reason: ContextMenuChangeEventReason,
     event?: Event,
-  ) => {
+  ): boolean => {
     const details = createChangeEventDetails(reason, event, trigger());
     // 同根组件：先回调，cancel() 时不落状态
     props.onOpenChange?.(next, details);
-    if (details.isCanceled) return;
+    if (details.isCanceled) return false;
     if (props.open === undefined) setInternalOpen(next);
+    return true;
   };
 
   const closeSubmenu = (
@@ -70,7 +71,7 @@ export function ContextMenuSub(props: ContextMenuSubProps): JSX.Element {
     // 先关自己再清父浮层的登记:写信号会同步刷新相关 effect,若反过来,
     // 子菜单触发器的同步 effect 会抢先以 "list-navigation" 的 reason 关掉它,
     // 覆盖掉这里想上报的真实关闭原因。
-    if (open()) setOpen(false, reason, event);
+    if (open() && !setOpen(false, reason, event)) return;
     if (id && parentPopup.openPopupState()?.id === id) {
       parentPopup.closeOpenPopup();
     }
