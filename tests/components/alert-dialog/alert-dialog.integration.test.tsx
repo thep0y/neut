@@ -84,7 +84,7 @@ describe("alert-dialog 集成 - 打开与关闭流程", () => {
     expect(trigger()).toHaveAttribute("data-state", "open");
     // 关闭状态变化只回调一次，且不带事件详情对象（当前 API：单参数 boolean）
     expect(onOpenChange).toHaveBeenCalledTimes(1);
-    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
   });
 
   it("打开后结构子部件都渲染，且 aria 交叉引用成对", async () => {
@@ -134,7 +134,7 @@ describe("alert-dialog 集成 - 打开与关闭流程", () => {
 
     expect(onClick).toHaveBeenCalledTimes(1);
     expect(onOpenChange).toHaveBeenCalledTimes(1);
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
     expect(trigger()).toHaveAttribute("data-state", "closed");
     expect(surface()).toHaveAttribute("data-open", "false");
     // 仍在挂载中，等待退场动画
@@ -175,7 +175,7 @@ describe("alert-dialog 集成 - 打开与关闭流程", () => {
     );
 
     expect(onOpenChange).toHaveBeenCalledTimes(1);
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
   });
 
   it("AlertDialog 不渲染任何内置关闭按钮（必须显式选择）", () => {
@@ -254,7 +254,7 @@ describe("alert-dialog 集成 - 受控与非受控", () => {
 
     await user.click(trigger());
 
-    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
     expect(content()).toBeNull();
   });
 
@@ -269,7 +269,7 @@ describe("alert-dialog 集成 - 受控与非受控", () => {
     );
 
     expect(onOpenChange).toHaveBeenCalledTimes(1);
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
     expect(content()).not.toBeNull();
     expect(surface()).toHaveAttribute("data-open", "true");
   });

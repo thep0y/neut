@@ -78,6 +78,6 @@ describe("Sheet", () => {
     );
 
     expect(content()).toBeInTheDocument();
-    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
   });
 });

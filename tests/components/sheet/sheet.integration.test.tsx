@@ -77,7 +77,7 @@ describe("sheet 集成 - 打开与关闭流程", () => {
     expect(trigger()).toHaveAttribute("aria-expanded", "true");
     expect(trigger()).toHaveAttribute("data-state", "open");
     expect(onOpenChange).toHaveBeenCalledTimes(1);
-    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
   });
 
   it("打开后结构子部件都渲染，且 aria 交叉引用成对", async () => {
@@ -121,7 +121,7 @@ describe("sheet 集成 - 打开与关闭流程", () => {
     fireEvent.click(overlay() as HTMLElement);
 
     expect(onOpenChange).toHaveBeenCalledTimes(1);
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
     expect(trigger()).toHaveAttribute("data-state", "closed");
     expect(surface()).toHaveAttribute("data-open", "false");
     expect(content()).toBe(mounted);
@@ -165,7 +165,7 @@ describe("sheet 集成 - 打开与关闭流程", () => {
     );
 
     expect(onOpenChange).toHaveBeenCalledTimes(1);
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
   });
 
   it("showCloseButton=false 时不渲染关闭按钮", () => {
@@ -192,7 +192,7 @@ describe("sheet 集成 - 打开与关闭流程", () => {
     fireEvent.keyDown(document, { key: "Escape" });
 
     expect(onOpenChange).toHaveBeenCalledTimes(1);
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
   });
 
   it("浮层内已经 preventDefault 的 Escape 不再重复关闭", () => {
@@ -223,7 +223,7 @@ describe("sheet 集成 - 受控与非受控", () => {
 
     await user.click(trigger());
 
-    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
     expect(content()).toBeNull();
   });
 
@@ -234,7 +234,7 @@ describe("sheet 集成 - 受控与非受控", () => {
     fireEvent.click(overlay() as HTMLElement);
 
     expect(onOpenChange).toHaveBeenCalledTimes(1);
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
     expect(content()).not.toBeNull();
     expect(surface()).toHaveAttribute("data-open", "true");
   });
