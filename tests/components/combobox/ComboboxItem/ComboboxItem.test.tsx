@@ -22,13 +22,13 @@ function renderItem(
 }
 
 describe("ComboboxItem - 渲染与选中", () => {
-  it("渲染为 role=option 且可聚焦（tabIndex=0）", () => {
+  it("渲染为 role=option 且不进入 Tab 序列（焦点留在输入框）", () => {
     renderItem();
 
     const option = comboboxOptions()[0];
     expect(option).toHaveAttribute("data-slot", "combobox-item");
     expect(option).toHaveAttribute("aria-selected", "false");
-    expect(option).toHaveAttribute("tabindex", "0");
+    expect(option).toHaveAttribute("tabindex", "-1");
   });
 
   it("选中项 aria-selected=true 并渲染选中标记", () => {

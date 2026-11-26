@@ -39,6 +39,7 @@ export function ComboboxChipsInput(props: {
         const next = e.currentTarget.value;
         ctx.setInputValue(next);
         ctx.setFilterValue(next);
+        ctx.setActiveIndex(-1);
         ctx.setOpen(true, "input-change");
       }}
       onFocus={() => ctx.setOpen(true, "input-focus")}

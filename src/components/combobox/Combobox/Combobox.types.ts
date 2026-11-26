@@ -73,6 +73,10 @@ export interface ComboboxContextValue<T = any> {
   ) => void;
   selectItem: (item: T, event?: Event) => void;
   isSelected: (item: T) => boolean;
+  /** 选项自身是否 disabled（供键盘跳过与提交守卫） */
+  isItemDisabled: (item: T) => boolean;
+  /** ComboboxItem 挂载时登记 disabled 状态，返回取消登记函数 */
+  registerItemDisabled: (item: T) => () => void;
   itemToStringValue: (item: T) => string;
   activeIndex: Accessor<number>;
   setActiveIndex: (index: number) => void;

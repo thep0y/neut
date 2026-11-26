@@ -13,38 +13,46 @@ export function createComboboxKeyboard(ctx: ComboboxContextValue) {
     return item === undefined ? undefined : ctx.optionId(item);
   };
 
+  /** 从 from 开始沿 step 找第一个非 disabled 项；找不到返回 -1 */
+  const findEnabled = (
+    list: readonly unknown[],
+    from: number,
+    step: 1 | -1,
+  ) => {
+    for (let i = 0; i < list.length; i++) {
+      const index =
+        (((from + step * i) % list.length) + list.length) % list.length;
+      if (!ctx.isItemDisabled(list[index])) return index;
+    }
+    return -1;
+  };
+
   const onKeyDown = (e: KeyboardEvent) => {
     const list = ctx.filteredItems();
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
       ctx.setOpen(true, "input-change", e);
-      ctx.setActiveIndex(
-        list.length === 0 ? -1 : (ctx.activeIndex() + 1) % list.length,
-      );
+      ctx.setActiveIndex(findEnabled(list, ctx.activeIndex() + 1, 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       ctx.setOpen(true, "input-change", e);
-      // 没有高亮时 ArrowUp 应落在最后一项，而不是 len-2
-      ctx.setActiveIndex(
-        list.length === 0
-          ? -1
-          : ctx.activeIndex() <= 0
-            ? list.length - 1
-            : ctx.activeIndex() - 1,
-      );
+      const start =
+        ctx.activeIndex() <= 0 ? list.length - 1 : ctx.activeIndex() - 1;
+      ctx.setActiveIndex(findEnabled(list, start, -1));
     } else if (e.key === "Home") {
       e.preventDefault();
       ctx.setOpen(true, "input-change", e);
-      ctx.setActiveIndex(list.length === 0 ? -1 : 0);
+      ctx.setActiveIndex(findEnabled(list, 0, 1));
     } else if (e.key === "End") {
       e.preventDefault();
       ctx.setOpen(true, "input-change", e);
-      ctx.setActiveIndex(list.length === 0 ? -1 : list.length - 1);
+      ctx.setActiveIndex(findEnabled(list, list.length - 1, -1));
     } else if (e.key === "Enter" && ctx.open()) {
       e.preventDefault();
-      const item = ctx.filteredItems()[ctx.activeIndex()];
-      if (item !== undefined) ctx.selectItem(item, e);
+      const item = list[ctx.activeIndex()];
+      if (item !== undefined && !ctx.isItemDisabled(item))
+        ctx.selectItem(item, e);
     } else if (e.key === "Escape" && ctx.open()) {
       e.preventDefault();
       ctx.close("escape-key", e);
