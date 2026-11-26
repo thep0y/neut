@@ -36,6 +36,8 @@ export interface CreateContextMenuPopupOptions {
   alignOffset: Accessor<number>;
   collisionPadding: Accessor<number>;
   dir: Accessor<"ltr" | "rtl" | "auto" | undefined>;
+  /** 打开后首次高亮落到第一项还是最后一项 */
+  initialHighlight?: Accessor<"first" | "last" | undefined>;
   /** 子菜单可以覆盖根组件的行为;不传则回退到 root 上的值 */
   loopFocus?: Accessor<boolean>;
   orientation?: Accessor<ContextMenuOrientation>;
@@ -173,7 +175,10 @@ export function createContextMenuPopupRuntime(
     queueMicrotask(() => {
       if (!options.open()) return;
       popupEl()?.focus({ preventScroll: true });
-      if (activeId() === undefined) focusFirst();
+      if (activeId() === undefined) {
+        if (options.initialHighlight?.() === "last") focusLast();
+        else focusFirst();
+      }
     });
   };
 

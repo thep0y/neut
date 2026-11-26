@@ -147,6 +147,29 @@ describe("DropdownMenuTrigger - 禁用守卫的默认与组合", () => {
     expect(onOpenChange).toHaveBeenCalledWith(true, expect.anything());
   });
 
+  it("ArrowUp 打开后高亮最后一项", async () => {
+    render(() => (
+      <DropdownMenu>
+        <DropdownMenuTrigger>打开</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem>第一项</DropdownMenuItem>
+          <DropdownMenuItem>最后一项</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ));
+
+    fireEvent.keyDown(trigger(), { key: "ArrowUp" });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const items = Array.from(
+      document.querySelectorAll('[data-slot="dropdown-menu-item"]'),
+    );
+    expect(
+      document.querySelector('[data-slot="dropdown-menu-content"]'),
+    ).toHaveAttribute("aria-activedescendant", items[1]!.id);
+  });
+
   it("根 disabled 与触发器 disabled 都为真时同样拦下", () => {
     const onOpenChange = vi.fn();
     const triggerProps = {

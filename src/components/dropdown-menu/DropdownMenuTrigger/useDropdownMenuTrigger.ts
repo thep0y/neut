@@ -24,7 +24,9 @@ export function useDropdownMenuTrigger(
       const e = event as KeyboardEvent;
       if (!["ArrowDown", "ArrowUp", "Enter", " "].includes(e.key)) return;
       e.preventDefault();
-      if (!ctx.open()) ctx.setOpen(true, e);
+      if (ctx.open()) return;
+      if (e.key === "ArrowUp") ctx.openWithHighlight("last", e);
+      else ctx.openWithHighlight("first", e);
     };
 
     el.addEventListener("click", onClick);
