@@ -104,6 +104,7 @@ export function fakeCtx(overrides: Partial<SliderCtx> = {}): SliderCtx {
     max: () => 100,
     step: () => 1,
     orientation: () => "horizontal",
+    dir: () => "ltr",
     disabled: () => false,
     activeThumbIndex: () => 0,
     setActiveThumbIndex: () => {},

@@ -62,6 +62,21 @@ describe("useSliderThumb", () => {
     expect(updateValue).toHaveBeenLastCalledWith(0, 39);
   });
 
+  it("RTL 横向：ArrowLeft 增大、ArrowRight 减小", () => {
+    const updateValue = vi.fn();
+    const { result } = renderHook(() => useSliderThumb(0), {
+      wrapper: contextWrapper(
+        fakeCtx({ dir: () => "rtl", values: () => [40], updateValue }),
+      ),
+    });
+
+    result.handleKeyDown(keyEvent("ArrowLeft"));
+    expect(updateValue).toHaveBeenLastCalledWith(0, 41);
+
+    result.handleKeyDown(keyEvent("ArrowRight"));
+    expect(updateValue).toHaveBeenLastCalledWith(0, 39);
+  });
+
   it("按住 Shift 时步长放大 10 倍", () => {
     const updateValue = vi.fn();
     const { result } = renderHook(() => useSliderThumb(0), {

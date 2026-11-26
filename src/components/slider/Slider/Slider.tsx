@@ -13,6 +13,7 @@ export const Slider = <T extends number | number[]>(props: SliderProps<T>) => {
   const merged = mergeProps(
     {
       orientation: "horizontal",
+      dir: "ltr",
       max: 100,
       min: 0,
       step: 1,
@@ -28,6 +29,7 @@ export const Slider = <T extends number | number[]>(props: SliderProps<T>) => {
     "min",
     "step",
     "orientation",
+    "dir",
     "onValueChange",
     "disabled",
     "class",
@@ -45,6 +47,7 @@ export const Slider = <T extends number | number[]>(props: SliderProps<T>) => {
       <div
         data-slot="slider"
         data-orientation={local.orientation}
+        dir={local.dir}
         class={clsx(classes, local.class)}
         classList={local.classList}
         {...others}

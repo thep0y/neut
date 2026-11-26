@@ -14,10 +14,11 @@ export const useSlider = <T extends number | number[]>({
       | "min"
       | "step"
       | "orientation"
+      | "dir"
       | "onValueChange"
       | "disabled"
     >,
-    "max" | "min" | "step" | "orientation" | "disabled"
+    "max" | "min" | "step" | "orientation" | "dir" | "disabled"
   >;
 }) => {
   // 由初始传入的类型一次性决定，运行时不再改变
@@ -92,6 +93,7 @@ export const useSlider = <T extends number | number[]>({
     max: () => local.max,
     step: () => local.step,
     orientation: () => local.orientation,
+    dir: () => local.dir,
     disabled: () => local.disabled,
     activeThumbIndex,
     setActiveThumbIndex,

@@ -48,6 +48,25 @@ describe("Slider 组合行为", () => {
     expect(onValueChange).toHaveBeenCalledWith(25);
   });
 
+  it("RTL：根节点带 dir，指针从右往左递增", () => {
+    const onValueChange = vi.fn();
+    const slider = setup({ defaultValue: 0, dir: "rtl", onValueChange });
+    slider.layout();
+
+    expect(
+      slider.container.querySelector('[data-slot="slider"]'),
+    ).toHaveAttribute("dir", "rtl");
+
+    fireEvent.pointerDown(slider.control(), {
+      button: 0,
+      pointerId: 1,
+      clientX: 50,
+    });
+
+    expect(onValueChange).toHaveBeenCalledWith(75);
+    expect(positionOf(slider.thumbs()[0])).toBe("75%");
+  });
+
   it("拖拽：pointerdown 后 pointermove 持续跟随坐标", () => {
     const onValueChange = vi.fn();
     const slider = setup({ defaultValue: 0, onValueChange });
